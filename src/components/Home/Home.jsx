@@ -1,82 +1,217 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Layout, Row, Col, Typography, Image, Input, Button, Card } from "antd";
-import { SearchOutlined, ShoppingCartOutlined, ZoomInOutlined } from "@ant-design/icons";
-import Header from "../Header/Header";
-import Footer from "../Footer/Footer";
+import React, { useState, useEffect, useRef } from "react";
+import { Row, Col, Typography, Image, Button, Card, Carousel } from "antd";
+import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 
-const { Content } = Layout;
 const { Title, Text } = Typography;
 
 const Home = () => {
-  const brands = ["IPHONE", "SAMSUNG", "OPPO", "HUAWEI", "REALME", "VIVO", "XIAOMI", "NOKIA"];
-  const phones = [
-    { name: "Iphone 12", price: "27.990.000 đ", img: "rectangle-25.png" },
-    { name: "Oppo", price: "10.990.000 đ", img: "image.png" },
-    { name: "Xiaomi", price: "5.499.000 đ", img: "rectangle-25-2.png" },
-    { name: "Samsung", price: "19.499.000 đ", img: "rectangle-25-3.png" },
-    { name: "Iphone X series", price: "19.499.000 đ", img: "rectangle-25-4.png" },
-  ];
+    const [bestSellers, setBestSellers] = useState([]);
+    const [phonesByBrand, setPhonesByBrand] = useState({});
+    const carouselRefs = useRef({});
 
-  return (
-    <Layout>
-      <Header brands={brands} />
-      <Content style={{ padding: "20px 50px" }}>
-        <Row justify="center">
-          <Image width={1723} src="rectangle-22.png" preview={false} />
-        </Row>
-        <Row justify="center" style={{ marginTop: 20 }}>
-          <Card
-            title={
-              <Row align="middle">
-                <Image width={53} src="campfire.png" preview={false} />
-                <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
-                  Điện thoại nổi bật
+    useEffect(() => {
+        fetch('/phoneData.json')
+            .then(response => response.json())
+            .then(data => {
+                setBestSellers(data.bestSellers);
+                setPhonesByBrand(data.phonesByBrand);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }, []); // Mảng dependencies trống
+
+    const renderPhoneCard = (phone) => (
+        <div key={phone.name} style={{ padding: '0 10px' }}>
+            <Card
+                hoverable
+                cover={
+                    <div style={{   
+                        padding: '20px', 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        height: '250px',
+                        overflow: 'hidden'
+                    }}>
+                        <Image 
+                            alt={phone.name} 
+                            src={phone.img} 
+                            preview={false}
+                            style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover',
+                                objectPosition: 'center'
+                            }}
+                        />
+                    </div>
+                }
+                bordered={false}
+                style={{ 
+                    height: '100%', 
+                    paddingTop: '5px', 
+                    paddingBottom: '5px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: 'none',
+                    background: 'transparent'
+                }}
+                styles={{
+                    body: { 
+                        flex: 1, 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        padding: '10px 0'
+                    }
+                }}
+            >
+                <Title level={5} style={{ color: "#219ebc", textAlign: "center", marginBottom: '5px' }}>
+                    {phone.name}
                 </Title>
-              </Row>
-            }
-            bordered={false}
-            style={{ width: 1724, borderRadius: 20 }}
-          >
-            <Row gutter={16} justify="center">
-              {phones.map((phone) => (
-                <Col key={phone.name}>
-                  <Card
-                    cover={<Image alt={phone.name} src={phone.img} preview={false} />}
-                    bordered={false}
-                    style={{ width: 250, borderRadius: 20 }}
-                  >
-                    <Title level={5} style={{ color: "#219ebc", textAlign: "center" }}>
-                      {phone.name}
-                    </Title>
-                    <Text style={{ display: "block", textAlign: "center" }}>{phone.price}</Text>
-                    <Row justify="space-between" style={{ marginTop: 20 }}>
-                      <Button icon={<ZoomInOutlined />} style={{ borderRadius: 5 }} />
-                      <Button icon={<ShoppingCartOutlined />} style={{ borderRadius: 5 }}>
+                <Text style={{ display: "block", textAlign: "center", marginBottom: '15px' }}>{phone.price}</Text>
+                <Row justify="center" style={{ marginTop: 'auto' }}>
+                    <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
+                    <Button icon={<ShoppingCartOutlined />} type="primary">
                         Thêm vào
-                      </Button>
-                    </Row>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Card>
-        </Row>
-      </Content>
-      <Footer />
-    </Layout>
-  );
-};
+                    </Button>
+                </Row>
+            </Card>
+        </div>
+    );
 
-Home.propTypes = {
-  brands: PropTypes.arrayOf(PropTypes.string),
-  phones: PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string,
-      price: PropTypes.string,
-      img: PropTypes.string,
-    })
-  ),
+    const settings = {
+        dots: true,
+        infinite: true,
+        speed: 500,
+        slidesToShow: 4,
+        slidesToScroll: 4,
+        autoplay: false,
+        responsive: [
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 3,
+                }
+            },
+            {
+                breakpoint: 600,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                }
+            }
+        ]
+    };
+
+    const bestSellerSettings = {
+        ...settings,
+        autoplay: true,
+        autoplaySpeed: 1000,
+    };
+
+    return (
+        <>
+            {/* Banner cố định */}
+            <div style={{ 
+                width: '100%', 
+                height: '300px', 
+                overflow: 'hidden', 
+                marginBottom: '20px',
+                borderRadius: '10px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <Image 
+                    src="https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg" 
+                    alt="Banner" 
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center'
+                    }}
+                />
+            </div>
+
+            <Row gutter={[24, 24]} justify="center" style={{ marginTop: 20 }}>
+                <Col span={24}>
+                    <Card
+                        title={
+                            <Row align="middle">
+                                <TrophyOutlined style={{ color: "#ffd700" }} />
+                                <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
+                                    Bán chạy nhất
+                                </Title>
+                            </Row>
+                        }
+                        bordered={false}
+                        style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
+                        extra={
+                            <div>
+                                <Button 
+                                    className="custom-carousel-button prev" 
+                                    icon={<LeftOutlined />} 
+                                    onClick={() => carouselRefs.current['bestSellers']?.prev()}
+                                />
+                                <Button 
+                                    className="custom-carousel-button next" 
+                                    icon={<RightOutlined />} 
+                                    onClick={() => carouselRefs.current['bestSellers']?.next()}
+                                />
+                            </div>
+                        }
+                    >
+                        <Carousel {...bestSellerSettings} ref={ref => carouselRefs.current['bestSellers'] = ref}>
+                            {bestSellers.map(renderPhoneCard)}
+                        </Carousel>
+                    </Card>
+                </Col>
+
+                {Object.entries(phonesByBrand).map(([brand, phones]) => (
+                    <Col span={24} key={brand}>
+                        <Card
+                            title={
+                                <Row align="middle">
+                                    <FireOutlined />
+                                    <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
+                                        {brand}
+                                    </Title>
+                                </Row>
+                            }
+                            bordered={false}
+                            style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
+                            extra={
+                                <div>
+                                    <Button 
+                                        className="custom-carousel-button prev" 
+                                        icon={<LeftOutlined />} 
+                                        onClick={() => carouselRefs.current[brand]?.prev()}
+                                    />
+                                    <Button 
+                                        className="custom-carousel-button next" 
+                                        icon={<RightOutlined />} 
+                                        onClick={() => carouselRefs.current[brand]?.next()}
+                                    />
+                                </div>
+                            }
+                        >
+                            <Carousel {...settings} ref={ref => carouselRefs.current[brand] = ref}>
+                                {phones.map(renderPhoneCard)}
+                            </Carousel>
+                        </Card>
+                    </Col>
+                ))}
+            </Row>
+        </>
+    );
 };
 
 export default Home;

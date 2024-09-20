@@ -1,42 +1,63 @@
-import React from "react";
-import { Row, Col, Typography, Image, Input } from "antd";
+import { Link, useLocation } from "react-router-dom";
+import { Row, Col, Image, Input, Tabs, Button } from "antd";
 import { SearchOutlined, UserOutlined, ShoppingOutlined } from "@ant-design/icons";
-
-const { Title } = Typography;
+import styles from './Header.module.css';
 
 const Header = ({ brands }) => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const getActiveKey = () => {
+    if (currentPath === '/') return 'home';
+    const brand = brands.find(brand => currentPath.includes(`/brand/${brand.toLowerCase()}`));
+    return brand || 'home';
+  };
+
+  const items = [
+    {
+      key: 'home',
+      label: <Link to="/">Trang chủ</Link>,
+    },
+    ...brands.map(brand => ({
+      key: brand,
+      label: <Link to={`/brand/${brand.toLowerCase()}`}>{brand}</Link>,
+    }))
+  ];
+
   return (
-    <header style={{ height: 200 }}>
-      <Row justify="space-between" align="middle" style={{ height: "100%" }}>
-        <Col>
-          <Image width={150} src="rectangle-19.png" preview={false} />
+    <header className={styles.header}>
+      <Row justify="space-between" align="middle" className={styles.topRow}>
+        <Col span={4} className={styles.logoCol}>
+          <Image
+            width={80}
+            src="https://github.com/fluidicon.png"
+            alt="Apple Logo"
+            preview={false}
+          />
         </Col>
-        <Col flex="auto">
+        <Col span={12} className={styles.searchCol}>
           <Input
             size="large"
             placeholder="Nhập thứ cần tìm..."
             prefix={<SearchOutlined />}
-            style={{ borderRadius: 5 }}
+            className={styles.searchInput}
           />
         </Col>
-        <Col>
-          <UserOutlined style={{ fontSize: '32px', color: 'white', marginRight: '20px' }} />
-          <ShoppingOutlined style={{ fontSize: '32px', color: 'white' }} />
+        <Col span={4} className={styles.userCol}>
+          <Button type="link" className={styles.iconTextButton}>
+            <UserOutlined className={styles.icon} />
+            <span>Đăng nhập</span>
+          </Button>
         </Col>
-        <Col>
-          <Title level={3} style={{ color: "white" }}>
-            Đăng nhập
-          </Title>
+        <Col span={4} className={styles.cartCol}>
+          <Button type="link" className={styles.iconTextButton}>
+            <ShoppingOutlined className={styles.icon} />
+            <span>Sản phẩm</span>
+          </Button>
         </Col>
       </Row>
-      <Row justify="center">
-        {brands.map((brand) => (
-          <Col key={brand} style={{ padding: "0 20px" }}>
-            <Title level={4} style={{ color: "white" }}>
-              {brand}
-            </Title>
-          </Col>
-        ))}
+      <Row justify="center" className={styles.brandRow}>
+        <Tabs activeKey={getActiveKey()} className={styles.brandTabs} items={items} />
       </Row>
     </header>
   );

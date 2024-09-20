@@ -9,7 +9,7 @@ const Footer = () => {
     <footer style={{ padding: "20px 50px" }}>
       <Row justify="space-between">
         <Col>
-          <Image width={188} src="rectangle-19-2.png" preview={false} />
+          <Image width={188} src="https://github.com/fluidicon.png" preview={false} />
         </Col>
         <Col>
           <Title level={5}>

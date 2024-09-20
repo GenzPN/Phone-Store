@@ -1,0 +1,66 @@
+.header {
+  height: auto; /* Thay đổi từ fixed height sang auto */
+}
+
+.topRow {
+  height: 100%;
+  padding: 10px 20px; /* Thêm padding cho hàng trên cùng */
+}
+
+.logoCol, .searchCol, .userCol, .cartCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchCol {
+  max-width: 500px;
+  margin: 0 20px;
+  justify-content: center;
+}
+
+.searchInput {
+  border-radius: 5px;
+  width: 100%;
+}
+
+.icon {
+  font-size: 20px;
+  color: #000000;
+  margin-right: 20px;
+}
+
+.logoLoginGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loginButton {
+  margin-left: 10px;
+  padding: 0;
+}
+
+.cartText {
+  font-size: 14px;
+}
+
+.userCol, .cartCol {
+  gap: 5px;
+}
+
+.iconTextButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.iconTextButton:hover {
+  color: #1890ff;
+}
+
+.iconTextButton span {
+  font-size: 14px;
+}
