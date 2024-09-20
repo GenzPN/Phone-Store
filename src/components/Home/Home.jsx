@@ -1,80 +1,82 @@
-import React from 'react';
-import { Layout, Menu, Input, Button, Card, Row, Col } from 'antd';
+import React from "react";
+import PropTypes from "prop-types";
+import { Layout, Row, Col, Typography, Image, Input, Button, Card } from "antd";
+import { SearchOutlined, ShoppingCartOutlined, ZoomInOutlined } from "@ant-design/icons";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 
-const { Header, Content, Footer } = Layout;
+const { Content } = Layout;
+const { Title, Text } = Typography;
 
-export default function Home() {
+const Home = () => {
+  const brands = ["IPHONE", "SAMSUNG", "OPPO", "HUAWEI", "REALME", "VIVO", "XIAOMI", "NOKIA"];
+  const phones = [
+    { name: "Iphone 12", price: "27.990.000 đ", img: "rectangle-25.png" },
+    { name: "Oppo", price: "10.990.000 đ", img: "image.png" },
+    { name: "Xiaomi", price: "5.499.000 đ", img: "rectangle-25-2.png" },
+    { name: "Samsung", price: "19.499.000 đ", img: "rectangle-25-3.png" },
+    { name: "Iphone X series", price: "19.499.000 đ", img: "rectangle-25-4.png" },
+  ];
+
   return (
-    <Layout className="min-h-screen">
-      <Header className="bg-cyan-500">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            {/* Image component omitted */}
-            <h1 className="text-white text-2xl ml-2">H.D.T</h1>
-          </div>
-          <Input placeholder="Nhập thứ cần tìm..." className="flex-grow mx-4" />
-          <Button type="primary">Đăng nhập</Button>
-        </div>
-      </Header>
-
-      <Menu mode="horizontal" className="bg-cyan-400">
-        {['IPHONE', 'SAMSUNG', 'OPPO', 'HUAWEI', 'REALME', 'VIVO', 'XIAOMI', 'NOKIA'].map((brand) => (
-          <Menu.Item key={brand}>
-            {/* Link component omitted */}
-            {brand}
-          </Menu.Item>
-        ))}
-      </Menu>
-
-      <Content className="container mx-auto p-4">
-        <div className="mb-4">
-          {/* Image component omitted */}
-        </div>
-
-        <h2 className="text-xl font-bold mb-4">Điện thoại nổi bật</h2>
-        <Row gutter={16}>
-          {['Iphone 12', 'Oppo', 'Xiaomi', 'Samsung', 'Iphone X Series'].map((phone) => (
-            <Col span={4} key={phone}>
-              <Card
-                cover={<img src="path/to/your/image.png" alt={phone} />}
-                actions={[
-                  <Button type="default">Xem</Button>,
-                  <Button type="primary">Thêm vào giỏ</Button>
-                ]}
-              >
-                <Card.Meta title={phone} description="Giá: X,XXX,XXX đ" />
-              </Card>
-            </Col>
-          ))}
+    <Layout>
+      <Header brands={brands} />
+      <Content style={{ padding: "20px 50px" }}>
+        <Row justify="center">
+          <Image width={1723} src="rectangle-22.png" preview={false} />
+        </Row>
+        <Row justify="center" style={{ marginTop: 20 }}>
+          <Card
+            title={
+              <Row align="middle">
+                <Image width={53} src="campfire.png" preview={false} />
+                <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
+                  Điện thoại nổi bật
+                </Title>
+              </Row>
+            }
+            bordered={false}
+            style={{ width: 1724, borderRadius: 20 }}
+          >
+            <Row gutter={16} justify="center">
+              {phones.map((phone) => (
+                <Col key={phone.name}>
+                  <Card
+                    cover={<Image alt={phone.name} src={phone.img} preview={false} />}
+                    bordered={false}
+                    style={{ width: 250, borderRadius: 20 }}
+                  >
+                    <Title level={5} style={{ color: "#219ebc", textAlign: "center" }}>
+                      {phone.name}
+                    </Title>
+                    <Text style={{ display: "block", textAlign: "center" }}>{phone.price}</Text>
+                    <Row justify="space-between" style={{ marginTop: 20 }}>
+                      <Button icon={<ZoomInOutlined />} style={{ borderRadius: 5 }} />
+                      <Button icon={<ShoppingCartOutlined />} style={{ borderRadius: 5 }}>
+                        Thêm vào
+                      </Button>
+                    </Row>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Card>
         </Row>
       </Content>
-
-      <Footer className="bg-cyan-500 text-white p-4">
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <h3 className="font-bold">Về công ty</h3>
-            <ul>
-              <li>Giới thiệu</li>
-              <li>Chính sách bảo mật</li>
-              <li>Quy chế hoạt động</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-bold">Hỗ trợ khách hàng</h3>
-            <ul>
-              <li>Kiểm tra đơn hàng</li>
-              <li>Tra cứu thông tin bảo hành</li>
-              <li>Hướng dẫn mua online</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-bold">Kết nối với chúng tôi</h3>
-            <div className="flex space-x-2 mt-2">
-              {/* Link component omitted */}
-            </div>
-          </div>
-        </div>
-      </Footer>
+      <Footer />
     </Layout>
   );
-}
+};
+
+Home.propTypes = {
+  brands: PropTypes.arrayOf(PropTypes.string),
+  phones: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      price: PropTypes.string,
+      img: PropTypes.string,
+    })
+  ),
+};
+
+export default Home;
