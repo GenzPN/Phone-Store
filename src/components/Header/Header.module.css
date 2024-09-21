@@ -52,15 +52,22 @@
 .iconTextButton {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.85);
+  color: #333;
 }
 
-.iconTextButton:hover {
-  color: #1890ff;
+.iconTextButton .anticon {
+  font-size: 20px;
+  margin-right: 8px;
 }
 
 .iconTextButton span {
   font-size: 14px;
+}
+
+.userCol .iconTextButton {
+  justify-content: flex-end;
+}
+
+.userCol .ant-avatar {
+  margin-right: 8px;
 }

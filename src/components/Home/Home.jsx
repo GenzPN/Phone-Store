@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Row, Col, Typography, Image, Button, Card, Carousel } from "antd";
+import { Link } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { formatProductNameForUrl } from '../../utils/stringUtils';
 
 const { Title, Text } = Typography;
-
 const Home = () => {
     const [bestSellers, setBestSellers] = useState([]);
     const [phonesByBrand, setPhonesByBrand] = useState({});
@@ -69,7 +70,9 @@ const Home = () => {
                 </Title>
                 <Text style={{ display: "block", textAlign: "center", marginBottom: '15px' }}>{phone.price}</Text>
                 <Row justify="center" style={{ marginTop: 'auto' }}>
-                    <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
+                    <Link to={`/details/${formatProductNameForUrl(phone.name)}`}>
+                        <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
+                    </Link>
                     <Button icon={<ShoppingCartOutlined />} type="primary">
                         Thêm vào
                     </Button>

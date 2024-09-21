@@ -1,9 +1,11 @@
+import React from 'react';
 import { Link, useLocation } from "react-router-dom";
-import { Row, Col, Image, AutoComplete, Tabs, Button, Input } from "antd";
-import { SearchOutlined, UserOutlined, ShoppingOutlined } from "@ant-design/icons";
+import { Row, Col, Image, AutoComplete, Tabs, Button, Input, Avatar } from "antd";
+import { SearchOutlined, UserOutlined, ShoppingOutlined, LogoutOutlined } from "@ant-design/icons";
+import { Dropdown } from 'antd';
 import styles from './Header.module.css';
 
-const Header = ({ brands }) => {
+const Header = ({ brands, user, onLogout }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -38,6 +40,21 @@ const Header = ({ brands }) => {
     }))
   ];
 
+  const userMenuItems = [
+    {
+      key: 'profile',
+      label: <Link to="/profile">Profile</Link>,
+    },
+    {
+      key: 'logout',
+      label: (
+        <span onClick={onLogout}>
+          <LogoutOutlined /> Logout
+        </span>
+      ),
+    },
+  ];
+
   return (
     <header className={styles.header}>
       <Row justify="space-between" align="middle" className={styles.topRow}>
@@ -66,10 +83,21 @@ const Header = ({ brands }) => {
           </AutoComplete>
         </Col>
         <Col span={4} className={styles.userCol}>
-          <Button type="link" className={styles.iconTextButton}>
-            <UserOutlined className={styles.icon} />
-            <span>Đăng nhập</span>
-          </Button>
+          {user ? (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Button type="link" className={styles.iconTextButton}>
+                <Avatar src={user.image} alt={user.firstName} />
+                <span>{`${user.firstName} ${user.lastName}`}</span>
+              </Button>
+            </Dropdown>
+          ) : (
+            <Link to="/api/auth">
+              <Button type="link" className={styles.iconTextButton}>
+                <UserOutlined className={styles.icon} />
+                <span>Đăng nhập</span>
+              </Button>
+            </Link>
+          )}
         </Col>
         <Col span={4} className={styles.cartCol}>
           <Button type="link" className={styles.iconTextButton}>

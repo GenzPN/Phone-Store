@@ -1,0 +1,100 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "iPhone 16 Pro Max",
+      "description": "Apple's latest flagship phone with the most advanced features and stunning design.",
+      "category": "smartphones",
+      "price": 34990000,
+      "discountPercentage": 0,
+      "rating": 4.8,
+      "stock": 100,
+      "tags": [
+        "smartphones",
+        "Apple"
+      ],
+      "brand": "Apple",
+      "sku": "IP16PMAX",
+      "weight": 240,
+      "dimensions": {
+        "width": 7.81,
+        "height": 16.09,
+        "depth": 0.78
+      },
+      "warrantyInformation": "1 year warranty",
+      "shippingInformation": "Ships in 1-2 business days",
+      "availabilityStatus": "In Stock",
+      "reviews": [
+        {
+          "rating": 5,
+          "comment": "Incredible performance!",
+          "date": "2024-06-10T08:56:21.625Z",
+          "reviewerName": "John Doe",
+          "reviewerEmail": "john.doe@example.com"
+        }
+      ],
+      "returnPolicy": "30-day return policy",
+      "minimumOrderQuantity": 1,
+      "meta": {
+        "createdAt": "2024-06-10T08:56:21.625Z",
+        "updatedAt": "2024-06-10T08:56:21.625Z",
+        "barcode": "123456789012",
+        "qrCode": "https://assets.example.com/public/qr-code.png"
+      },
+      "images": [
+        "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-16-pro-max.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-16-pro-max-thumbnail.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Samsung Galaxy S24 Ultra",
+      "description": "The new Samsung Galaxy S24 Ultra brings a massive screen, incredible battery life, and top-tier cameras.",
+      "category": "smartphones",
+      "price": 32990000,
+      "discountPercentage": 0,
+      "rating": 4.6,
+      "stock": 85,
+      "tags": [
+        "smartphones",
+        "Samsung"
+      ],
+      "brand": "Samsung",
+      "sku": "SGS24U",
+      "weight": 228,
+      "dimensions": {
+        "width": 7.62,
+        "height": 16.52,
+        "depth": 0.88
+      },
+      "warrantyInformation": "1 year warranty",
+      "shippingInformation": "Ships in 1-2 business days",
+      "availabilityStatus": "In Stock",
+      "reviews": [
+        {
+          "rating": 4,
+          "comment": "Great display and battery!",
+          "date": "2024-06-15T08:56:21.625Z",
+          "reviewerName": "Jane Smith",
+          "reviewerEmail": "jane.smith@example.com"
+        }
+      ],
+      "returnPolicy": "30-day return policy",
+      "minimumOrderQuantity": 1,
+      "meta": {
+        "createdAt": "2024-06-15T08:56:21.625Z",
+        "updatedAt": "2024-06-15T08:56:21.625Z",
+        "barcode": "987654321098",
+        "qrCode": "https://assets.example.com/public/qr-code.png"
+      },
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-0.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-1.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-2.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-3.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-4.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-0.jpg"
+    }
+  ]
+}
