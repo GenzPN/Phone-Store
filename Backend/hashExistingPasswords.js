@@ -12,12 +12,12 @@ async function hashExistingPasswords() {
   });
 
   try {
-    const [rows] = await connection.execute('SELECT id, password FROM Users');
+    const [rows] = await connection.execute('SELECT id, password FROM Users WHERE password_hashed = 0');
     for (const user of rows) {
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      await connection.execute('UPDATE Users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
+      await connection.execute('UPDATE Users SET password = ?, password_hashed = 1 WHERE id = ?', [hashedPassword, user.id]);
     }
-    console.log('All passwords have been hashed successfully.');
+    console.log('All unhashed passwords have been hashed successfully.');
   } catch (error) {
     console.error('Error hashing passwords:', error);
   } finally {
@@ -25,4 +25,5 @@ async function hashExistingPasswords() {
   }
 }
 
-hashExistingPasswords();
+// Export the function so it can be used in other files
+module.exports = hashExistingPasswords;

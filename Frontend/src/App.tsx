@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
+import { CartProvider } from './contexts/CartContext';
 import Home from './components/Home/Home';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
@@ -95,40 +96,58 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/api/payment/*" element={user ? <Payment /> : <Navigate to="/api/auth" state={{ from: '/api/payment' }} />} />
-        <Route path="/api/auth/*" element={!user ? <Auth onLogin={handleLogin} /> : <Navigate to="/" />} />
-        <Route path="*" element={
-          <Layout>
-            <Header brands={brands} user={user} onLogout={handleLogout} />
-            <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/brand/:brandName" element={<BrandPage />} />
-                <Route path="/details/:productName" element={<Details />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/checkout" element={<Checkout />} />
-                <Route path="/products/checkout/address" element={user ? <Address userId={user.id} /> : <Navigate to="/api/auth" state={{ from: '/products/checkout/address' }} />} />
-                <Route path="/test" element={<Test />} />
-                <Route 
-                  path="/profile" 
-                  element={
-                    loading ? (
-                      <div>Loading...</div>
-                    ) : user ? (
-                      <Profile user={user} />
-                    ) : (
-                      <Navigate to="/api/auth" state={{ from: '/profile' }} />
-                    )
-                  } 
-                />
-              </Routes>
-            </Content>
-            <Footer />
-          </Layout>
-        } />
-      </Routes>
+      <CartProvider>
+        <Routes>
+          <Route path="/api/payment/*" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/api/payment' }} />} />
+          <Route 
+            path="/api/auth/*" 
+            element={
+              !user ? (
+                <Routes>
+                  <Route path="login" element={<Auth onLogin={handleLogin} />} />
+                  <Route path="register" element={<Auth onLogin={handleLogin} />} />
+                  <Route path="" element={<Navigate to="/api/auth/login" />} />
+                </Routes>
+              ) : (
+                <Navigate to="/" />
+              )
+            } 
+          />
+          <Route path="*" element={
+            <Layout>
+              <Header brands={brands} user={user} onLogout={handleLogout} />
+              <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/brand/:brandName" element={<BrandPage />} />
+                  <Route path="/details/:productName" element={<Details />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/checkout" element={<Checkout />} />
+                  <Route 
+                    path="/products/checkout/address" 
+                    element={user ? <Address userId={user.id} /> : <Navigate to="/api/auth/login" state={{ from: '/products/checkout/address' }} />} 
+                  />
+                  <Route path="/test" element={<Test />} />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      loading ? (
+                        <div>Loading...</div>
+                      ) : user ? (
+                        <Profile user={user} />
+                      ) : (
+                        <Navigate to="/api/auth/login" state={{ from: '/profile' }} />
+                      )
+                    } 
+                  />
+                </Routes>
+              </Content>
+              <Footer />
+            </Layout>
+          } />
+        </Routes>
+      </CartProvider>
     </Router>
   );
 };

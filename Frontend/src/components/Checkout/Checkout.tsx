@@ -1,39 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Col, Row, Typography, Table, Radio, Button, message, Space } from 'antd';
+import React, { useState } from 'react';
+import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Input, Form, Select } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { getToken } from '../../utils/tokenStorage';
+import { useCart, CartItem } from '../../contexts/CartContext';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title } = Typography;
+const { Option } = Select;
 
-interface CartItem {
-  id: number;
-  image: string;
-  name: string;
-  quantity: number;
-  price: number;
+interface AddressData {
+  fullName: string;
+  phone: string;
+  address: string;
+  addressType: string;
+  companyName?: string;
+  note?: string;
 }
 
 const Checkout: React.FC = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const { cartItems, total, fetchCartItems } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [addressType, setAddressType] = useState<string>('home');
+  const [form] = Form.useForm();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Fetch cart items from cart.json
-    fetch('/cart.json')
-      .then(response => response.json())
-      .then(data => {
-        setCartItems(data);
-        
-        // Calculate total
-        const calculatedTotal = data.reduce((acc: number, item: CartItem) => {
-          return acc + (item.price * item.quantity);
-        }, 0);
-        setTotal(calculatedTotal);
-      })
-      .catch(error => console.error('Error fetching cart data:', error));
-  }, []);
 
   const columns = [
     {
@@ -71,42 +60,57 @@ const Checkout: React.FC = () => {
     setPaymentMethod(e.target.value);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!paymentMethod) {
       message.error('Vui lòng chọn phương thức thanh toán');
       return;
     }
 
-    switch (paymentMethod) {
-      case 'momo':
-        // Xử lý thanh toán MoMo
-        message.info('Đang chuyển hướng đến thanh toán MoMo...');
-        // Thêm logic chuyển hướng đến MoMo ở đây
-        break;
-      case 'bank':
-        // Xử lý thanh toán ngân hàng
-        fetch(`/api/payment/${cartItems[0].id}`)
-          .then(response => response.json())
-          .then(data => {
-            // Xử lý dữ liệu trả về từ API
-            console.log('Payment data:', data);
-            // Chuyển hướng đến trang thanh toán ngân hàng hoặc hiển thị thông tin thanh toán
-            // window.location.href = data.paymentUrl; // Ví dụ
-          })
-          .catch(error => console.error('Error fetching payment data:', error));
-        break;
-      case 'cod':
-        // Xử lý thanh toán tiền mặt khi nhận hàng
-        message.success('Đơn hàng đã được đặt thành công. Bạn sẽ thanh toán khi nhận hàng.');
-        // Thêm logic xử lý đơn hàng COD ở đây
-        break;
-      default:
-        message.error('Phương thức thanh toán không hợp lệ');
+    try {
+      const addressData = await form.validateFields();
+      const orderData = {
+        items: cartItems,
+        total,
+        paymentMethod,
+        address: addressData,
+      };
+
+      const token = getToken();
+      const response = await fetch('http://localhost:5000/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        message.success('Đơn hàng đã được đặt thành công.');
+        // Clear the cart after successful order
+        await fetchCartItems();
+        navigate('/order-confirmation', { state: { orderId: result.orderId } });
+      } else {
+        message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('Error during payment:', error);
+      message.error('Có lỗi xảy ra. Vui lòng thử lại.');
     }
   };
 
   const handleBackToCart = () => {
-    navigate('/cart'); // Điều hướng về trang giỏ hàng
+    navigate('/cart');
+  };
+
+  const handleAddressTypeChange = (value: string) => {
+    setAddressType(value);
+    form.setFieldsValue({ addressType: value });
   };
 
   return (
@@ -116,6 +120,39 @@ const Checkout: React.FC = () => {
         <Col span={16}>
           <Card title="Giỏ hàng">
             <Table dataSource={cartItems} columns={columns} pagination={false} />
+          </Card>
+          <Card title="Địa chỉ giao hàng" style={{ marginTop: '20px' }}>
+            <Form form={form} layout="vertical" initialValues={{ addressType: 'home' }}>
+              <Form.Item name="addressType" label="Loại địa chỉ">
+                <Select style={{ width: 120 }} onChange={handleAddressTypeChange}>
+                  <Option value="home">Nhà riêng</Option>
+                  <Option value="company">Công ty</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}>
+                <Input placeholder="Nhập họ và tên" />
+              </Form.Item>
+              <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
+                <Input placeholder="Nhập số điện thoại" />
+              </Form.Item>
+              {addressType === 'company' && (
+                <Form.Item name="companyName" label="Tên công ty" rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}>
+                  <Input placeholder="Nhập tên công ty" />
+                </Form.Item>
+              )}
+              <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
+                <Input.TextArea 
+                  placeholder={addressType === 'home' ? "Nhập địa chỉ nhà" : "Nhập địa chỉ công ty"} 
+                  rows={4} 
+                />
+              </Form.Item>
+              <Form.Item name="note" label="Ghi chú">
+                <Input.TextArea 
+                  placeholder="Nhập ghi chú cho đơn hàng (nếu có)" 
+                  rows={3} 
+                />
+              </Form.Item>
+            </Form>
           </Card>
         </Col>
         <Col span={8}>

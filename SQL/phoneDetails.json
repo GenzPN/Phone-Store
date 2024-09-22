@@ -25,6 +25,306 @@
     },
     {
       "id": 2,
+      "title": "iPhone 15 Pro Max",
+      "description": "Apple's previous flagship with excellent performance.",
+      "category": "Điện thoại",
+      "price": 34990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP15PMAX",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-15-pro-max-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-15-pro-max-1.jpg"
+    },
+    {
+      "id": 3,
+      "title": "iPhone 15",
+      "description": "A powerful phone with great features.",
+      "category": "Điện thoại",
+      "price": 25990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP15",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-15-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-15-1.jpg"
+    },
+    {
+      "id": 4,
+      "title": "iPhone 14 Pro",
+      "description": "An advanced model with cutting-edge technology.",
+      "category": "Điện thoại",
+      "price": 30990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP14PRO",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-14-pro-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-14-pro-1.jpg"
+    },
+    {
+      "id": 5,
+      "title": "iPhone 14",
+      "description": "A reliable phone with excellent features.",
+      "category": "Điện thoại",
+      "price": 22990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP14",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-14-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-14-1.jpg"
+    },
+    {
+      "id": 6,
+      "title": "iPhone SE (2022)",
+      "description": "A budget-friendly option with great performance.",
+      "category": "Điện thoại",
+      "price": 14990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IPSE22",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-se-2022-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-se-2022-1.jpg"
+    },
+    {
+      "id": 7,
+      "title": "iPhone 13 Pro",
+      "description": "A powerful device with advanced features.",
+      "category": "Điện thoại",
+      "price": 25490000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP13PRO",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-13-pro-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-13-pro-1.jpg"
+    },
+    {
+      "id": 8,
+      "title": "iPhone 13",
+      "description": "An excellent choice for everyday use.",
+      "category": "Điện thoại",
+      "price": 19990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP13",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-13-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-13-1.jpg"
+    },
+    {
+      "id": 9,
+      "title": "iPhone 12 Pro",
+      "description": "A premium smartphone with a stunning display.",
+      "category": "Điện thoại",
+      "price": 20990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP12PRO",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-12-pro-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-12-pro-1.jpg"
+    },
+    {
+      "id": 10,
+      "title": "iPhone 12",
+      "description": "An affordable model with great features.",
+      "category": "Điện thoại",
+      "price": 16490000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP12",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-12-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-12-1.jpg"
+    },
+    {
+      "id": 11,
+      "title": "iPhone 11",
+      "description": "A reliable smartphone with great performance.",
+      "category": "Điện thoại",
+      "price": 14990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP11",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-11-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-11-1.jpg"
+    },
+    {
+      "id": 12,
+      "title": "Samsung Galaxy S23 Ultra",
+      "description": "The flagship of Samsung with top-notch features.",
+      "category": "Điện thoại",
+      "price": 31990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Samsung",
+      "sku": "SGS23U",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s23-ultra-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s23-ultra-1.jpg"
+    },
+    {
+      "id": 13,
+      "title": "Samsung Galaxy S23",
+      "description": "A powerful device for everyday use.",
+      "category": "Điện thoại",
+      "price": 24990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Samsung",
+      "sku": "SGS23",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s23-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s23-1.jpg"
+    },
+    {
+      "id": 14,
+      "title": "Samsung Galaxy Z Fold5",
+      "description": "A premium folding smartphone with unique features.",
+      "category": "Điện thoại",
+      "price": 43990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Samsung",
+      "sku": "SGZ5",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-z-fold5-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-z-fold5-1.jpg"
+    },
+    {
+      "id": 15,
+      "title": "Samsung Galaxy A54",
+      "description": "A budget-friendly option with solid performance.",
+      "category": "Điện thoại",
+      "price": 10990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Samsung",
+      "sku": "SGA54",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-a54-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-a54-1.jpg"
+    },
+    {
+      "id": 16,
+      "title": "Samsung Galaxy A34",
+      "description": "An excellent mid-range device.",
+      "category": "Điện thoại",
+      "price": 8990000,
+      "discountPercentage": 0,
+      "stock": 100,
+      "brand": "Samsung",
+      "sku": "SGA34",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-a34-1.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-a34-1.jpg"
+    },
+    {
+      "id": 17,
       "title": "Samsung Galaxy S24 Ultra",
       "description": "Samsung S24 Ultra là siêu phẩm smartphone đỉnh cao mở đầu năm 2024 đến từ nhà Samsung với chip Snapdragon 8 Gen 3",
       "category": "Điện thoại",

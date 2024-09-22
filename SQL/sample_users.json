@@ -3,21 +3,28 @@
     {
       "username": "admin",
       "email": "admin@phonestore.com",
-      "password": "admin123",
-      "firstName": "Admin",
-      "lastName": "User",
+      "password": "12345678",
+      "fullName": "Admin User",
       "gender": "other",
       "image": "https://example.com/admin_avatar.jpg",
       "isAdmin": true
     },
     {
-      "username": "emilys",
+      "username": "johndoe",
       "email": "john.doe@example.com",
-      "password": "emilyspass",
-      "firstName": "John",
-      "lastName": "Doe",
+      "password": "johndoepass",
+      "fullName": "John Doe",
       "gender": "male",
       "image": "https://example.com/john_avatar.jpg",
+      "isAdmin": false
+    },
+    {
+      "username": "janesmith",
+      "email": "jane.smith@example.com",
+      "password": "janepass",
+      "fullName": "Jane Smith",
+      "gender": "female",
+      "image": "https://example.com/jane_avatar.jpg",
       "isAdmin": false
     }
   ]

@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select } from 'antd';
+import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, message } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
+import { useCart, CartItem } from '../../contexts/CartContext';
 
 const { Meta } = Card;
 const { Title } = Typography;
 const { Option } = Select;
 
 interface Phone {
+  id: number;  // Thêm trường id
   name: string;
-  price: string;
+  price: number;  // Đã thay đổi từ string sang number
   img: string;
   brand: string;
 }
 
 const Products: React.FC = () => {
+  const { cartItems, setCartItems } = useCart();
   const [phones, setPhones] = useState<Phone[]>([]);
   const [filteredPhones, setFilteredPhones] = useState<Phone[]>([]);
   const [priceFilter, setPriceFilter] = useState('all');
@@ -33,7 +36,7 @@ const Products: React.FC = () => {
     // Price filtering
     if (priceFilter !== 'all') {
       filtered = filtered.filter(phone => {
-        const price = parseInt(phone.price.replace(/[^\d]/g, ''), 10) / 1000000;
+        const price = phone.price / 1000000;  // Giả sử giá được lưu trữ trong đơn vị đồng
         switch (priceFilter) {
           case 'under5':
             return price < 5;
@@ -51,7 +54,7 @@ const Products: React.FC = () => {
       });
     } else {
       filtered = filtered.filter(phone => {
-        const price = parseInt(phone.price.replace(/[^\d]/g, ''), 10) / 1000000;
+        const price = phone.price / 1000000;
         return price >= priceRange[0] && price <= priceRange[1];
       });
     }
@@ -59,14 +62,12 @@ const Products: React.FC = () => {
     // Sorting
     if (sortOrder) {
       filtered.sort((a, b) => {
-        const priceA = parseInt(a.price.replace(/[^\d]/g, ''), 10);
-        const priceB = parseInt(b.price.replace(/[^\d]/g, ''), 10);
-        return sortOrder === 'asc' ? priceA - priceB : priceB - priceA;
+        return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
       });
     }
 
     setFilteredPhones(filtered);
-  }, [phones, priceFilter, priceRange, sortOrder, brandFilter]);
+  }, [phones, brandFilter, priceFilter, priceRange, sortOrder]);
 
   useEffect(() => {
     fetch('/phoneData.json')
@@ -101,6 +102,20 @@ const Products: React.FC = () => {
 
   const handleBrandFilterChange = (checkedValues: string[]) => {
     setBrandFilter(checkedValues);
+  };
+
+  const addToCart = (phone: Phone) => {
+    const existingItem = cartItems.find(item => item.id === phone.id);
+    if (existingItem) {
+      setCartItems(prevItems =>
+        prevItems.map(item =>
+          item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
+        )
+      );
+    } else {
+      setCartItems(prevItems => [...prevItems, { ...phone, image: phone.img, quantity: 1 }]);
+    }
+    message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
   };
 
   return (
@@ -205,10 +220,15 @@ const Products: React.FC = () => {
                   <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                     <Meta 
                       title={phone.name} 
-                      description={`${phone.brand || 'Unknown Brand'} - ${phone.price}`} 
+                      description={`${phone.brand || 'Unknown Brand'} - ${phone.price.toLocaleString()} đ`} 
                     />
-                    <Button type="primary" icon={<ShoppingCartOutlined />} style={{ width: '100%' }}>
-                      Mua ngay
+                    <Button 
+                      type="primary" 
+                      icon={<ShoppingCartOutlined />} 
+                      style={{ width: '100%' }}
+                      onClick={() => addToCart(phone)}
+                    >
+                      Thêm vào giỏ hàng
                     </Button>
                   </Space>
                 </Card>

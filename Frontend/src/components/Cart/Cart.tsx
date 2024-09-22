@@ -1,51 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Table, Image, Typography, Space, Button, InputNumber, Popconfirm, Row, Col, message } from 'antd';
-import { ShoppingCartOutlined, ShoppingOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined, ShoppingOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useCart, CartItem } from '../../contexts/CartContext';
 
 const { Title, Text } = Typography;
-
-interface CartItem {
-  id: number;
-  image: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
 
 const MAX_PRODUCTS = 10;
 
 const Cart: React.FC = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCartData = async () => {
-      try {
-        const response = await fetch('/cart.json');
-        if (!response.ok) {
-          throw new Error('Không thể tải dữ liệu giỏ hàng');
-        }
-        const data: CartItem[] = await response.json();
-        setCartItems(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCartData();
-  }, []);
-
-  const calculateTotal = (item: CartItem) => {
-    return item.quantity * item.price;
-  };
-
-  const calculateCartTotal = () => {
-    return cartItems.reduce((total, item) => total + calculateTotal(item), 0);
-  };
+  const { cartItems, setCartItems, total } = useCart();
 
   const handleQuantityChange = (id: number, newQuantity: number | null) => {
     if (newQuantity === null) return;
@@ -72,13 +36,13 @@ const Cart: React.FC = () => {
   const columns = [
     {
       title: 'Sản phẩm',
-      dataIndex: 'image',
-      key: 'image',
-      render: (image: string, record: CartItem) => (
-        <Space>
-          <Image src={image} alt={record.name} width={50} />
-          <Text>{record.name}</Text>
-        </Space>
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: CartItem) => (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src={record.image} alt={text} style={{ width: 50, marginRight: 10 }} />
+          {text}
+        </div>
       ),
     },
     {
@@ -103,7 +67,7 @@ const Cart: React.FC = () => {
     {
       title: 'Tổng',
       key: 'total',
-      render: (record: CartItem) => `${calculateTotal(record).toLocaleString()} đ`,
+      render: (record: CartItem) => `${(record.price * record.quantity).toLocaleString()} đ`,
     },
     {
       title: 'Thao tác',
@@ -120,9 +84,6 @@ const Cart: React.FC = () => {
       ),
     },
   ];
-
-  if (isLoading) return <div>Đang tải...</div>;
-  if (error) return <div>Lỗi: {error}</div>;
 
   const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -144,7 +105,7 @@ const Cart: React.FC = () => {
           rowKey="id"
         />
         <div style={{ textAlign: 'right' }}>
-          <Text strong style={{ fontSize: '18px' }}>Tổng cộng: {calculateCartTotal().toLocaleString()} đ</Text>
+          <Text strong style={{ fontSize: '18px' }}>Tổng cộng: {total.toLocaleString()} đ</Text>
         </div>
         <Row justify="space-between" align="middle">
           <Col>
@@ -154,7 +115,7 @@ const Cart: React.FC = () => {
           </Col>
           <Col>
             <Button type="primary">
-              <Link to="/checkout">Thanh toán</Link>
+              <Link to="/products/checkout/">Thanh toán</Link>
             </Button>
           </Col>
         </Row>

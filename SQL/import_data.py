@@ -1,6 +1,7 @@
 import json
 import mysql.connector
 from mysql.connector import Error
+import pkg_resources
 
 def create_connection():
     try:
@@ -50,26 +51,13 @@ def insert_product_reviews(connection, product_id, reviews):
     try:
         cursor = connection.cursor()
         for review in reviews:
-            # Trước tiên, tìm user_id dựa trên username
-            user_query = "SELECT id FROM Users WHERE username = %s"
-            cursor.execute(user_query, (review['user'],))
-            user_result = cursor.fetchone()
-            
-            if user_result:
-                user_id = user_result[0]
-            else:
-                # Nếu không tìm thấy user, tạo một user mới
-                insert_user_query = "INSERT INTO Users (username, email, password) VALUES (%s, %s, %s)"
-                cursor.execute(insert_user_query, (review['user'], f"{review['user']}@example.com", "defaultpassword"))
-                connection.commit()
-                user_id = cursor.lastrowid
-
             query = """INSERT INTO ProductReviews 
                        (product_id, user_id, rating, comment) 
                        VALUES (%s, %s, %s, %s)"""
-            values = (product_id, user_id, review['rating'], review['comment'])
+            values = (product_id, review['user_id'], review['rating'], review['comment'])
             cursor.execute(query, values)
         connection.commit()
+        print(f"Inserted {len(reviews)} reviews for product ID: {product_id}")
     except Error as e:
         print(f"Error inserting product reviews: {e}")
         connection.rollback()
@@ -78,11 +66,11 @@ def insert_user(connection, user):
     try:
         cursor = connection.cursor()
         query = """INSERT INTO Users 
-                   (username, email, password, firstName, lastName, gender, image, isAdmin) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                   (username, email, password, fullName, gender, image, isAdmin) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
         values = (user['username'], user['email'], user['password'],
-                  user.get('firstName'), user.get('lastName'), user.get('gender'),
-                  user.get('image'), user.get('isAdmin', False))
+                  user['fullName'], user.get('gender'), user.get('image'),
+                  user.get('isAdmin', False))
         cursor.execute(query, values)
         connection.commit()
         return cursor.lastrowid
@@ -91,7 +79,35 @@ def insert_user(connection, user):
         connection.rollback()
         return None
 
+def create_requirements_file():
+    try:
+        installed_packages = pkg_resources.working_set
+        installed_packages_list = sorted([f"{i.key}=={i.version}" for i in installed_packages])
+        
+        with open('requirements.txt', 'w') as f:
+            for package in installed_packages_list:
+                f.write(f"{package}\n")
+        print("requirements.txt file created successfully.")
+    except Exception as e:
+        print(f"Error creating requirements.txt: {e}")
+
+def insert_product_ratings(connection, product_id, ratings):
+    try:
+        cursor = connection.cursor()
+        for rating in ratings:
+            query = """INSERT INTO ProductRatings 
+                       (product_id, name, rating, comment) 
+                       VALUES (%s, %s, %s, %s)"""
+            values = (product_id, rating['name'], rating['rating'], rating['comment'])
+            cursor.execute(query, values)
+        connection.commit()
+    except Error as e:
+        print(f"Error inserting product ratings: {e}")
+        connection.rollback()
+
 def main():
+    create_requirements_file()
+
     connection = create_connection()
     if connection is None:
         return
@@ -116,7 +132,6 @@ def main():
     with open('productDetails.json', 'r', encoding='utf-8') as file:
         product_details = json.load(file)
         for product_name, details in product_details.items():
-            # Tìm product_id dựa trên tên sản phẩm
             cursor = connection.cursor()
             cursor.execute("SELECT id FROM Products WHERE title = %s", (product_name,))
             result = cursor.fetchone()
@@ -125,11 +140,10 @@ def main():
                 insert_product_details(connection, product_id, details)
                 print(f"Inserted details for product: {product_name}")
 
-    # Đọc và xử lý dữ liệu từ productReviews.json
+    # Thay đổi tên file từ 'productRatings.json' thành 'productReviews.json'
     with open('productReviews.json', 'r', encoding='utf-8') as file:
         product_reviews = json.load(file)
         for product_name, reviews in product_reviews.items():
-            # Tìm product_id dựa trên tên sản phẩm
             cursor = connection.cursor()
             cursor.execute("SELECT id FROM Products WHERE title = %s", (product_name,))
             result = cursor.fetchone()

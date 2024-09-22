@@ -1,7 +1,7 @@
-import React from 'react';
-import { Form, Input, Button, Checkbox, message, Tabs } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Checkbox, message, Tabs, Radio } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, CloseOutlined } from '@ant-design/icons';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Auth.css';
 
 const { TabPane } = Tabs;
@@ -13,6 +13,17 @@ interface AuthProps {
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeKey, setActiveKey] = useState('login');
+
+  useEffect(() => {
+    // Set active key based on the current path
+    if (location.pathname === '/api/auth/register') {
+      setActiveKey('register');
+    } else {
+      setActiveKey('login');
+    }
+  }, [location.pathname]);
 
   const onFinishLogin = async (values: { username: string; password: string }) => {
     const { username, password } = values;
@@ -46,6 +57,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     phone: string;
     username: string;
     password: string;
+    gender: string;
   }) => {
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
@@ -57,6 +69,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (response.ok) {
         message.success('Đăng ký thành công');
         form.setFieldsValue({ username: values.username, password: '' });
+        setActiveKey('login'); // Chuyển sang tab đăng nhập
       } else {
         const data = await response.json();
         message.error(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
@@ -67,12 +80,32 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }
   };
 
+  const handleTabChange = (key: string) => {
+    setActiveKey(key);
+    navigate(key === 'login' ? '/api/auth/login' : '/api/auth/register');
+  };
+
+  const handleClose = () => {
+    const { state } = location;
+    if (state && state.from) {
+      navigate(state.from);
+    } else {
+      navigate('/'); // Điều hướng về trang chủ nếu không có trang trước đó
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-image"></div>
         <div className="auth-form-container">
-          <Tabs defaultActiveKey="login">
+          <Button 
+            icon={<CloseOutlined />} 
+            onClick={handleClose}
+            className="close-button"
+            type="text"
+          />
+          <Tabs activeKey={activeKey} onChange={handleTabChange}>
             <TabPane tab="Đăng Nhập" key="login">
               <Form
                 name="normal_login"
@@ -138,6 +171,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   ]}
                 >
                   <Input prefix={<PhoneOutlined className="site-form-item-icon" />} placeholder="Số điện thoại" />
+                </Form.Item>
+                <Form.Item
+                  name="gender"
+                  rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                >
+                  <Radio.Group>
+                    <Radio value="male">Nam</Radio>
+                    <Radio value="female">Nữ</Radio>
+                    <Radio value="other">Khác</Radio>
+                  </Radio.Group>
                 </Form.Item>
                 <Form.Item
                   name="username"

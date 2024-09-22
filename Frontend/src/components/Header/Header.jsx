@@ -91,8 +91,8 @@ const Header = ({ brands, user, onLogout }) => {
           {user ? (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Button type="link" className={styles.iconTextButton}>
-                <Avatar src={user.image} alt={user.firstName} />
-                <span>{`${user.firstName} ${user.lastName}`}</span>
+                <Avatar src={user.image} alt={user.fullName || user.username} />
+                <span>{user.fullName || user.username}</span>
               </Button>
             </Dropdown>
           ) : (
