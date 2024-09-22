@@ -150,24 +150,13 @@ function Payment() {
   const {
     linkQR,
     amount, 
-    notify_url,
     trade_no,
     return_url,
     order_id,
     STK,
     CTK,
     KEYWORD,
-    BANKID,
-    LOGO_DVS,
-    URL_ZALO,
-    THOI_GIAN,
     URL_TELEGRAM,
-    URL_WEB,
-    directoryPath,
-    price,
-    status,
-    time,
-    tradeNo,
   } = paymentInfo || {};
 
   const copyToClipboard = (text: string) => {

@@ -9,7 +9,11 @@ import Payment from './components/Payment/Payment';
 import Auth from './components/Auth/Auth';
 import Profile from './components/Profile/Profile';
 import Details from './components/Details/Details'; // Import Details component
-import { getToken, setToken, removeToken } from './utils/tokenStorage';
+import Cart from './components/Cart/Cart';
+import Products from './components/Products/Products';
+import Checkout from './components/Checkout/Checkout';
+
+import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
 const { Content } = Layout;
 
@@ -30,7 +34,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const accessToken = getToken();
+      const accessToken = getToken() || getCookie('accessToken');
+      console.log('Access token:', accessToken); // Log the access token
+
       if (accessToken) {
         try {
           const response = await fetch('https://dummyjson.com/auth/me', {
@@ -39,38 +45,46 @@ const App: React.FC = () => {
               'Authorization': `Bearer ${accessToken}`,
             },
           });
+          console.log('Response status:', response.status); // Log the response status
+
           if (response.ok) {
             const userData = await response.json();
+            console.log('User data:', userData); // Log the user data
             setUser(userData);
+            setToken(accessToken);
+            setCookie('accessToken', accessToken, 7);
           } else {
-            // If the token is invalid, clear it and the user data
+            console.log('Invalid token, clearing data');
             removeToken();
+            removeCookie('accessToken');
             setUser(null);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
-          // Clear token and user data on error
           removeToken();
+          removeCookie('accessToken');
           setUser(null);
         }
       } else {
-        // If no token, ensure user is null
+        console.log('No access token found');
         setUser(null);
       }
       setLoading(false);
     };
 
     fetchCurrentUser();
-  }, []);
+  }, []); // Empty dependency array
 
   const handleLogin = (userData: UserData, accessToken: string) => {
     setUser(userData);
     setToken(accessToken);
+    setCookie('accessToken', accessToken, 7); // Store for 7 days
   };
 
   const handleLogout = () => {
     setUser(null);
     removeToken();
+    removeCookie('accessToken');
   };
 
   if (loading) {
@@ -89,8 +103,12 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/brand/:brandName" element={<BrandPage />} />
-                <Route path="/details/:productName" element={<Details />} /> {/* New route for product details */}
+                <Route path="/details/:productName" element={<Details />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/checkout" element={<Checkout />} />
                 <Route 
+
                   path="/profile" 
                   element={
                     loading ? (

@@ -100,10 +100,12 @@ const Header = ({ brands, user, onLogout }) => {
           )}
         </Col>
         <Col span={4} className={styles.cartCol}>
-          <Button type="link" className={styles.iconTextButton}>
-            <ShoppingOutlined className={styles.icon} />
-            <span>Sản phẩm</span>
-          </Button>
+          <Link to="/cart">
+            <Button type="link" className={styles.iconTextButton}>
+              <ShoppingOutlined className={styles.icon} />
+              <span>Giỏ hàng</span>
+            </Button>
+          </Link>
         </Col>
       </Row>
       <Row justify="center" className={styles.brandRow}>

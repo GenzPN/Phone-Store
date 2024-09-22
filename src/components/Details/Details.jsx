@@ -1,43 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Col, Row, Typography, Button, Image, Spin, message, Rate, Descriptions, Tag } from 'antd';
+import { Card, Col, Row, Typography, Button, Image, Spin, message, Rate, Descriptions, Collapse, Empty } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { unformatProductNameFromUrl } from '../../utils/stringUtils';
 import './Details.css';
 
 const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;
 
 const Details = () => {
   const { productName } = useParams();
   const [product, setProduct] = useState(null);
+  const [productDetails, setProductDetails] = useState(null);
+  const [productReviews, setProductReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState('');
 
+  const averageRating = useMemo(() => {
+    if (!productReviews || productReviews.length === 0) return 0;
+    const sum = productReviews.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / productReviews.length).toFixed(1);
+  }, [productReviews]);
+
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductData = async () => {
       try {
-        const response = await fetch('/phoneDetails.json');
-        if (!response.ok) {
-          throw new Error('Failed to fetch product details');
+        const [productResponse, detailsResponse, reviewsResponse] = await Promise.all([
+          fetch('/phoneDetails.json'),
+          fetch('/productDetails.json'),
+          fetch('/productReviews.json')
+        ]);
+
+        if (!productResponse.ok || !detailsResponse.ok || !reviewsResponse.ok) {
+          throw new Error('Failed to fetch product data');
         }
-        const data = await response.json();
+
+        const productData = await productResponse.json();
+        const detailsData = await detailsResponse.json();
+        const reviewsData = await reviewsResponse.json();
+
         const unformattedProductName = unformatProductNameFromUrl(productName || '');
-        const foundProduct = data.products.find((p) => p.title.toLowerCase() === unformattedProductName.toLowerCase());
+        const foundProduct = productData.products.find((p) => p.title.toLowerCase() === unformattedProductName.toLowerCase());
+
         if (foundProduct) {
           setProduct(foundProduct);
           setMainImage(foundProduct.images[0]);
+          setProductDetails(detailsData[foundProduct.title]);
+          setProductReviews(reviewsData[foundProduct.title]);
         } else {
           throw new Error('Product not found');
         }
-        setLoading(false);
       } catch (error) {
-        console.error('Error fetching product:', error);
-        message.error('Failed to load product details');
+        console.error('Error fetching product data:', error);
+        message.error('Failed to load product data');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    fetchProductData();
   }, [productName]);
 
   if (loading) {
@@ -54,23 +75,42 @@ const Details = () => {
     <div className="details-container">
       <Row gutter={[24, 24]}>
         <Col span={12}>
-          <Image
-            src={mainImage}
-            alt={product.title}
-            className="main-image"
-          />
-          <Row gutter={[8, 8]} className="thumbnail-container">
-            {product.images.map((image, index) => (
-              <Col span={6} key={index}>
+          <div className="image-gallery">
+            <div className="main-image-container">
+              {mainImage ? (
                 <Image
-                  src={image}
-                  alt={`${product.title} - view ${index + 1}`}
-                  onClick={() => setMainImage(image)}
-                  preview={false}
+                  src={mainImage}
+                  alt={product.title}
+                  className="main-image"
+                  preview={{
+                    mask: 'Click để xem ảnh lớn',
+                  }}
                 />
-              </Col>
-            ))}
-          </Row>
+              ) : (
+                <Empty description="No image available" />
+              )}
+            </div>
+            <div className="thumbnail-container">
+              {product.images && product.images.length > 0 ? (
+                product.images.map((image, index) => (
+                  <div 
+                    key={index} 
+                    className={`thumbnail-wrapper ${image === mainImage ? 'active' : ''}`}
+                    onClick={() => setMainImage(image)}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${product.title} - view ${index + 1}`}
+                      preview={false}
+                      className="thumbnail-image"
+                    />
+                  </div>
+                ))
+              ) : (
+                <Empty description="No thumbnails available" />
+              )}
+            </div>
+          </div>
         </Col>
         <Col span={12}>
           <Card>
@@ -85,10 +125,17 @@ const Details = () => {
               )}
             </Title>
             {product.discountPercentage > 0 && (
-              <Text>Discount: {product.discountPercentage}% off</Text>
+              <Text>Giảm giá: {product.discountPercentage}%</Text>
             )}
             <br />
-            <Rate disabled defaultValue={product.rating} /> <Text>({product.rating})</Text>
+            {productReviews && productReviews.length > 0 ? (
+              <>
+                <Rate disabled allowHalf value={parseFloat(averageRating)} /> 
+                <Text>({averageRating}) - {productReviews.length} đánh giá</Text>
+              </>
+            ) : (
+              <Text>Chưa có đánh giá</Text>
+            )}
             <br />
             <Text>Danh mục: {product.category}</Text>
             <br />
@@ -111,18 +158,46 @@ const Details = () => {
               <Descriptions.Item label="Trả hàng">{product.returnPolicy}</Descriptions.Item>
             </Descriptions>
           </Card>
-          <Card style={{ marginTop: 16 }}>
-            <Title level={4}>Đánh giá</Title>
-            {product.reviews.map((review, index) => (
-              <Card key={index} style={{ marginBottom: 16 }}>
-                <Rate disabled defaultValue={review.rating} />
-                <Paragraph>{review.comment}</Paragraph>
-                <Text type="secondary">Bởi {review.reviewerName} vào {new Date(review.date).toLocaleDateString()}</Text>
-              </Card>
-            ))}
-          </Card>
         </Col>
       </Row>
+
+      {/* Product Details */}
+      <Card style={{ marginTop: 24 }}>
+        <Title level={3}>Thông số kỹ thuật</Title>
+        {productDetails && productDetails.length > 0 ? (
+          <Collapse defaultActiveKey={['0']}>
+            {productDetails.map((category, index) => (
+              <Panel header={category.category} key={index}>
+                <Descriptions column={1} bordered>
+                  {category.items.map((item, itemIndex) => (
+                    <Descriptions.Item key={itemIndex} label={item.label}>
+                      {item.value}
+                    </Descriptions.Item>
+                  ))}
+                </Descriptions>
+              </Panel>
+            ))}
+          </Collapse>
+        ) : (
+          <Empty description="Không có thông tin thông số kỹ thuật" />
+        )}
+      </Card>
+
+      {/* Product Reviews */}
+      <Card style={{ marginTop: 24 }}>
+        <Title level={3}>Đánh giá sản phẩm</Title>
+        {productReviews && productReviews.length > 0 ? (
+          productReviews.map((review) => (
+            <Card key={review.id} style={{ marginBottom: 16 }}>
+              <Rate disabled defaultValue={review.rating} />
+              <Paragraph>{review.comment}</Paragraph>
+              <Text type="secondary">Bởi {review.user}</Text>
+            </Card>
+          ))
+        ) : (
+          <Empty description="Chưa có đánh giá nào cho sản phẩm này" />
+        )}
+      </Card>
     </div>
   );
 };

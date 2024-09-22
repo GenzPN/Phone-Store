@@ -116,7 +116,7 @@ const Home = () => {
     const bestSellerSettings = {
         ...settings,
         autoplay: true,
-        autoplaySpeed: 1000,
+        autoplaySpeed: 3500,
     };
 
     return (

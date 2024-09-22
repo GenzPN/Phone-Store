@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Form, Input, Button, Checkbox, message, Tabs } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -27,8 +27,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       const data = await response.json();
 
       if (response.ok) {
+        console.log('Login successful, data:', data); // Log the login data
         message.success('Đăng nhập thành công');
-        onLogin(data, data.token);
+        onLogin(data, data.token); // Make sure this is being called with the correct data
         navigate('/');
       } else {
         message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
@@ -53,8 +54,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-
-      const data = await response.json();
 
       if (response.ok) {
         message.success('Đăng ký thành công');

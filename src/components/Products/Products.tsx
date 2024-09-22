@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
 import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 
@@ -11,26 +10,27 @@ interface Phone {
   name: string;
   price: string;
   img: string;
+  brand: string;
 }
 
-const BrandPage: React.FC = () => {
-  const { brandName: urlBrandName } = useParams<{ brandName: string }>();
+const Products: React.FC = () => {
   const [phones, setPhones] = useState<Phone[]>([]);
   const [filteredPhones, setFilteredPhones] = useState<Phone[]>([]);
   const [priceFilter, setPriceFilter] = useState('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
-
-  const capitalizeFirstLetter = (string: string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-  };
-
-  const formattedBrandName = urlBrandName ? capitalizeFirstLetter(urlBrandName) : '';
+  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
 
   const filterAndSortPhones = useCallback(() => {
     let filtered = phones;
     
-    // Filtering logic
+    // Brand filtering
+    if (brandFilter.length > 0) {
+      filtered = filtered.filter(phone => brandFilter.includes(phone.brand));
+    }
+
+    // Price filtering
     if (priceFilter !== 'all') {
       filtered = filtered.filter(phone => {
         const price = parseInt(phone.price.replace(/[^\d]/g, ''), 10) / 1000000;
@@ -56,7 +56,7 @@ const BrandPage: React.FC = () => {
       });
     }
 
-    // Sorting logic
+    // Sorting
     if (sortOrder) {
       filtered.sort((a, b) => {
         const priceA = parseInt(a.price.replace(/[^\d]/g, ''), 10);
@@ -66,27 +66,27 @@ const BrandPage: React.FC = () => {
     }
 
     setFilteredPhones(filtered);
-  }, [phones, priceFilter, priceRange, sortOrder]);
+  }, [phones, priceFilter, priceRange, sortOrder, brandFilter]);
 
   useEffect(() => {
-    if (!formattedBrandName) return;
-
-    console.log('Fetching data for brand:', formattedBrandName);
-
     fetch('/phoneData.json')
       .then(response => response.json())
       .then(data => {
-        console.log('Fetched data:', data);
         if (data && data.phonesByBrand) {
-          const brandPhones = data.phonesByBrand[formattedBrandName] || [];
-          console.log('Brand phones:', brandPhones);
-          setPhones(brandPhones);
+          const allPhones = Object.values(data.phonesByBrand).flat() as Phone[];
+          setPhones(allPhones);
+          
+          // Lọc ra các thương hiệu có sản phẩm
+          const brands = Object.keys(data.phonesByBrand).filter(brand => 
+            data.phonesByBrand[brand].length > 0
+          );
+          setAvailableBrands(brands);
         } else {
           console.error('Invalid data structure:', data);
         }
       })
       .catch(error => console.error('Error fetching phone data:', error));
-  }, [formattedBrandName]);
+  }, []);
 
   useEffect(() => {
     filterAndSortPhones();
@@ -99,13 +99,30 @@ const BrandPage: React.FC = () => {
     }
   };
 
+  const handleBrandFilterChange = (checkedValues: string[]) => {
+    setBrandFilter(checkedValues);
+  };
+
   return (
     <div>
-      <Title level={2}>{formattedBrandName}</Title>
+      <Title level={2}>All Products</Title>
       <Row gutter={[24, 24]}>
         <Col span={6}>
           <Card title="Bộ lọc">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div>
+                <Title level={5}>Thương hiệu</Title>
+                <Select
+                  mode="multiple"
+                  style={{ width: '100%' }}
+                  placeholder="Chọn thương hiệu"
+                  onChange={handleBrandFilterChange}
+                >
+                  {availableBrands.map(brand => (
+                    <Option key={brand} value={brand}>{brand}</Option>
+                  ))}
+                </Select>
+              </div>
               <div>
                 <Title level={5}>Khoảng giá</Title>
                 <Radio.Group onChange={(e) => setPriceFilter(e.target.value)} value={priceFilter}>
@@ -186,7 +203,10 @@ const BrandPage: React.FC = () => {
                   }
                 >
                   <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    <Meta title={phone.name} description={phone.price} />
+                    <Meta 
+                      title={phone.name} 
+                      description={`${phone.brand || 'Unknown Brand'} - ${phone.price}`} 
+                    />
                     <Button type="primary" icon={<ShoppingCartOutlined />} style={{ width: '100%' }}>
                       Mua ngay
                     </Button>
@@ -201,4 +221,4 @@ const BrandPage: React.FC = () => {
   );
 };
 
-export default BrandPage;
+export default Products;
