@@ -1,0 +1,51 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "iPhone 16 Pro Max",
+      "description": "Apple's latest flagship phone with the most advanced features and stunning design.",
+      "category": "Điện thoại",
+      "price": 34990000,
+      "discountPercentage": 0,
+      "rating": 4.8,
+      "stock": 100,
+      "brand": "Apple",
+      "sku": "IP16PMAX",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-16-pro-max-1.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-16-pro-max-2.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-16-pro-max-3.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-16-pro-max-1.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Samsung Galaxy S24 Ultra",
+      "description": "Samsung S24 Ultra là siêu phẩm smartphone đỉnh cao mở đầu năm 2024 đến từ nhà Samsung với chip Snapdragon 8 Gen 3",
+      "category": "Điện thoại",
+      "price": 32990000,
+      "discountPercentage": 10,
+      "stock": 85,
+      "brand": "Samsung",
+      "sku": "SGS24U",
+      "warrantyInformation": "1 năm bảo hành",
+      "shippingInformation": "Giao hàng 1-2 ngày",
+      "availabilityStatus": "Còn hàng",
+      "returnPolicy": "30 ngày đổi trả",
+      "minimumOrderQuantity": 1,
+      "images": [
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-0.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-1.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-2.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-3.jpg",
+        "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-4.jpg"
+      ],
+      "thumbnail": "https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s24-ultra-5g-sm-s928-0.jpg"
+    }
+  ]
+}

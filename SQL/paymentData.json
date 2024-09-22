@@ -1,0 +1,23 @@
+{
+  "linkQR": "https://api.vietqr.io/ICB/107875185067/240000/GEN2793/qr_only.png?&accountName=NGUYEN VO ANH SON",
+  "trade_no": "2024092121092257038444293",
+  "amount": "240.000",
+  "CTK": "NGUYEN VO ANH SON",
+  "STK": "107875185067",
+  "KEYWORD": "GEN",
+  "order_id": "2793",
+  "return_url": "https://genzpn.com/#/order/2024092121092257038444293",
+  "notify_url": "https://genzpn.com/api/v1/guest/payment/notify/AutoViettin_DVS/genzpn",
+  "BANKID": 970415,
+  "LOGO_DVS": null,
+  "URL_ZALO": "https://zalo.me/0964747524",
+  "THOI_GIAN": "30",
+  "URL_TELEGRAM": "t.me/genzpn",
+  "URL_WEB": "/#/dashboard",
+  "directoryPath": "DonHang/gen2793",
+  "domain": "GENZPN.COM",
+  "status": "0",
+  "time": "1727017599",
+  "price": "240000",
+  "tradeNo": "2024092121092257038444293"
+}

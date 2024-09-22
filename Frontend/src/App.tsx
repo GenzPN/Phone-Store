@@ -8,10 +8,12 @@ import BrandPage from './components/BrandPage/BrandPage';
 import Payment from './components/Payment/Payment';
 import Auth from './components/Auth/Auth';
 import Profile from './components/Profile/Profile';
-import Details from './components/Details/Details'; // Import Details component
+import Details from './components/Details/Details';
 import Cart from './components/Cart/Cart';
 import Products from './components/Products/Products';
 import Checkout from './components/Checkout/Checkout';
+import Address from './components/Address/Address';
+import Test from './components/Test';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
@@ -35,21 +37,21 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const accessToken = getToken() || getCookie('accessToken');
-      console.log('Access token:', accessToken); // Log the access token
+      console.log('Access token:', accessToken);
 
       if (accessToken) {
         try {
-          const response = await fetch('https://dummyjson.com/auth/me', {
+          const response = await fetch('http://localhost:5000/api/auth/me', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
             },
           });
-          console.log('Response status:', response.status); // Log the response status
+          console.log('Response status:', response.status);
 
           if (response.ok) {
             const userData = await response.json();
-            console.log('User data:', userData); // Log the user data
+            console.log('User data:', userData);
             setUser(userData);
             setToken(accessToken);
             setCookie('accessToken', accessToken, 7);
@@ -73,12 +75,12 @@ const App: React.FC = () => {
     };
 
     fetchCurrentUser();
-  }, []); // Empty dependency array
+  }, []);
 
   const handleLogin = (userData: UserData, accessToken: string) => {
     setUser(userData);
     setToken(accessToken);
-    setCookie('accessToken', accessToken, 7); // Store for 7 days
+    setCookie('accessToken', accessToken, 7);
   };
 
   const handleLogout = () => {
@@ -88,7 +90,7 @@ const App: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Or use a loading spinner
+    return <div>Loading...</div>;
   }
 
   return (
@@ -106,9 +108,10 @@ const App: React.FC = () => {
                 <Route path="/details/:productName" element={<Details />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/products" element={<Products />} />
-                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/products/checkout" element={<Checkout />} />
+                <Route path="/products/checkout/address" element={user ? <Address userId={user.id} /> : <Navigate to="/api/auth" state={{ from: '/products/checkout/address' }} />} />
+                <Route path="/test" element={<Test />} />
                 <Route 
-
                   path="/profile" 
                   element={
                     loading ? (
@@ -120,7 +123,6 @@ const App: React.FC = () => {
                     )
                   } 
                 />
-                {/* Add other routes here */}
               </Routes>
             </Content>
             <Footer />

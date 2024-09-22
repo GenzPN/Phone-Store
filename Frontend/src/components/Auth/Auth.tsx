@@ -18,7 +18,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const { username, password } = values;
 
     try {
-      const response = await fetch('https://dummyjson.com/auth/login', {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -27,12 +27,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('Login successful, data:', data); // Log the login data
+        console.log('Login successful, data:', data);
         message.success('Đăng nhập thành công');
-        onLogin(data, data.token); // Make sure this is being called with the correct data
+        onLogin(data.user, data.accessToken);
         navigate('/');
       } else {
-        message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
+        message.error(data.error || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
       }
     } catch (error) {
       console.error('Lỗi đăng nhập:', error);
@@ -48,8 +48,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     password: string;
   }) => {
     try {
-      // Thay thế URL này bằng API đăng ký thực tế của bạn
-      const response = await fetch('https://dummyjson.com/users/add', {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -57,10 +56,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
       if (response.ok) {
         message.success('Đăng ký thành công');
-        // Chuyển sang tab đăng nhập sau khi đăng ký thành công
         form.setFieldsValue({ username: values.username, password: '' });
       } else {
-        message.error('Đăng ký thất bại. Vui lòng thử lại.');
+        const data = await response.json();
+        message.error(data.error || 'Đăng ký thất bại. Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Lỗi đăng ký:', error);
