@@ -25,6 +25,7 @@ const Header = ({ brands, user, onLogout }) => {
 
   const getActiveKey = () => {
     if (currentPath === '/') return 'home';
+    if (currentPath === '/products') return 'products';
     const brand = brands.find(brand => currentPath.includes(`/brand/${brand.toLowerCase()}`));
     return brand || 'home';
   };
@@ -33,6 +34,10 @@ const Header = ({ brands, user, onLogout }) => {
     {
       key: 'home',
       label: <Link to="/">Trang chủ</Link>,
+    },
+    {
+      key: 'products',
+      label: <Link to="/products">Sản phẩm</Link>,
     },
     ...brands.map(brand => ({
       key: brand,

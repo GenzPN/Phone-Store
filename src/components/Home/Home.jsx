@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Row, Col, Typography, Image, Button, Card, Carousel } from "antd";
-import { Link } from 'react-router-dom';
+import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "antd";
+import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { formatProductNameForUrl } from '../../utils/stringUtils';
 
 const { Title, Text } = Typography;
+
 const Home = () => {
     const [bestSellers, setBestSellers] = useState([]);
     const [phonesByBrand, setPhonesByBrand] = useState({});
     const carouselRefs = useRef({});
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetch('/phoneData.json')
@@ -19,6 +21,15 @@ const Home = () => {
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []); // Mảng dependencies trống
+
+    const handleImageClick = (phoneName) => {
+        navigate(`/details/${formatProductNameForUrl(phoneName)}`);
+    };
+
+    const handleAddToCart = (phone) => {
+        // Thêm logic để thêm sản phẩm vào giỏ hàng ở đây
+        message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
+    };
 
     const renderPhoneCard = (phone) => (
         <div key={phone.name} style={{ padding: '0 10px' }}>
@@ -31,8 +42,11 @@ const Home = () => {
                         justifyContent: 'center', 
                         alignItems: 'center', 
                         height: '250px',
-                        overflow: 'hidden'
-                    }}>
+                        overflow: 'hidden',
+                        cursor: 'pointer'
+                    }}
+                    onClick={() => handleImageClick(phone.name)}
+                    >
                         <Image 
                             alt={phone.name} 
                             src={phone.img} 
@@ -73,7 +87,11 @@ const Home = () => {
                     <Link to={`/details/${formatProductNameForUrl(phone.name)}`}>
                         <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
                     </Link>
-                    <Button icon={<ShoppingCartOutlined />} type="primary">
+                    <Button 
+                        icon={<ShoppingCartOutlined />} 
+                        type="primary"
+                        onClick={() => handleAddToCart(phone)}
+                    >
                         Thêm vào
                     </Button>
                 </Row>

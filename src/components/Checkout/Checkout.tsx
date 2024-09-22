@@ -1,54 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Col, Row, Typography, Table, QRCode, Radio, Button, message } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
+import { Card, Col, Row, Typography, Table, Radio, Button, message, Space } from 'antd';
+import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
 
 interface CartItem {
+  id: number;
+  image: string;
   name: string;
-  price: string;
   quantity: number;
-}
-
-interface PaymentData {
-  linkQR: string;
-  trade_no: string;
-  amount: string;
-  CTK: string;
-  STK: string;
-  KEYWORD: string;
-  order_id: string;
-  return_url: string;
-  BANKID: number;
-  URL_TELEGRAM: string;
+  price: number;
 }
 
 const Checkout: React.FC = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [selectedBank, setSelectedBank] = useState('vietcombank');
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch cart items from localStorage
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      const parsedCart = JSON.parse(storedCart);
-      setCartItems(parsedCart);
-      
-      // Calculate total
-      const calculatedTotal = parsedCart.reduce((acc: number, item: CartItem) => {
-        const price = parseInt(item.price.replace(/[^\d]/g, ''), 10);
-        return acc + (price * item.quantity);
-      }, 0);
-      setTotal(calculatedTotal);
-    }
-
-    // Fetch payment data
-    fetch('/paymentData.json')
+    // Fetch cart items from cart.json
+    fetch('/cart.json')
       .then(response => response.json())
-      .then(data => setPaymentData(data))
-      .catch(error => console.error('Error fetching payment data:', error));
+      .then(data => {
+        setCartItems(data);
+        
+        // Calculate total
+        const calculatedTotal = data.reduce((acc: number, item: CartItem) => {
+          return acc + (item.price * item.quantity);
+        }, 0);
+        setTotal(calculatedTotal);
+      })
+      .catch(error => console.error('Error fetching cart data:', error));
   }, []);
 
   const columns = [
@@ -56,11 +40,18 @@ const Checkout: React.FC = () => {
       title: 'Sản phẩm',
       dataIndex: 'name',
       key: 'name',
+      render: (text: string, record: CartItem) => (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src={record.image} alt={text} style={{ width: 50, marginRight: 10 }} />
+          {text}
+        </div>
+      ),
     },
     {
       title: 'Giá',
       dataIndex: 'price',
       key: 'price',
+      render: (price: number) => `${price.toLocaleString('vi-VN')} đ`,
     },
     {
       title: 'Số lượng',
@@ -71,16 +62,51 @@ const Checkout: React.FC = () => {
       title: 'Tổng',
       key: 'total',
       render: (text: string, record: CartItem) => {
-        const price = parseInt(record.price.replace(/[^\d]/g, ''), 10);
-        return `${(price * record.quantity).toLocaleString('vi-VN')} đ`;
+        return `${(record.price * record.quantity).toLocaleString('vi-VN')} đ`;
       },
     },
   ];
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      message.success('Đã sao chép thành công!');
-    });
+  const handlePaymentMethodChange = (e: any) => {
+    setPaymentMethod(e.target.value);
+  };
+
+  const handlePayment = () => {
+    if (!paymentMethod) {
+      message.error('Vui lòng chọn phương thức thanh toán');
+      return;
+    }
+
+    switch (paymentMethod) {
+      case 'momo':
+        // Xử lý thanh toán MoMo
+        message.info('Đang chuyển hướng đến thanh toán MoMo...');
+        // Thêm logic chuyển hướng đến MoMo ở đây
+        break;
+      case 'bank':
+        // Xử lý thanh toán ngân hàng
+        fetch(`/api/payment/${cartItems[0].id}`)
+          .then(response => response.json())
+          .then(data => {
+            // Xử lý dữ liệu trả về từ API
+            console.log('Payment data:', data);
+            // Chuyển hướng đến trang thanh toán ngân hàng hoặc hiển thị thông tin thanh toán
+            // window.location.href = data.paymentUrl; // Ví dụ
+          })
+          .catch(error => console.error('Error fetching payment data:', error));
+        break;
+      case 'cod':
+        // Xử lý thanh toán tiền mặt khi nhận hàng
+        message.success('Đơn hàng đã được đặt thành công. Bạn sẽ thanh toán khi nhận hàng.');
+        // Thêm logic xử lý đơn hàng COD ở đây
+        break;
+      default:
+        message.error('Phương thức thanh toán không hợp lệ');
+    }
+  };
+
+  const handleBackToCart = () => {
+    navigate('/cart'); // Điều hướng về trang giỏ hàng
   };
 
   return (
@@ -96,55 +122,36 @@ const Checkout: React.FC = () => {
           <Card title="Tổng cộng">
             <Title level={3}>{total.toLocaleString('vi-VN')} đ</Title>
           </Card>
-          {paymentData && (
-            <Card title="Thông tin thanh toán" style={{ marginTop: '20px' }}>
-              <Paragraph>
-                Số tiền: 
-                <Button type="link" onClick={() => copyToClipboard(paymentData.amount)}>
-                  <Text strong>{paymentData.amount}</Text>
-                  <CopyOutlined />
-                </Button>
-              </Paragraph>
-              <Paragraph>
-                Tên tài khoản: <Text strong>{paymentData.CTK}</Text>
-              </Paragraph>
-              <Paragraph>
-                Số tài khoản:
-                <Button type="link" onClick={() => copyToClipboard(paymentData.STK)}>
-                  <Text strong>{paymentData.STK}</Text>
-                  <CopyOutlined />
-                </Button>
-              </Paragraph>
-              <Paragraph>
-                Nội dung chuyển khoản:
-                <Button 
-                  type="link"                   
-                  onClick={() => copyToClipboard(`${paymentData.KEYWORD}${paymentData.order_id}`)}
-                >
-                  <Text strong>{`${paymentData.KEYWORD}${paymentData.order_id}`}</Text>
-                  <CopyOutlined />
-                </Button>
-              </Paragraph>
-              <Paragraph>
-                <Text type="warning" strong>* Đơn hàng sẽ không duyệt nếu chuyển tiền không có nội dung {`${paymentData.KEYWORD}${paymentData.order_id}`} này.</Text>
-              </Paragraph>
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                <QRCode value={paymentData.linkQR} size={200} />
-              </div>
-              <Paragraph style={{ textAlign: 'center', marginTop: '10px' }}>
-                Quét mã QR để thanh toán
-              </Paragraph>
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                <Button type="primary" onClick={() => {
-                  if (paymentData.return_url) {
-                    window.location.href = paymentData.return_url;
-                  }
-                }}>
-                  Hoàn tất thanh toán
-                </Button>
-              </div>
-            </Card>
-          )}
+          <Card title="Phương thức thanh toán" style={{ marginTop: '20px' }}>
+            <Radio.Group onChange={handlePaymentMethodChange} value={paymentMethod}>
+              <Radio value="momo" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+                <MobileOutlined /> Thanh toán MoMo
+              </Radio>
+              <Radio value="bank" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+                <BankOutlined /> Thanh toán ngân hàng
+              </Radio>
+              <Radio value="cod" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+                <DollarOutlined /> Thanh toán khi nhận hàng (COD)
+              </Radio>
+            </Radio.Group>
+            <Space direction="vertical" style={{ width: '100%', marginTop: '20px' }}>
+              <Button 
+                type="primary" 
+                onClick={handlePayment} 
+                style={{ width: '100%' }}
+                disabled={!paymentMethod}
+              >
+                {paymentMethod === 'cod' ? 'Đặt hàng' : 'Tiến hành thanh toán'}
+              </Button>
+              <Button 
+                icon={<ShoppingCartOutlined />} 
+                onClick={handleBackToCart}
+                style={{ width: '100%' }}
+              >
+                Quay lại giỏ hàng
+              </Button>
+            </Space>
+          </Card>
         </Col>
       </Row>
     </div>

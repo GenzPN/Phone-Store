@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select } from 'antd';
+import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, Empty } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 
 const { Meta } = Card;
@@ -155,46 +155,65 @@ const BrandPage: React.FC = () => {
           </Card>
         </Col>
         <Col span={18}>
-          <Row gutter={[16, 16]}>
-            {filteredPhones.map((phone, index) => (
-              <Col key={index} xs={24} sm={12} md={8} lg={6}>
-                <Card
-                  hoverable
-                  cover={
-                    <div style={{
-                      padding: '20px',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '250px',
-                      overflow: 'hidden'
-                    }}>
-                      <Image
-                        alt={phone.name}
-                        src={phone.img}
-                        preview={false}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                          width: '100%',
-                          height: '100%',
-                          objectPosition: 'center'
-                        }}
-                      />
-                    </div>
-                  }
-                >
-                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    <Meta title={phone.name} description={phone.price} />
-                    <Button type="primary" icon={<ShoppingCartOutlined />} style={{ width: '100%' }}>
-                      Mua ngay
-                    </Button>
-                  </Space>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+          {filteredPhones.length > 0 ? (
+            <Row gutter={[16, 16]}>
+              {filteredPhones.map((phone, index) => (
+                <Col key={index} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    cover={
+                      <div style={{
+                        padding: '20px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '250px',
+                        overflow: 'hidden'
+                      }}>
+                        <Image
+                          alt={phone.name}
+                          src={phone.img}
+                          preview={false}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            width: '100%',
+                            height: '100%',
+                            objectPosition: 'center'
+                          }}
+                        />
+                      </div>
+                    }
+                  >
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                      <Meta title={phone.name} description={phone.price} />
+                      <Button type="primary" icon={<ShoppingCartOutlined />} style={{ width: '100%' }}>
+                        Mua ngay
+                      </Button>
+                    </Space>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <span>
+                  Không tìm thấy sản phẩm nào phù hợp với tiêu chí tìm kiếm
+                </span>
+              }
+            >
+              <Button type="primary" onClick={() => {
+                setPriceFilter('all');
+                setPriceRange([0, 50]);
+                setSortOrder('');
+              }}>
+                Đặt lại bộ lọc
+              </Button>
+            </Empty>
+          )}
         </Col>
       </Row>
     </div>
