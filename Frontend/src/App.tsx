@@ -17,12 +17,12 @@ import Products from './components/User/Products/Products';
 import Checkout from './components/User/Checkout/Checkout';
 // Admin
 import HeaderAdmin from './components/Admin/Header/Header';
+import SidebarAdmin from './components/Admin/Sidebar/Sidebar';
 // Admin
 import DashboardAdmin from './components/Admin/Dashboard/Dashboard';
 import LoginAdmin from './components/Admin/Login/Login';
 import ProductsAdmin from './components/Admin/Products/Products';
 import SettingsAdmin from './components/Admin/Settings/Settings';
-import SidebarAdmin from './components/Admin/Sidebar/Sidebar';
 import OrdersAdmin from './components/Admin/Orders/Orders';
 import StatusAdmin from './components/Admin/Status/Status';
 import UsersAdmin from './components/Admin/Users/Users';
@@ -45,6 +45,7 @@ interface UserData {
 const App: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const brands = ["Apple", "Samsung", "Oppo", "Huawei", "Realme", "Vivo", "Xiaomi", "Nokia"];
 
   useEffect(() => {
@@ -102,6 +103,10 @@ const App: React.FC = () => {
     removeCookie('accessToken');
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -127,20 +132,22 @@ const App: React.FC = () => {
           />
           <Route path="/admin/*" element={
             <Layout>
-              <HeaderAdmin onToggleSidebar={() => {}} />
-              <SidebarAdmin />
-              <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
-                <Routes>
-                  <Route path="dashboard" element={<DashboardAdmin />} />
-                  <Route path="auth" element={<LoginAdmin />} />
-                  <Route path="orders" element={<OrdersAdmin />} />
-                  <Route path="users" element={<UsersAdmin />} />
-                  <Route path="settings" element={<SettingsAdmin />} />
-                  <Route path="status" element={<StatusAdmin currentStatus={undefined} />} />
-                  <Route path="products" element={<ProductsAdmin />} />
-                  <Route path="*" element={<Navigate to="/admin/dashboard" />} />
-                </Routes>
-              </Content>
+              <HeaderAdmin onToggleSidebar={toggleSidebar} />
+              <Layout style={{ marginLeft: isSidebarCollapsed ? 80 : 200 }}>
+                <SidebarAdmin collapsed={isSidebarCollapsed} />
+                <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
+                  <Routes>
+                    <Route path="dashboard" element={<DashboardAdmin />} />
+                    <Route path="auth" element={<LoginAdmin />} />
+                    <Route path="orders" element={<OrdersAdmin />} />
+                    <Route path="users" element={<UsersAdmin />} />
+                    <Route path="settings" element={<SettingsAdmin />} />
+                    <Route path="status" element={<StatusAdmin currentStatus={undefined} />} />
+                    <Route path="products" element={<ProductsAdmin />} />
+                    <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+                  </Routes>
+                </Content>
+              </Layout>
             </Layout>
           } />
           <Route path="*" element={

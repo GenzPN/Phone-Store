@@ -112,6 +112,54 @@ def insert_product_reviews(connection, product_id, reviews):
         print(f"Error inserting product reviews: {e}")
         connection.rollback()
 
+def insert_user_address(connection, address):
+    try:
+        cursor = connection.cursor()
+        query = """INSERT INTO UserAddresses 
+                   (user_id, fullName, phone, address, is_default, address_type, company_name) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+        values = (address['user_id'], address['fullName'], address['phone'],
+                  address['address'], address['is_default'], address['address_type'],
+                  address.get('company_name'))
+        cursor.execute(query, values)
+        connection.commit()
+        print(f"Inserted address for user ID: {address['user_id']}")
+    except Error as e:
+        print(f"Error inserting user address: {e}")
+        connection.rollback()
+
+def insert_order(connection, order):
+    try:
+        cursor = connection.cursor()
+        query = """INSERT INTO Orders 
+                   (user_id, address_id, total_amount, status, note, created_at) 
+                   VALUES (%s, %s, %s, %s, %s, %s)"""
+        values = (order['user_id'], order['address_id'], order['total_amount'],
+                  order['status'], order['note'], order['created_at'])
+        cursor.execute(query, values)
+        order_id = cursor.lastrowid
+
+        for item in order['order_items']:
+            item_query = """INSERT INTO OrderItems 
+                            (order_id, product_id, quantity, price) 
+                            VALUES (%s, %s, %s, %s)"""
+            item_values = (order_id, item['product_id'], item['quantity'], item['price'])
+            cursor.execute(item_query, item_values)
+
+        payment_query = """INSERT INTO Payments 
+                           (order_id, amount, payment_method, status, transaction_id, created_at) 
+                           VALUES (%s, %s, %s, %s, %s, %s)"""
+        payment_values = (order_id, order['payment']['amount'], order['payment']['payment_method'],
+                          order['payment']['status'], order['payment']['transaction_id'],
+                          order['payment']['created_at'])
+        cursor.execute(payment_query, payment_values)
+
+        connection.commit()
+        print(f"Inserted order ID: {order_id} for user ID: {order['user_id']}")
+    except Error as e:
+        print(f"Error inserting order: {e}")
+        connection.rollback()
+
 def main():
     create_requirements_file()
 
@@ -146,6 +194,18 @@ def main():
                 product_id = result[0]
                 insert_product_reviews(connection, product_id, reviews)
                 print(f"Inserted reviews for product: {product_name}")
+
+    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.js
+    with open('address.js', 'r', encoding='utf-8') as file:
+        address_data = json.load(file)
+        for address in address_data['user_addresses']:
+            insert_user_address(connection, address)
+
+    # Đọc và xử lý dữ liệu đơn hàng từ order.js
+    with open('order.js', 'r', encoding='utf-8') as file:
+        order_data = json.load(file)
+        for order in order_data['orders']:
+            insert_order(connection, order)
 
     connection.commit()
     connection.close()

@@ -6,7 +6,7 @@ CREATE TABLE Users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    password_hashed BOOLEAN DEFAULT FALSE,  -- Thêm cột này
+    password_hashed BOOLEAN DEFAULT FALSE,
     fullName VARCHAR(150),
     gender ENUM('male', 'female', 'other'),
     image VARCHAR(255),
@@ -38,7 +38,7 @@ CREATE TABLE Products (
     stock INT,
     brand VARCHAR(100),
     thumbnail VARCHAR(255),
-    images JSON,  -- Thêm trường này để lưu trữ nhiều ảnh
+    images JSON,
     category VARCHAR(100),
     sku VARCHAR(100),
     warranty_information VARCHAR(255),

@@ -29,7 +29,8 @@ router.get('/', async (req, res) => {
 
     const formattedProducts = products.map(product => ({
       ...product,
-      price: product.price != null ? formatPrice(Number(product.price)) : 'Liên hệ'
+      price: formatPrice(product.price),
+      images: JSON.parse(product.images || '[]')
     }));
 
     res.json({
@@ -150,6 +151,21 @@ router.post('/:id/reviews', async (req, res) => {
     res.status(201).json({ message: 'Review added', id: result.insertId });
   } catch (error) {
     console.error('Add review error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Cập nhật sản phẩm
+router.put('/:id', authenticateToken, async (req, res) => {
+  const { title, description, price, stock, brand, thumbnail, images, category, sku, warranty_information, shipping_information, availability_status, return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order } = req.body;
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE Products SET title = ?, description = ?, price = ?, stock = ?, brand = ?, thumbnail = ?, images = ?, category = ?, sku = ?, warranty_information = ?, shipping_information = ?, availability_status = ?, return_policy = ?, minimum_order_quantity = ?, discount_percentage = ?, is_featured = ?, featured_sort_order = ? WHERE id = ?',
+      [title, description, price, stock, brand, thumbnail, JSON.stringify(images), category, sku, warranty_information, shipping_information, availability_status, return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id]
+    );
+    res.status(200).json({ message: 'Product updated' });
+  } catch (error) {
+    console.error('Update product error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

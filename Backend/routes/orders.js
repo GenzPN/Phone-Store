@@ -7,7 +7,7 @@ const authenticateToken = require('../middleware/auth');
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const [orders] = await db.promise().query(
-      'SELECT * FROM Orders WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT o.id, o.status, o.total_amount, oi.product_id, p.title as name, p.thumbnail as image, oi.quantity as amount, o.note, o.created_at, p.price FROM Orders o JOIN OrderItems oi ON o.id = oi.order_id JOIN Products p ON oi.product_id = p.id WHERE o.user_id = ? ORDER BY o.created_at DESC',
       [req.user.id]
     );
     res.json(orders);

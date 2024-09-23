@@ -37,8 +37,8 @@ const HeaderAdmin: React.FC<HeaderAdminProps> = ({ onToggleSidebar }) => {
         </Col>
         <Col>
           <div className="header-right">
-            <Button type="text" icon={<ProfileOutlined />} onClick={() => navigate('/catalogs')} />
-            <Button type="text" icon={<ShoppingCartOutlined />} onClick={() => navigate('/orders')} />
+            <Button type="text" icon={<ProfileOutlined />} onClick={() => navigate('/admin/products')} />
+            <Button type="text" icon={<ShoppingCartOutlined />} onClick={() => navigate('/admin/orders')} />
             <Dropdown menu={{ items: menuItems }} trigger={['click']}>
               <Button type="text" className="ant-dropdown-link" onClick={e => e.preventDefault()}>
                 <Avatar icon={<UserOutlined />} />

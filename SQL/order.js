@@ -1,0 +1,53 @@
+{
+    "orders": [
+      {
+        "user_id": 1,
+        "address_id": 1,
+        "total_amount": 1500,
+        "status": "pending",
+        "note": "Please deliver between 9 AM to 5 PM",
+        "created_at": "2023-10-01 10:00:00",
+        "order_items": [
+          {
+            "product_id": 1,
+            "quantity": 2,
+            "price": 500
+          },
+          {
+            "product_id": 2,
+            "quantity": 1,
+            "price": 500
+          }
+        ],
+        "payment": {
+          "amount": 1500,
+          "payment_method": "cod",
+          "status": "pending",
+          "transaction_id": "TXN123456",
+          "created_at": "2023-10-01 10:05:00"
+        }
+      },
+      {
+        "user_id": 2,
+        "address_id": 2,
+        "total_amount": 3000,
+        "status": "paid",
+        "note": "Leave the package at the front door",
+        "created_at": "2023-10-02 11:00:00",
+        "order_items": [
+          {
+            "product_id": 3,
+            "quantity": 1,
+            "price": 3000
+          }
+        ],
+        "payment": {
+          "amount": 3000,
+          "payment_method": "momo",
+          "status": "completed",
+          "transaction_id": "TXN654321",
+          "created_at": "2023-10-02 11:05:00"
+        }
+      }
+    ]
+  }

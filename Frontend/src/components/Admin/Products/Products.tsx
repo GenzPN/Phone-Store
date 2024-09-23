@@ -12,7 +12,7 @@ const Products = () => {
       title: 'Hình ảnh',
       dataIndex: 'image',
       key: 'image',
-      render: (text) => (
+      render: (text: string) => (
         <div style={{ width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img 
             src={text} 
