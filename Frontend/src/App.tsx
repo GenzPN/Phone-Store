@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
 import { CartProvider } from './contexts/CartContext';
+// User
+import HeaderUser from './components/User/Header/Header';
+import FooterUser from './components/User/Footer/Footer';
+// User
 import Home from './components/User/Home/Home';
-import Header from './components/User/Header/Header';
-import Footer from './components/User/Footer/Footer';
 import BrandPage from './components/User/BrandPage/BrandPage';
 import Payment from './components/User/Payment/Payment';
 import Auth from './components/User/Auth/Auth';
@@ -13,6 +15,17 @@ import Details from './components/User/Details/Details';
 import Cart from './components/User/Cart/Cart';
 import Products from './components/User/Products/Products';
 import Checkout from './components/User/Checkout/Checkout';
+// Admin
+import HeaderAdmin from './components/Admin/Header/Header';
+// Admin
+import DashboardAdmin from './components/Admin/Dashboard/Dashboard';
+import LoginAdmin from './components/Admin/Login/Login';
+import ProductsAdmin from './components/Admin/Products/Products';
+import SettingsAdmin from './components/Admin/Settings/Settings';
+import SidebarAdmin from './components/Admin/Sidebar/Sidebar';
+import OrdersAdmin from './components/Admin/Orders/Orders';
+import StatusAdmin from './components/Admin/Status/Status';
+import UsersAdmin from './components/Admin/Users/Users';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
@@ -112,9 +125,27 @@ const App: React.FC = () => {
               )
             } 
           />
+          <Route path="/admin/*" element={
+            <Layout>
+              <HeaderAdmin onToggleSidebar={() => {}} />
+              <SidebarAdmin />
+              <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
+                <Routes>
+                  <Route path="dashboard" element={<DashboardAdmin />} />
+                  <Route path="auth" element={<LoginAdmin />} />
+                  <Route path="orders" element={<OrdersAdmin />} />
+                  <Route path="users" element={<UsersAdmin />} />
+                  <Route path="settings" element={<SettingsAdmin />} />
+                  <Route path="status" element={<StatusAdmin currentStatus={undefined} />} />
+                  <Route path="products" element={<ProductsAdmin />} />
+                  <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+                </Routes>
+              </Content>
+            </Layout>
+          } />
           <Route path="*" element={
             <Layout>
-              <Header brands={brands} user={user} onLogout={handleLogout} />
+              <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
               <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -138,7 +169,7 @@ const App: React.FC = () => {
                   />
                 </Routes>
               </Content>
-              <Footer />
+              <FooterUser />
             </Layout>
           } />
         </Routes>

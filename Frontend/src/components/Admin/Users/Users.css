@@ -1,0 +1,7 @@
+.custom-alert {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000; /* Ensure it's above other content */
+  width: 300px; /* Adjust width if needed */
+}

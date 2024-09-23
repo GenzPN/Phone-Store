@@ -1,0 +1,89 @@
+/* src/components/Header.css */
+.header {
+    background: #03045e;
+    padding: 0 16px !important;
+    box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+}
+
+.menu-button {
+    margin-right: 16px;
+    color: white !important;
+}
+
+.logo {
+    height: 32px;
+}
+
+.header-right .ant-btn {
+    margin-left: 16px;
+    color: white !important;
+}
+
+.username {
+    margin: 0 8px;
+    color: white !important;
+}
+
+.ant-dropdown-link {
+    color: white !important;
+}
+
+.ant-avatar {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 8px !important;
+    }
+
+    .menu-button {
+        margin-right: 8px;
+    }
+
+    .logo {
+        height: 24px;
+    }
+
+    .header-right .ant-btn {
+        margin-left: 8px;
+    }
+
+    .username {
+        display: none;
+    }
+
+    .ant-dropdown-link .anticon-down {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 0 4px !important;
+    }
+
+    .menu-button {
+        margin-right: 4px;
+    }
+
+    .header-right .ant-btn {
+        padding: 4px;
+    }
+
+    .ant-avatar {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Override Ant Design's default styles */
+.ant-layout-header {
+    background: #03045e !important;
+    padding: 0 !important;
+}

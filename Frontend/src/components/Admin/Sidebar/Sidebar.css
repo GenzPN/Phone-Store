@@ -1,0 +1,35 @@
+.ant-layout-sider {
+  background: #03045e !important;
+}
+
+.ant-menu {
+  background: #03045e;
+}
+
+.ant-menu-item {
+  color: white !important;
+}
+
+.ant-menu-item-selected {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.ant-menu-item-active {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.ant-menu-item a {
+  color: white !important;
+}
+
+.ant-menu-item-selected a {
+  color: white !important;
+}
+
+.ant-menu-item .anticon {
+  color: white !important;
+}
