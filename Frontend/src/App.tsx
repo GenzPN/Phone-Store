@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
 import { CartProvider } from './contexts/CartContext';
-import Home from './components/Home/Home';
-import Header from './components/Header/Header';
-import Footer from './components/Footer/Footer';
-import BrandPage from './components/BrandPage/BrandPage';
-import Payment from './components/Payment/Payment';
-import Auth from './components/Auth/Auth';
-import Profile from './components/Profile/Profile';
-import Details from './components/Details/Details';
-import Cart from './components/Cart/Cart';
-import Products from './components/Products/Products';
-import Checkout from './components/Checkout/Checkout';
+import Home from './components/User/Home/Home';
+import Header from './components/User/Header/Header';
+import Footer from './components/User/Footer/Footer';
+import BrandPage from './components/User/BrandPage/BrandPage';
+import Payment from './components/User/Payment/Payment';
+import Auth from './components/User/Auth/Auth';
+import Profile from './components/User/Profile/Profile';
+import Details from './components/User/Details/Details';
+import Cart from './components/User/Cart/Cart';
+import Products from './components/User/Products/Products';
+import Checkout from './components/User/Checkout/Checkout';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 

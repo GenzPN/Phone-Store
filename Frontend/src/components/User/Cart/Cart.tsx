@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Table, Typography, Space, Button, InputNumber, Popconfirm, Row, Col, message } from 'antd';
 import { ShoppingCartOutlined, ShoppingOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useCart, CartItem } from '../../contexts/CartContext';
+import { useCart, CartItem } from '../../../contexts/CartContext';
 
 const { Title, Text } = Typography;
 

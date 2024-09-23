@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "antd";
 import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { formatProductNameForUrl } from '../../utils/stringUtils';
-import { useCart, CartItem } from '../../contexts/CartContext';
+import { formatProductNameForUrl } from '../../../utils/stringUtils';
+import { useCart } from '../../../contexts/CartContext';
 
 const { Title, Text } = Typography;
 
