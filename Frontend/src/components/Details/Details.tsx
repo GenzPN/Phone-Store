@@ -2,18 +2,48 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, Col, Row, Typography, Button, Image, Spin, message, Rate, Descriptions, Collapse, Empty, Modal, Tabs } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
-import { unformatProductNameFromUrl } from '../../utils/stringUtils';
+import axios from 'axios';
 import './Details.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
 const { TabPane } = Tabs;
 
-const Details = () => {
-  const { productName } = useParams();
-  const [product, setProduct] = useState(null);
-  const [productDetails, setProductDetails] = useState(null);
-  const [productReviews, setProductReviews] = useState([]);
+interface ProductReview {
+  id: number;
+  rating: number;
+  comment: string;
+  user: string;
+}
+
+interface ProductDetail {
+  category: string;
+  items: Array<{ label: string; value: string }>;
+}
+
+interface Product {
+  id: number;
+  title: string;
+  brand: string;
+  price: number;
+  discountPercentage: number;
+  images: string[];
+  category: string;
+  sku: string;
+  description: string;
+  warrantyInformation: string;
+  shippingInformation: string;
+  availabilityStatus: string;
+  returnPolicy: string;
+  details: ProductDetail[];
+  reviews: ProductReview[];
+}
+
+const Details: React.FC = () => {
+  const { productName } = useParams<{ productName: string }>();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [productDetails, setProductDetails] = useState<ProductDetail[] | null>(null);
+  const [productReviews, setProductReviews] = useState<ProductReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState('');
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -21,35 +51,24 @@ const Details = () => {
 
   const averageRating = useMemo(() => {
     if (!productReviews || productReviews.length === 0) return 0;
-    const sum = productReviews.reduce((acc, review) => acc + review.rating, 0);
+    const sum = productReviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / productReviews.length).toFixed(1);
   }, [productReviews]);
 
   useEffect(() => {
     const fetchProductData = async () => {
       try {
-        const [productResponse, detailsResponse, reviewsResponse] = await Promise.all([
-          fetch('/phoneDetails.json'),
-          fetch('/productDetails.json'),
-          fetch('/productReviews.json')
-        ]);
+        const encodedProductName = encodeURIComponent(productName || '');
+        console.log('Fetching product:', encodedProductName);
 
-        if (!productResponse.ok || !detailsResponse.ok || !reviewsResponse.ok) {
-          throw new Error('Failed to fetch product data');
-        }
-
-        const productData = await productResponse.json();
-        const detailsData = await detailsResponse.json();
-        const reviewsData = await reviewsResponse.json();
-
-        const unformattedProductName = unformatProductNameFromUrl(productName || '');
-        const foundProduct = productData.products.find((p) => p.title.toLowerCase() === unformattedProductName.toLowerCase());
-
-        if (foundProduct) {
-          setProduct(foundProduct);
-          setMainImage(foundProduct.images[0]);
-          setProductDetails(detailsData[foundProduct.title]);
-          setProductReviews(reviewsData[foundProduct.title]);
+        const productResponse = await axios.get<Product>(`http://localhost:5000/api/products/by-name/${encodedProductName}`);
+        console.log('Product data:', productResponse.data);
+        
+        if (productResponse.data) {
+          setProduct(productResponse.data);
+          setMainImage(productResponse.data.images[0]);
+          setProductDetails(productResponse.data.details || []);
+          setProductReviews(productResponse.data.reviews || []);
         } else {
           throw new Error('Product not found');
         }
@@ -61,7 +80,9 @@ const Details = () => {
       }
     };
 
-    fetchProductData();
+    if (productName) {
+      fetchProductData();
+    }
   }, [productName]);
 
   if (loading) {
@@ -72,7 +93,7 @@ const Details = () => {
     return <Text>Product not found</Text>;
   }
 
-  const discountedPrice = product.price * (1 - product.discountPercentage / 100);
+  const discountedPrice = product.price * (1 - (product.discountPercentage || 0) / 100);
 
   const showReviewModal = () => {
     setIsReviewModalVisible(true);
@@ -89,7 +110,7 @@ const Details = () => {
 
   const visibleReviews = productReviews.slice(0, 4); // Hiển thị 4 đánh giá đầu tiên
 
-  const renderReviewCards = (reviews) => (
+  const renderReviewCards = (reviews: ProductReview[]) => (
     reviews.map((review) => (
       <Card key={review.id} style={{ marginBottom: 16 }}>
         <Rate disabled defaultValue={review.rating} />
@@ -107,8 +128,8 @@ const Details = () => {
             <div className="main-image-container">
               {mainImage ? (
                 <Image
-                  src={mainImage}
-                  alt={product.title}
+                  src={mainImage || 'path/to/placeholder-image.jpg'}
+                  alt={product?.title || 'Product image'}
                   className="main-image"
                   preview={{
                     mask: 'Click để xem ảnh lớn',
@@ -135,30 +156,30 @@ const Details = () => {
                   </div>
                 ))
               ) : (
-                <Empty description="No thumbnails available" />
+                <Empty description="Không có hình ảnh" />
               )}
             </div>
           </div>
         </Col>
         <Col span={12}>
           <Card>
-            <Title level={2}>{product.title}</Title>
-            <Text type="secondary">{product.brand}</Text>
+            <Title level={2}>{product.title || 'Không có tiêu đề'}</Title>
+            <Text type="secondary">{product.brand || 'Không có thương hiệu'}</Text>
             <Title level={3} type="danger">
               {discountedPrice.toLocaleString()}₫
-              {product.discountPercentage > 0 && (
+              {(product.discountPercentage || 0) > 0 && (
                 <Text delete type="secondary" style={{ marginLeft: 8 }}>
                   {product.price.toLocaleString()}₫
                 </Text>
               )}
             </Title>
-            {product.discountPercentage > 0 && (
+            {(product.discountPercentage || 0) > 0 && (
               <Text>Giảm giá: {product.discountPercentage}%</Text>
             )}
             <br />
             {productReviews && productReviews.length > 0 ? (
               <>
-                <Rate disabled allowHalf value={parseFloat(averageRating)} /> 
+                <Rate disabled allowHalf value={Number(averageRating)} /> 
                 <Text>({averageRating}) - {productReviews.length} đánh giá</Text>
               </>
             ) : (

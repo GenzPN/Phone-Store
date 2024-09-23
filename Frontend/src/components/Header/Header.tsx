@@ -5,7 +5,19 @@ import { SearchOutlined, UserOutlined, ShoppingOutlined, LogoutOutlined } from "
 import { Dropdown } from 'antd';
 import styles from './Header.module.css';
 
-const Header = ({ brands, user, onLogout }) => {
+interface User {
+  image: string;
+  fullName: string;
+  username: string;
+}
+
+interface HeaderProps {
+  brands: string[];
+  user: User | null;
+  onLogout: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -76,7 +88,7 @@ const Header = ({ brands, user, onLogout }) => {
             options={options}
             style={{ width: '100%' }}
             filterOption={(inputValue, option) =>
-              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+              option?.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
             }
           >
             <Input

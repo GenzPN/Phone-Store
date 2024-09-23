@@ -1,13 +1,15 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { getToken } from '../utils/tokenStorage';
 import { setCookie, getCookie } from '../utils/cookieUtils';
+import { Phone } from '../types/Phone'; // Tạo file này nếu chưa có
 
 export interface CartItem {
   id: number;
-  image: string;
   name: string;
-  quantity: number;
   price: number;
+  thumbnail: string;
+  brand: string;
+  quantity: number;
 }
 
 interface CartContextType {

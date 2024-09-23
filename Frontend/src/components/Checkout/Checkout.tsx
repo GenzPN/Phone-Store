@@ -31,7 +31,7 @@ const Checkout: React.FC = () => {
       key: 'name',
       render: (text: string, record: CartItem) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src={record.image} alt={text} style={{ width: 50, marginRight: 10 }} />
+          <img src={record.thumbnail} alt={text} style={{ width: 50, marginRight: 10 }} />
           {text}
         </div>
       ),

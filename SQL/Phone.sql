@@ -1,13 +1,12 @@
--- Tạo cơ sở dữ liệu
 CREATE DATABASE IF NOT EXISTS phone_store;
 USE phone_store;
 
--- Bảng Users
 CREATE TABLE Users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    password_hashed BOOLEAN DEFAULT FALSE,  -- Thêm cột này
     fullName VARCHAR(150),
     gender ENUM('male', 'female', 'other'),
     image VARCHAR(255),
@@ -17,7 +16,6 @@ CREATE TABLE Users (
     INDEX idx_email (email)
 ) ENGINE=InnoDB;
 
--- Bảng UserAddresses
 CREATE TABLE UserAddresses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -32,7 +30,6 @@ CREATE TABLE UserAddresses (
     INDEX idx_is_default (is_default)
 ) ENGINE=InnoDB;
 
--- Bảng Products
 CREATE TABLE Products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -41,11 +38,23 @@ CREATE TABLE Products (
     stock INT,
     brand VARCHAR(100),
     thumbnail VARCHAR(255),
+    images JSON,  -- Thêm trường này để lưu trữ nhiều ảnh
+    category VARCHAR(100),
+    sku VARCHAR(100),
+    warranty_information VARCHAR(255),
+    shipping_information VARCHAR(255),
+    availability_status VARCHAR(100),
+    return_policy VARCHAR(255),
+    minimum_order_quantity INT,
+    discount_percentage DECIMAL(5,2),
+    is_featured BOOLEAN DEFAULT FALSE,
+    featured_sort_order INT DEFAULT 0,
     INDEX idx_brand (brand),
-    INDEX idx_price (price)
+    INDEX idx_price (price),
+    INDEX idx_is_featured (is_featured),
+    INDEX idx_featured_sort_order (featured_sort_order)
 ) ENGINE=InnoDB;
 
--- Bảng Cart
 CREATE TABLE Cart (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -55,7 +64,6 @@ CREATE TABLE Cart (
     FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Bảng Orders
 CREATE TABLE Orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -69,7 +77,6 @@ CREATE TABLE Orders (
     INDEX idx_status (status)
 ) ENGINE=InnoDB;
 
--- Bảng OrderItems
 CREATE TABLE OrderItems (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT,
@@ -80,7 +87,6 @@ CREATE TABLE OrderItems (
     FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Bảng Payments
 CREATE TABLE Payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT,
@@ -93,23 +99,13 @@ CREATE TABLE Payments (
     INDEX idx_status (status)
 ) ENGINE=InnoDB;
 
--- Bảng ProductDetails
-CREATE TABLE ProductDetails (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT,
-    category VARCHAR(100),
-    label VARCHAR(100),
-    value TEXT,
-    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- Bảng ProductReviews
 CREATE TABLE ProductReviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT,
-    user_id INT,
+    user_id INT NULL,
     rating INT,
     comment TEXT,
+    reviewer_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
@@ -118,7 +114,6 @@ CREATE TABLE ProductReviews (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB;
 
--- Bảng PaymentGateways
 CREATE TABLE PaymentGateways (
     id INT AUTO_INCREMENT PRIMARY KEY,
     payment_method ENUM('bank_transfer', 'momo', 'cod') UNIQUE NOT NULL,

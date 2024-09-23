@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Table, Image, Typography, Space, Button, InputNumber, Popconfirm, Row, Col, message } from 'antd';
+import { Table, Typography, Space, Button, InputNumber, Popconfirm, Row, Col, message } from 'antd';
 import { ShoppingCartOutlined, ShoppingOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useCart, CartItem } from '../../contexts/CartContext';
 
@@ -40,7 +40,7 @@ const Cart: React.FC = () => {
       key: 'name',
       render: (text: string, record: CartItem) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src={record.image} alt={text} style={{ width: 50, marginRight: 10 }} />
+          <img src={record.thumbnail} alt={text} style={{ width: 50, marginRight: 10 }} />
           {text}
         </div>
       ),

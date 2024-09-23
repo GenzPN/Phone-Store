@@ -4,18 +4,19 @@ require('dotenv').config();
 
 async function hashExistingPasswords() {
   const connection = await mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'phone_store',
-    port: 3306
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'phone_store',
+    port: process.env.DB_PORT || 3306
   });
 
   try {
-    const [rows] = await connection.execute('SELECT id, password FROM Users WHERE password_hashed = 0');
+    const [rows] = await connection.execute('SELECT id, password FROM Users WHERE password_hashed = FALSE');
     for (const user of rows) {
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      await connection.execute('UPDATE Users SET password = ?, password_hashed = 1 WHERE id = ?', [hashedPassword, user.id]);
+      await connection.execute('UPDATE Users SET password = ?, password_hashed = TRUE WHERE id = ?', [hashedPassword, user.id]);
+      console.log(`Hashed password for user ID ${user.id}`);
     }
     console.log('All unhashed passwords have been hashed successfully.');
   } catch (error) {
@@ -25,5 +26,9 @@ async function hashExistingPasswords() {
   }
 }
 
-// Export the function so it can be used in other files
+// Chạy hàm nếu script được chạy trực tiếp
+if (require.main === module) {
+  hashExistingPasswords().then(() => process.exit());
+}
+
 module.exports = hashExistingPasswords;

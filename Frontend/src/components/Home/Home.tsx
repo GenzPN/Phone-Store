@@ -3,36 +3,105 @@ import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "an
 import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { formatProductNameForUrl } from '../../utils/stringUtils';
+import { useCart, CartItem } from '../../contexts/CartContext';
 
 const { Title, Text } = Typography;
 
-const Home = () => {
-    const [bestSellers, setBestSellers] = useState([]);
-    const [phonesByBrand, setPhonesByBrand] = useState({});
-    const carouselRefs = useRef({});
+interface Phone {
+  id: number;
+  title: string;
+  name: string; // Thêm trường này
+  price: string | number;
+  thumbnail: string;
+  brand: string;
+  quantity?: number;
+}
+
+const Home: React.FC = () => {
+    const { cartItems, setCartItems } = useCart();
+    const [bestSellers, setBestSellers] = useState<Phone[]>([]);
+    const [phonesByBrand, setPhonesByBrand] = useState<Record<string, Phone[]>>({});
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const carouselRefs = useRef<Record<string, any>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch('/phoneData.json')
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/products?page=${currentPage}&limit=20`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                console.log('Received products:', data.products);
+                const products: Phone[] = data.products;
+                
+                setBestSellers(products.slice(0, 4));
+
+                const groupedProducts = products.reduce((acc: Record<string, Phone[]>, product: Phone) => {
+                    if (!acc[product.brand]) {
+                        acc[product.brand] = [];
+                    }
+                    acc[product.brand].push(product);
+                    return acc;
+                }, {});
+
+                setPhonesByBrand(prevState => ({
+                    ...prevState,
+                    ...groupedProducts
+                }));
+                setTotalPages(data.totalPages);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            }
+        };
+
+        fetchProducts();
+    }, [currentPage]);
+
+    const handleImageClick = (productName: string) => {
+        navigate(`/details/${formatProductNameForUrl(productName)}`);
+    };
+
+    const handleAddToCart = (phone: Phone) => {
+        const existingItem = cartItems.find((item: CartItem) => item.id === phone.id);
+        let updatedCart: CartItem[];
+        if (existingItem) {
+            updatedCart = cartItems.map((item: CartItem) =>
+                item.id === phone.id ? { ...item, quantity: (item.quantity || 0) + 1 } : item
+            );
+        } else {
+            const newCartItem: CartItem = {
+                id: phone.id,
+                name: phone.title,
+                price: typeof phone.price === 'string' ? parseFloat(phone.price) : phone.price,
+                thumbnail: phone.thumbnail,
+                brand: phone.brand,
+                quantity: 1
+            };
+            updatedCart = [...cartItems, newCartItem];
+        }
+        setCartItems(updatedCart);
+
+        // Lưu đơn hàng vào cookie
+        fetch('http://localhost:5000/api/cookie/save-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedCart),
+            credentials: 'include', // Quan trọng để gửi và nhận cookies
+        })
             .then(response => response.json())
-            .then(data => {
-                setBestSellers(data.bestSellers);
-                setPhonesByBrand(data.phonesByBrand);
-            })
-            .catch(error => console.error('Error fetching data:', error));
-    }, []); // Mảng dependencies trống
+            .then(data => console.log(data.message))
+            .catch(error => console.error('Error saving order to cookie:', error));
 
-    const handleImageClick = (phoneName) => {
-        navigate(`/details/${formatProductNameForUrl(phoneName)}`);
+        message.success(`Đã thêm ${phone.title} vào giỏ hàng`);
     };
 
-    const handleAddToCart = (phone) => {
-        // Thêm logic để thêm sản phẩm vào giỏ hàng ở đây
-        message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
-    };
-
-    const renderPhoneCard = (phone) => (
-        <div key={phone.name} style={{ padding: '0 10px' }}>
+    const renderPhoneCard = (phone: Phone) => (
+        <div key={phone.id} style={{ padding: '0 10px' }}>
             <Card
                 hoverable
                 cover={
@@ -41,15 +110,15 @@ const Home = () => {
                         display: 'flex', 
                         justifyContent: 'center', 
                         alignItems: 'center', 
-                        height: '250px',
+                        height: '300px',
                         overflow: 'hidden',
                         cursor: 'pointer'
                     }}
-                    onClick={() => handleImageClick(phone.name)}
+                    onClick={() => handleImageClick(phone.title)}
                     >
                         <Image 
-                            alt={phone.name} 
-                            src={phone.img} 
+                            alt={phone.title} 
+                            src={phone.thumbnail} 
                             preview={false}
                             style={{ 
                                 width: '100%', 
@@ -70,21 +139,21 @@ const Home = () => {
                     boxShadow: 'none',
                     background: 'transparent'
                 }}
-                styles={{
-                    body: { 
-                        flex: 1, 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        padding: '10px 0'
-                    }
+                bodyStyle={{ 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    padding: '10px 0'
                 }}
             >
                 <Title level={5} style={{ color: "#219ebc", textAlign: "center", marginBottom: '5px' }}>
-                    {phone.name}
+                    {phone.title}
                 </Title>
-                <Text style={{ display: "block", textAlign: "center", marginBottom: '15px' }}>{phone.price}</Text>
+                <Text style={{ display: "block", textAlign: "center", marginBottom: '15px' }}>
+                    {phone.price !== null && phone.price !== undefined ? phone.price : 'Giá không xác định'}
+                </Text>
                 <Row justify="center" style={{ marginTop: 'auto' }}>
-                    <Link to={`/details/${formatProductNameForUrl(phone.name)}`}>
+                    <Link to={`/details/${formatProductNameForUrl(phone.title)}`}>
                         <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
                     </Link>
                     <Button 
@@ -190,7 +259,7 @@ const Home = () => {
                             </div>
                         }
                     >
-                        <Carousel {...bestSellerSettings} ref={ref => carouselRefs.current['bestSellers'] = ref}>
+                        <Carousel {...bestSellerSettings} ref={ref => {if (ref) carouselRefs.current['bestSellers'] = ref}}>
                             {bestSellers.map(renderPhoneCard)}
                         </Carousel>
                     </Card>
@@ -224,13 +293,19 @@ const Home = () => {
                                 </div>
                             }
                         >
-                            <Carousel {...settings} ref={ref => carouselRefs.current[brand] = ref}>
+                            <Carousel {...settings} ref={ref => {if (ref) carouselRefs.current[brand] = ref}}>
                                 {phones.map(renderPhoneCard)}
                             </Carousel>
                         </Card>
                     </Col>
                 ))}
             </Row>
+            
+            {currentPage < totalPages && (
+                <Button onClick={() => setCurrentPage(prev => prev + 1)}>
+                    Load More
+                </Button>
+            )}
         </>
     );
 };

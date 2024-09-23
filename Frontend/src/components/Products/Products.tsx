@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, message } from 'antd';
+import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, Empty, message } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { useCart, CartItem } from '../../contexts/CartContext';
 
@@ -8,10 +8,10 @@ const { Title } = Typography;
 const { Option } = Select;
 
 interface Phone {
-  id: number;  // Thêm trường id
+  id: number;
   name: string;
-  price: number;  // Đã thay đổi từ string sang number
-  img: string;
+  price: number;
+  thumbnail: string;
   brand: string;
 }
 
@@ -24,6 +24,7 @@ const Products: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
   const [brandFilter, setBrandFilter] = useState<string[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const filterAndSortPhones = useCallback(() => {
     let filtered = phones;
@@ -36,7 +37,7 @@ const Products: React.FC = () => {
     // Price filtering
     if (priceFilter !== 'all') {
       filtered = filtered.filter(phone => {
-        const price = phone.price / 1000000;  // Giả sử giá được lưu trữ trong đơn vị đồng
+        const price = phone.price / 1000000;
         switch (priceFilter) {
           case 'under5':
             return price < 5;
@@ -70,23 +71,40 @@ const Products: React.FC = () => {
   }, [phones, brandFilter, priceFilter, priceRange, sortOrder]);
 
   useEffect(() => {
-    fetch('/phoneData.json')
+    setLoading(true);
+    fetch('http://localhost:5000/api/products')
       .then(response => response.json())
       .then(data => {
-        if (data && data.phonesByBrand) {
-          const allPhones = Object.values(data.phonesByBrand).flat() as Phone[];
+        console.log('Raw data from API:', data);
+        if (data && data.products && Array.isArray(data.products)) {
+          const allPhones: Phone[] = data.products.map((product: any) => ({
+            id: product.id,
+            name: product.title,
+            price: parseFloat(product.price.replace(/[^\d]/g, '')),
+            thumbnail: product.thumbnail || '', // Sử dụng trường thumbnail
+            brand: product.brand
+          }));
+          console.log('Processed phones:', allPhones);
           setPhones(allPhones);
+          setFilteredPhones(allPhones);
           
-          // Lọc ra các thương hiệu có sản phẩm
-          const brands = Object.keys(data.phonesByBrand).filter(brand => 
-            data.phonesByBrand[brand].length > 0
-          );
+          // Extract unique brands
+          const brandsSet = new Set(allPhones.map(phone => phone.brand));
+          const brands = Array.from(brandsSet) as string[];
+          console.log('Available brands:', brands);
           setAvailableBrands(brands);
         } else {
           console.error('Invalid data structure:', data);
+          setPhones([]);
+          setFilteredPhones([]);
         }
       })
-      .catch(error => console.error('Error fetching phone data:', error));
+      .catch(error => {
+        console.error('Error fetching phone data:', error);
+        setPhones([]);
+        setFilteredPhones([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -106,23 +124,37 @@ const Products: React.FC = () => {
 
   const addToCart = (phone: Phone) => {
     const existingItem = cartItems.find(item => item.id === phone.id);
+    let updatedCart;
     if (existingItem) {
-      setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
+      updatedCart = cartItems.map(item =>
+        item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
       );
     } else {
-      setCartItems(prevItems => [...prevItems, { ...phone, image: phone.img, quantity: 1 }]);
+      updatedCart = [...cartItems, { ...phone, quantity: 1 }];
     }
+    setCartItems(updatedCart);
+
+    // Lưu đơn hàng vào cookie
+    fetch('http://localhost:5000/api/cookie/save-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedCart),
+      credentials: 'include', // Quan trọng để gửi và nhận cookies
+    })
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error('Error saving order to cookie:', error));
+
     message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
   };
 
   return (
-    <div>
-      <Title level={2}>All Products</Title>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+      <Title level={2}>Tất cả sản phẩm</Title>
       <Row gutter={[24, 24]}>
-        <Col span={6}>
+        <Col xs={24} sm={24} md={6} lg={6}>
           <Card title="Bộ lọc">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <div>
@@ -152,25 +184,25 @@ const Products: React.FC = () => {
                   </Space>
                 </Radio.Group>
               </div>
-              <div>
-                <Title level={5}>Tùy chỉnh khoảng giá</Title>
-                <Slider
-                  range
-                  min={0}
-                  max={50}
-                  value={priceRange}
-                  onChange={handlePriceRangeChange}
-                  marks={{
-                    0: '0đ',
-                    10: '10tr',
-                    20: '20tr',
-                    30: '30tr',
-                    40: '40tr',
-                    50: '50tr+'
-                  }}
-                  disabled={priceFilter !== 'custom'}
-                />
-              </div>
+              {priceFilter === 'custom' && (
+                <div>
+                  <Slider
+                    range
+                    min={0}
+                    max={50}
+                    value={priceRange}
+                    onChange={handlePriceRangeChange}
+                    marks={{
+                      0: '0',
+                      10: '10tr',
+                      20: '20tr',
+                      30: '30tr',
+                      40: '40tr',
+                      50: '50tr+'
+                    }}
+                  />
+                </div>
+              )}
               <div>
                 <Title level={5}>Sắp xếp theo giá</Title>
                 <Select
@@ -186,55 +218,80 @@ const Products: React.FC = () => {
             </Space>
           </Card>
         </Col>
-        <Col span={18}>
-          <Row gutter={[16, 16]}>
-            {filteredPhones.map((phone, index) => (
-              <Col key={index} xs={24} sm={12} md={8} lg={6}>
-                <Card
-                  hoverable
-                  cover={
-                    <div style={{
-                      padding: '20px',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '250px',
-                      overflow: 'hidden'
-                    }}>
-                      <Image
-                        alt={phone.name}
-                        src={phone.img}
-                        preview={false}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                          width: '100%',
-                          height: '100%',
-                          objectPosition: 'center'
-                        }}
+        <Col xs={24} sm={24} md={18} lg={18}>
+          {loading ? (
+            <div>Loading...</div>
+          ) : filteredPhones.length > 0 ? (
+            <Row gutter={[16, 16]}>
+              {filteredPhones.map((phone, index) => (
+                <Col key={index} xs={12} sm={8} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    cover={
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '200px',
+                        overflow: 'hidden',
+                        backgroundColor: 'white',
+                        padding: '10px'
+                      }}>
+                        <Image
+                          alt={phone.name}
+                          src={phone.thumbnail}
+                          preview={false}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
+                        />
+                      </div>
+                    }
+                    bodyStyle={{ padding: '10px' }}
+                  >
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <Meta 
+                        title={<span style={{ fontSize: '14px', fontWeight: 'bold', height: '40px', overflow: 'hidden', display: 'block' }}>{phone.name}</span>} 
+                        description={<span style={{ fontSize: '16px', color: '#f5222d', fontWeight: 'bold' }}>{phone.price.toLocaleString()} đ</span>}
                       />
-                    </div>
-                  }
-                >
-                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    <Meta 
-                      title={phone.name} 
-                      description={`${phone.brand || 'Unknown Brand'} - ${phone.price.toLocaleString()} đ`} 
-                    />
-                    <Button 
-                      type="primary" 
-                      icon={<ShoppingCartOutlined />} 
-                      style={{ width: '100%' }}
-                      onClick={() => addToCart(phone)}
-                    >
-                      Thêm vào giỏ hàng
-                    </Button>
-                  </Space>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                      <Button 
+                        type="primary" 
+                        style={{ 
+                          width: '100%', 
+                          marginTop: '5px',
+                        }} 
+                        onClick={() => addToCart(phone)}
+                      >
+                        Thêm vào giỏ
+                      </Button>
+                    </Space>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <span>
+                  Không tìm thấy sản phẩm nào phù hợp với tiêu chí tìm kiếm
+                </span>
+              }
+            >
+              <Button type="primary" onClick={() => {
+                setPriceFilter('all');
+                setPriceRange([0, 50]);
+                setSortOrder('');
+                setBrandFilter([]);
+              }}>
+                Đặt lại bộ lọc
+              </Button>
+            </Empty>
+          )}
         </Col>
       </Row>
     </div>

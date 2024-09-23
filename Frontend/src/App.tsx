@@ -13,8 +13,6 @@ import Details from './components/Details/Details';
 import Cart from './components/Cart/Cart';
 import Products from './components/Products/Products';
 import Checkout from './components/Checkout/Checkout';
-import Address from './components/Address/Address';
-import Test from './components/Test';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
@@ -28,6 +26,7 @@ interface UserData {
   lastName: string;
   gender: string;
   image: string;
+  fullName: string; // Thêm trường này
 }
 
 const App: React.FC = () => {
@@ -124,11 +123,7 @@ const App: React.FC = () => {
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/products/checkout" element={<Checkout />} />
-                  <Route 
-                    path="/products/checkout/address" 
-                    element={user ? <Address userId={user.id} /> : <Navigate to="/api/auth/login" state={{ from: '/products/checkout/address' }} />} 
-                  />
-                  <Route path="/test" element={<Test />} />
+                  {/* Removed the Address route */}
                   <Route 
                     path="/profile" 
                     element={
