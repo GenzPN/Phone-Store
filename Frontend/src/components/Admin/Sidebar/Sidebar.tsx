@@ -34,6 +34,11 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ collapsed }) => {
     },
     {
       key: '5',
+      icon: <UsergroupAddOutlined />,
+      label: <Link to="/admin/addressuser">Address User</Link>,
+    },
+    {
+      key: '6',
       icon: <SettingOutlined />,
       label: <Link to="/admin/settings">Settings</Link>,
     },

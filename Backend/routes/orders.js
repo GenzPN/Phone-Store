@@ -6,14 +6,26 @@ const authenticateToken = require('../middleware/auth');
 // Lấy danh sách đơn hàng của người dùng
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    console.log('User ID:', req.user.id); // Log user ID để kiểm tra
+
     const [orders] = await db.promise().query(
-      'SELECT o.id, o.status, o.total_amount, oi.product_id, p.title as name, p.thumbnail as image, oi.quantity as amount, o.note, o.created_at, p.price FROM Orders o JOIN OrderItems oi ON o.id = oi.order_id JOIN Products p ON oi.product_id = p.id WHERE o.user_id = ? ORDER BY o.created_at DESC',
+      'SELECT * FROM Orders WHERE user_id = ?',
       [req.user.id]
     );
-    res.json(orders);
+
+    console.log('Raw orders:', orders); // Log raw orders data
+
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      items: JSON.parse(order.items)
+    }));
+
+    console.log('Formatted orders:', formattedOrders); // Log formatted orders
+
+    res.json(formattedOrders);
   } catch (error) {
     console.error('Get orders error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -69,6 +81,53 @@ router.get('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get order details error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Thêm route mới để lấy tất cả đơn hàng (chỉ cho admin)
+router.get('/all', authenticateToken, async (req, res) => {
+  try {
+    // Kiểm tra xem người dùng có phải là admin không
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const [orders] = await db.promise().query(`
+      SELECT o.*, u.username, ua.fullName, ua.phone, ua.address
+      FROM Orders o
+      JOIN Users u ON o.user_id = u.id
+      LEFT JOIN UserAddresses ua ON o.address_id = ua.id
+      ORDER BY o.created_at DESC
+    `);
+
+    const ordersWithItems = await Promise.all(orders.map(async (order) => {
+      const [items] = await db.promise().query(`
+        SELECT oi.*, p.title, p.thumbnail
+        FROM OrderItems oi
+        JOIN Products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `, [order.id]);
+
+      return { ...order, items };
+    }));
+
+    console.log('Orders with items:', ordersWithItems); // Log để kiểm tra
+
+    res.json(ordersWithItems);
+  } catch (error) {
+    console.error('Get all orders error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
+
+// Thêm route mới để kiểm tra lấy tất cả đơn hàng
+router.get('/test', authenticateToken, async (req, res) => {
+  try {
+    const [orders] = await db.promise().query('SELECT * FROM Orders');
+    res.json(orders);
+  } catch (error) {
+    console.error('Test orders error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select, Upload } from 'antd';
+import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import axios from 'axios';
 
 const { Option } = Select;
 
@@ -29,7 +30,6 @@ interface Product {
   featured_sort_order: number;
 }
 
-
 const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -37,7 +37,7 @@ const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) =
         <img
           src={value || 'https://via.placeholder.com/100'}
           alt="Preview"
-          style={{ width: 100, height: 100, objectFit: 'cover' }}
+          style={{ width: 100, height: 100, objectFit: 'contain' }}
         />
       </div>
       <Input
@@ -65,23 +65,21 @@ const Products: React.FC = () => {
     total: 0,
   });
 
-
   const fetchProducts = useCallback(async (page = 1, pageSize = 20) => {
     setLoading(true);
     try {
       const brandQuery = brandFilter.length > 0 ? `&brand=${brandFilter.join(',')}` : '';
       const isFeaturedQuery = isFeaturedFilter !== null ? `&isFeatured=${isFeaturedFilter}` : '';
-      const response = await fetch(`http://localhost:5000/api/products?page=${page}&limit=${pageSize}${brandQuery}${isFeaturedQuery}`);
-      const data = await response.json();
-      setProducts(data.products);
+      const response = await axios.get(`http://localhost:5000/api/products?page=${page}&limit=${pageSize}${brandQuery}${isFeaturedQuery}`);
+      setProducts(response.data.products);
       setPagination({
-        current: data.currentPage,
-        pageSize: pageSize,
-        total: data.totalProducts,
+        current: page,
+        pageSize,
+        total: response.data.total,
       });
     } catch (error) {
-      console.error('Error fetching products:', error);
-      message.error('Failed to fetch products');
+      console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+      message.error('Không thể lấy danh sách sản phẩm');
     } finally {
       setLoading(false);
     }
@@ -90,20 +88,6 @@ const Products: React.FC = () => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  const handleTableChange = (pagination: any) => {
-    fetchProducts(pagination.current, pagination.pageSize); 
-  };    
-  
-  const handleBrandFilterChange = (value: string[]) => {    
-    setBrandFilter(value);  
-    fetchProducts(pagination.current, pagination.pageSize); 
-  };
-
-  const handleIsFeaturedFilterChange = (value: string | null) => {
-    setIsFeaturedFilter(value);
-    fetchProducts(pagination.current, pagination.pageSize);
-  };
 
   const handleEdit = (record: Product) => {
     setEditingProduct(record);
@@ -132,11 +116,8 @@ const Products: React.FC = () => {
 
   const handleDelete = async (record: Product) => {
     try {
-      await fetch(`http://localhost:5000/api/products/${record.id}`, {
-        method: 'DELETE',
-        headers: {
-          'x-admin': 'true'
-        }
+      await axios.delete(`http://localhost:5000/api/products/${record.id}`, {
+        headers: { 'x-admin': 'true' }
       });
       message.success('Sản phẩm đã được xóa thành công');
       fetchProducts(pagination.current, pagination.pageSize);
@@ -146,30 +127,45 @@ const Products: React.FC = () => {
     }
   };
 
-  const handleEditModalOk = () => {
-    form.validateFields().then(async (values) => {
+  const handleEditModalOk = async () => {
+    try {
+      const values = await form.validateFields();
       const updatedProduct = {
         ...values,
-        images: JSON.stringify(values.images) // Chuyển images sang định dạng JSON
+        price: isNaN(Number(values.price)) ? 0 : Number(values.price),
+        stock: Number(values.stock),
+        minimum_order_quantity: Number(values.minimum_order_quantity),
+        discount_percentage: Number(values.discount_percentage),
+        is_featured: Number(values.is_featured),
+        featured_sort_order: Number(values.featured_sort_order)
       };
-      console.log('Updated Product:', updatedProduct); // Thêm dòng này để kiểm tra dữ liệu
-      try {
-        await fetch(`http://localhost:5000/api/products/${editingProduct?.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin': 'true'
-          },
-          body: JSON.stringify(updatedProduct)
-        });
-        message.success('Sản phẩm đã được cập nhật thành công');
-        setEditModalVisible(false);
-        fetchProducts(pagination.current, pagination.pageSize);
-      } catch (error) {
-        console.error('Lỗi khi cập nhật sản phẩm:', error);
+      console.log('Updated Product:', updatedProduct);
+
+      const token = localStorage.getItem('token');
+
+      await axios.put(`http://localhost:5000/api/products/${editingProduct?.id}`, updatedProduct, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      message.success('Sản phẩm đã được cập nhật thành công');
+      setEditModalVisible(false);
+      fetchProducts(pagination.current, pagination.pageSize);
+    } catch (error) {
+      console.error('Lỗi khi cập nhật sản phẩm:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        message.error(error.response.data.message || 'Không thể cập nhật sản phẩm');
+      } else {
         message.error('Không thể cập nhật sản phẩm');
       }
-    });
+    }
+  };
+
+  const handleTableChange = (pagination: any) => {
+    setPagination(pagination);
+    fetchProducts(pagination.current, pagination.pageSize);
   };
 
   const columns = [
@@ -190,7 +186,7 @@ const Products: React.FC = () => {
             style={{ 
               width: '100%', 
               height: '100%', 
-              objectFit: 'cover',
+              objectFit: 'contain',
               objectPosition: 'center'
             }} 
           />
@@ -240,7 +236,7 @@ const Products: React.FC = () => {
         <Select
           mode="multiple"
           placeholder="Lọc theo thương hiệu"
-          onChange={handleBrandFilterChange}
+          onChange={setBrandFilter}
           style={{ width: 200 }}
         >
           <Option value="Apple">Apple</Option>
@@ -250,7 +246,7 @@ const Products: React.FC = () => {
         </Select>
         <Select
           placeholder="Lọc theo nổi bật"
-          onChange={handleIsFeaturedFilterChange}
+          onChange={setIsFeaturedFilter}
           style={{ width: 200 }}
           allowClear
         >
@@ -269,10 +265,10 @@ const Products: React.FC = () => {
         bordered
       />
       <Modal
-        title="Chỉnh sửa sản phẩm"
-        visible={editModalVisible}
-        onOk={handleEditModalOk}
+        open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
+        onOk={handleEditModalOk}
+        title={editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
         width={800}
       >
         <Form form={form} layout="vertical">
@@ -290,7 +286,10 @@ const Products: React.FC = () => {
               {(fields, { add, remove }) => (
                 <>
                   {fields.map((field, index) => (
-                    <Form.Item required={false} key={field.key}>
+                    <Form.Item
+                      key={field.key}
+                      required={false}
+                    >
                       <Form.Item
                         {...field}
                         validateTrigger={['onChange', 'onBlur']}

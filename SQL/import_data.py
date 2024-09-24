@@ -215,14 +215,14 @@ def main():
                 insert_product_reviews(connection, product_id, reviews)
                 print(f"Inserted reviews for product: {product_name}")
 
-    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.js
-    with open('address.js', 'r', encoding='utf-8') as file:
+    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.json
+    with open('address.json', 'r', encoding='utf-8') as file:
         address_data = json.load(file)
         for address in address_data['user_addresses']:
             insert_user_address(connection, address)
 
-    # Đọc và xử lý dữ liệu đơn hàng từ order.js
-    with open('order.js', 'r', encoding='utf-8') as file:
+    # Đọc và xử lý dữ liệu đơn hàng từ order.json
+    with open('order.json', 'r', encoding='utf-8') as file:
         order_data = json.load(file)
         for order in order_data['orders']:
             insert_order(connection, order)

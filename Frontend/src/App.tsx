@@ -25,6 +25,7 @@ import ProductsAdmin from './components/Admin/Products/Products';
 import SettingsAdmin from './components/Admin/Settings/Settings';
 import OrdersAdmin from './components/Admin/Orders/Orders';
 import UsersAdmin from './components/Admin/Users/Users';
+import AddressUser from './components/Admin/AddressUser/AddressUser';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
@@ -126,6 +127,7 @@ const App: React.FC = () => {
                 <Route path="/users" element={<UsersAdmin />} />
                 <Route path="/settings" element={<SettingsAdmin />} />
                 <Route path="/products" element={<ProductsAdmin />} />
+                <Route path="/addressuser" element={<AddressUser />} />
                 <Route path="*" element={<Navigate to="/admin/dashboard" />} />
               </Routes>
             </Content>

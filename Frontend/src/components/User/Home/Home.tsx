@@ -132,7 +132,7 @@ const Home: React.FC = () => {
                             style={{ 
                                 width: '100%', 
                                 height: '100%', 
-                                objectFit: 'cover',
+                                objectFit: 'contain',
                                 objectPosition: 'center'
                             }}
                         />
@@ -234,7 +234,7 @@ const Home: React.FC = () => {
                     style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'contain',
                         objectPosition: 'center'
                     }}
                 />

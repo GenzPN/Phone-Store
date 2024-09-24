@@ -1,24 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 const authenticateToken = (req, res, next) => {
-  // Bỏ qua xác thực cho các yêu cầu từ admin
-  if (req.headers['x-admin'] === 'true') {
-    return next();
-  }
-
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (token == null) {
-    console.log('Token is null');
-    return res.sendStatus(401);
-  }
+  if (token == null) return res.sendStatus(401); // If no token, return 401 Unauthorized
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log('Token verification failed:', err);
-      return res.sendStatus(403);
-    }
+    if (err) return res.sendStatus(403); // If token is invalid, return 403 Forbidden
     req.user = user;
     next();
   });

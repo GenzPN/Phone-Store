@@ -6,7 +6,7 @@
       "password": "12345678",
       "fullName": "Admin User",
       "gender": "other",
-      "image": "https://example.com/admin_avatar.jpg",
+      "image": "https://via.placeholder.com/1080",
       "isAdmin": true
     },
     {
@@ -15,7 +15,7 @@
       "password": "johndoepass",
       "fullName": "John Doe",
       "gender": "male",
-      "image": "https://example.com/john_avatar.jpg",
+      "image": "https://via.placeholder.com/1080",
       "isAdmin": false
     },
     {
@@ -24,7 +24,7 @@
       "password": "janepass",
       "fullName": "Jane Smith",
       "gender": "female",
-      "image": "https://example.com/jane_avatar.jpg",
+      "image": "https://via.placeholder.com/1080",
       "isAdmin": false
     }
   ]

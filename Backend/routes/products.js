@@ -199,10 +199,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
     sku, warranty_information, shipping_information, availability_status,
     return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order
   } = req.body;
-  console.log('Received Product Data:', req.body); // Thêm dòng này để kiểm tra dữ liệu
-  console.log('Images before stringify:', images); // Log giá trị của images trước khi chuyển đổi
+  
+  console.log('Received Product Data:', req.body); // Log the entire request body
+  console.log('Images before stringify:', images); // Log the images before stringifying
+
   try {
-    // Kiểm tra quyền truy cập
+    // Check user role
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Bạn không có quyền cập nhật sản phẩm này' });
     }
@@ -222,6 +224,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
         return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id
       ]
     );
+
+    console.log('Update result:', result); // Log the result of the update query
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
     }

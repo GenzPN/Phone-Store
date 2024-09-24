@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
@@ -10,6 +9,7 @@ const orderRoutes = require('./routes/orders');
 const cartRoutes = require('./routes/cart');
 const hashExistingPasswords = require('./hashExistingPasswords');
 const cookieRoutes = require('./routes/cookie');
+const devAuth = require('./middleware/devAuth'); // Import the devAuth middleware
 
 if (!process.env.JWT_SECRET) {
   console.error('JWT_SECRET is not set. Please set it in your .env file.');
@@ -17,15 +17,24 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
-app.use(cors({
-  origin: 'http://localhost:3000', // Thay đổi nếu frontend của bạn chạy ở port khác
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin'], // Thêm 'x-admin' vào danh sách các header được phép
-  credentials: true // Thêm dòng này để cho phép gửi cookie
-}));
+
+// Manually set CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Change if your frontend runs on a different port
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
+
+// Use devAuth middleware in development environment
+if (process.env.NODE_ENV === 'development') {
+  app.use(devAuth);
+}
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -36,10 +45,10 @@ app.use('/api/cookie', cookieRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-// Hàm để khởi động server
+// Function to start the server
 async function startServer() {
   try {
-    // Chạy hàm hash password trước khi khởi động server
+    // Run the hash password function before starting the server
     await hashExistingPasswords();
     
     app.listen(PORT, () => {
@@ -52,7 +61,7 @@ async function startServer() {
   }
 }
 
-// Khởi động server
+// Start the server
 startServer();
 
 process.on('unhandledRejection', (reason, promise) => {
