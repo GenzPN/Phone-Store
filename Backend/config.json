@@ -1,0 +1,10 @@
+{
+    "adminSettings": {
+      "siteName": "Phone Store Admin",
+      "logoUrl": "/images/logo.png",
+      "theme": "light",
+      "language": "vi",
+      "itemsPerPage": 10,
+      "enableNotifications": true
+    }
+  }
