@@ -14,24 +14,51 @@ const formatPrice = (price) => {
 
 // Lấy danh sách sản phẩm
 router.get('/', async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
-  const offset = (page - 1) * limit;
-
   try {
-    const [products] = await db.promise().query('SELECT * FROM Products LIMIT ? OFFSET ?', [Number(limit), offset]);
-    const [countResult] = await db.promise().query('SELECT COUNT(*) as total FROM Products');
-    const totalProducts = countResult[0].total;
+    const { page = 1, limit = 20, brand, isFeatured } = req.query;
+    const offset = (page - 1) * limit;
 
-    if (!products || products.length === 0) {
-      console.log('No products found or empty result');
-      return res.status(404).json({ message: 'No products found' });
+    let query = 'SELECT * FROM Products WHERE 1=1';
+    const queryParams = [];
+
+    if (brand) {
+      query += ' AND brand IN (?)';
+      queryParams.push(brand.split(','));
     }
+
+    if (isFeatured !== undefined) {
+      query += ' AND is_featured = ?';
+      queryParams.push(isFeatured);
+    }
+
+    query += ' LIMIT ? OFFSET ?';
+    queryParams.push(Number(limit), offset);
+
+    const [products] = await db.promise().query(query, queryParams);
+
+    const [countResult] = await db.promise().query(
+      'SELECT COUNT(*) as total FROM Products WHERE 1=1' +
+      (brand ? ' AND brand IN (?)' : '') +
+      (isFeatured !== undefined ? ' AND is_featured = ?' : ''),
+      brand ? [brand.split(','), isFeatured] : [isFeatured]
+    );
+
+    const totalProducts = countResult[0].total;
 
     const formattedProducts = products.map(product => ({
       ...product,
       price: formatPrice(product.price),
-      images: JSON.parse(product.images || '[]')
+      images: JSON.parse(product.images || '[]'),
+      category: product.category,
+      screen: product.screen,
+      back_camera: product.back_camera,
+      front_camera: product.front_camera,
+      ram: product.ram,
+      storage: product.storage,
+      battery: product.battery
     }));
+
+    console.log('Sending products:', formattedProducts);
 
     res.json({
       products: formattedProducts,
@@ -40,8 +67,8 @@ router.get('/', async (req, res) => {
       totalProducts
     });
   } catch (error) {
-    console.error('Get products error:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -54,11 +81,20 @@ router.get('/:id', async (req, res) => {
     }
     const [reviews] = await db.promise().query('SELECT * FROM ProductReviews WHERE product_id = ?', [req.params.id]);
     
-    // Định dạng giá cho sản phẩm
     const formattedProduct = {
       ...products[0],
-      price: formatPrice(products[0].price)
+      price: formatPrice(products[0].price),
+      images: JSON.parse(products[0].images || '[]'),
+      category: products[0].category,
+      screen: products[0].screen,
+      back_camera: products[0].back_camera,
+      front_camera: products[0].front_camera,
+      ram: products[0].ram,
+      storage: products[0].storage,
+      battery: products[0].battery
     };
+
+    console.log('Sending product details:', formattedProduct);
 
     res.json({ ...formattedProduct, reviews });
   } catch (error) {
@@ -157,16 +193,42 @@ router.post('/:id/reviews', async (req, res) => {
 
 // Cập nhật sản phẩm
 router.put('/:id', authenticateToken, async (req, res) => {
-  const { title, description, price, stock, brand, thumbnail, images, category, sku, warranty_information, shipping_information, availability_status, return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order } = req.body;
+  const { 
+    title, description, price, stock, brand, thumbnail, images, 
+    screen, back_camera, front_camera, ram, storage, battery, category,
+    sku, warranty_information, shipping_information, availability_status,
+    return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order
+  } = req.body;
+  console.log('Received Product Data:', req.body); // Thêm dòng này để kiểm tra dữ liệu
+  console.log('Images before stringify:', images); // Log giá trị của images trước khi chuyển đổi
   try {
+    // Kiểm tra quyền truy cập
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Bạn không có quyền cập nhật sản phẩm này' });
+    }
+
     const [result] = await db.promise().query(
-      'UPDATE Products SET title = ?, description = ?, price = ?, stock = ?, brand = ?, thumbnail = ?, images = ?, category = ?, sku = ?, warranty_information = ?, shipping_information = ?, availability_status = ?, return_policy = ?, minimum_order_quantity = ?, discount_percentage = ?, is_featured = ?, featured_sort_order = ? WHERE id = ?',
-      [title, description, price, stock, brand, thumbnail, JSON.stringify(images), category, sku, warranty_information, shipping_information, availability_status, return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id]
+      `UPDATE Products SET 
+        title = ?, description = ?, price = ?, stock = ?, brand = ?, 
+        thumbnail = ?, images = ?, screen = ?, back_camera = ?, 
+        front_camera = ?, ram = ?, storage = ?, battery = ?, category = ?,
+        sku = ?, warranty_information = ?, shipping_information = ?, availability_status = ?,
+        return_policy = ?, minimum_order_quantity = ?, discount_percentage = ?, is_featured = ?, featured_sort_order = ?
+      WHERE id = ?`,
+      [
+        title, description, price, stock, brand, thumbnail, 
+        JSON.stringify(images), screen, back_camera, front_camera, 
+        ram, storage, battery, category, sku, warranty_information, shipping_information, availability_status,
+        return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id
+      ]
     );
-    res.status(200).json({ message: 'Product updated' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+    }
+    res.status(200).json({ message: 'Sản phẩm đã được cập nhật' });
   } catch (error) {
-    console.error('Update product error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Lỗi khi cập nhật sản phẩm:', error);
+    res.status(500).json({ message: 'Lỗi server nội bộ', error: error.message });
   }
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
 import { CartProvider } from './contexts/CartContext';
 // User
@@ -24,7 +24,6 @@ import LoginAdmin from './components/Admin/Login/Login';
 import ProductsAdmin from './components/Admin/Products/Products';
 import SettingsAdmin from './components/Admin/Settings/Settings';
 import OrdersAdmin from './components/Admin/Orders/Orders';
-import StatusAdmin from './components/Admin/Status/Status';
 import UsersAdmin from './components/Admin/Users/Users';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
@@ -107,6 +106,35 @@ const App: React.FC = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  const AdminLayout = () => {
+    const location = useLocation();
+    const isLoginPage = location.pathname === '/admin/auth';
+
+    return (
+      <Layout style={{ minHeight: '100vh' }}>
+        {!isLoginPage && <HeaderAdmin onToggleSidebar={toggleSidebar} />}
+        <Layout>
+          {!isLoginPage && (
+            <SidebarAdmin collapsed={isSidebarCollapsed} />
+          )}
+          <Layout style={{ marginLeft: isSidebarCollapsed ? 80 : 200, marginTop: 64 }}>
+            <Content style={{ padding: 24, margin: 0, minHeight: 280 }}>
+              <Routes>
+                <Route path="/dashboard" element={<DashboardAdmin />} />
+                <Route path="/auth" element={<LoginAdmin />} />
+                <Route path="/orders" element={<OrdersAdmin />} />
+                <Route path="/users" element={<UsersAdmin />} />
+                <Route path="/settings" element={<SettingsAdmin />} />
+                <Route path="/products" element={<ProductsAdmin />} />
+                <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+              </Routes>
+            </Content>
+          </Layout>
+        </Layout>
+      </Layout>
+    );
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -130,26 +158,7 @@ const App: React.FC = () => {
               )
             } 
           />
-          <Route path="/admin/*" element={
-            <Layout>
-              <HeaderAdmin onToggleSidebar={toggleSidebar} />
-              <Layout style={{ marginLeft: isSidebarCollapsed ? 80 : 200 }}>
-                <SidebarAdmin collapsed={isSidebarCollapsed} />
-                <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
-                  <Routes>
-                    <Route path="dashboard" element={<DashboardAdmin />} />
-                    <Route path="auth" element={<LoginAdmin />} />
-                    <Route path="orders" element={<OrdersAdmin />} />
-                    <Route path="users" element={<UsersAdmin />} />
-                    <Route path="settings" element={<SettingsAdmin />} />
-                    <Route path="status" element={<StatusAdmin currentStatus={undefined} />} />
-                    <Route path="products" element={<ProductsAdmin />} />
-                    <Route path="*" element={<Navigate to="/admin/dashboard" />} />
-                  </Routes>
-                </Content>
-              </Layout>
-            </Layout>
-          } />
+          <Route path="/admin/*" element={<AdminLayout />} />
           <Route path="*" element={
             <Layout>
               <HeaderUser brands={brands} user={user} onLogout={handleLogout} />

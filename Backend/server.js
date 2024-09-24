@@ -20,7 +20,7 @@ const app = express();
 app.use(cors({
   origin: 'http://localhost:3000', // Thay đổi nếu frontend của bạn chạy ở port khác
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin'], // Thêm 'x-admin' vào danh sách các header được phép
   credentials: true // Thêm dòng này để cho phép gửi cookie
 }));
 app.use(express.json({ limit: '50mb' }));

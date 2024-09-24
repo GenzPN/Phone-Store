@@ -1,82 +1,338 @@
 {
-    "iPhone 16 Pro Max": [
-      {
-        "category": "Màn hình",
-        "items": [
-          { "label": "Kích thước màn hình", "value": "6.7 inches" },
-          { "label": "Công nghệ màn hình", "value": "Super Retina XDR OLED" },
-          { "label": "Độ phân giải màn hình", "value": "2796 x 1290-pixel" }
-        ]
-      },
-      {
-        "category": "Camera sau",
-        "items": [
-          { "label": "Camera chính", "value": "48MP" },
-          { "label": "Camera góc siêu rộng", "value": "12 MP" },
-          { "label": "Camera Tele", "value": "12 MP" }
-        ]
-      },
-      {
-        "category": "Camera trước",
-        "items": [
-          { "label": "Camera trước", "value": "12MP" }
-        ]
-      },
-      {
-        "category": "Vi xử lý & đồ họa",
-        "items": [
-          { "label": "Chipset", "value": "Apple A17 Pro" },
-          { "label": "CPU", "value": "6 lõi" },
-          { "label": "GPU", "value": "6 nhân" }
-        ]
-      },
-      {
-        "category": "Giao tiếp & kết nối",
-        "items": [
-          { "label": "NFC", "value": "Có" },
-          { "label": "Thẻ SIM", "value": "2 SIM" },
-          { "label": "Hệ điều hành", "value": "iOS 17" },
-          { "label": "Wi-Fi", "value": "Wi‑Fi 6E" },
-          { "label": "Bluetooth", "value": "v5.3" },
-          { "label": "GPS", "value": "GPS tần số kép" }
-        ]
-      },
-      {
-        "category": "RAM & lưu trữ",
-        "items": [
-          { "label": "Dung lượng RAM", "value": "8 GB" },
-          { "label": "Bộ nhớ trong", "value": "256 GB" }
-        ]
-      },
-      {
-        "category": "Pin & công nghệ sạc",
-        "items": [
-          { "label": "Pin", "value": "4422 mAh" },
-          { "label": "Công nghệ sạc", "value": "Sạc nhanh 20 W" },
-          { "label": "Cổng sạc", "value": "USB Type-C" }
-        ]
-      },
-      {
-        "category": "Thiết kế & Trọng lượng",
-        "items": [
-          { "label": "Kích thước", "value": "159,9 x 76,7 x 8,25 mm" },
-          { "label": "Trọng lượng", "value": "221 g" },
-          { "label": "Chất liệu mặt lưng", "value": "Kính" },
-          { "label": "Chất liệu khung viền", "value": "Titanium" }
-        ]
-      },
-      {
-        "category": "Thông số khác",
-        "items": [
-          { "label": "Chỉ số kháng nước, bụi", "value": "IP68" },
-          { "label": "Công nghệ âm thanh", "value": "Dolby Atmos" }
-        ]
-      },
-      {
-        "category": "Thông tin chung",
-        "items": [
-          { "label": "Thời điểm ra mắt", "value": "09/2023" }
-        ]
-      }
-    ]
-  }
+  "iPhone 16 Pro Max": [
+    { "label": "Màn hình", "value": "6.7\", Super Retina XDR" },
+    { "label": "Camera sau", "value": "48 MP + 12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4422 mAh" }
+  ],
+  "Samsung Galaxy S24 Ultra": [
+    { "label": "Màn hình", "value": "6.8\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "200 MP + 50 MP + 12 MP + 10 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Xiaomi 13 Pro": [
+    { "label": "Màn hình", "value": "6.73\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 50 MP + 50 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4820 mAh" }
+  ],
+  "OPPO Find X6 Pro": [
+    { "label": "Màn hình", "value": "6.82\", AMOLED LTPO" },
+    { "label": "Camera sau", "value": "50 MP + 50 MP + 50 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "iPhone 15 Pro Max": [
+    { "label": "Màn hình", "value": "6.7\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "48 MP + 12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4422 mAh" }
+  ],
+  "iPhone 15": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "48 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3349 mAh" }
+  ],
+  "iPhone 14 Pro": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "48 MP + 12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3200 mAh" }
+  ],
+  "iPhone 14": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3279 mAh" }
+  ],
+  "iPhone SE (2022)": [
+    { "label": "Màn hình", "value": "4.7\", Retina IPS LCD" },
+    { "label": "Camera sau", "value": "12 MP" },
+    { "label": "Camera Selfie", "value": "7 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "2018 mAh" }
+  ],
+  "iPhone 13 Pro": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3095 mAh" }
+  ],
+  "iPhone 13": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3240 mAh" }
+  ],
+  "iPhone 12 Pro": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "2815 mAh" }
+  ],
+  "iPhone 12": [
+    { "label": "Màn hình", "value": "6.1\", Super Retina XDR OLED" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "2815 mAh" }
+  ],
+  "iPhone 11": [
+    { "label": "Màn hình", "value": "6.1\", Liquid Retina IPS LCD" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "3110 mAh" }
+  ],
+  "Samsung Galaxy S23 Ultra": [
+    { "label": "Màn hình", "value": "6.8\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "200 MP + 10 MP + 10 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Samsung Galaxy S23": [
+    { "label": "Màn hình", "value": "6.1\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "50 MP + 10 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "12 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "3900 mAh" }
+  ],
+  "Samsung Galaxy Z Fold5": [
+    { "label": "Màn hình", "value": "7.6\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "50 MP + 10 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "4 MP + 10 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4400 mAh" }
+  ],
+  "Samsung Galaxy A54": [
+    { "label": "Màn hình", "value": "6.4\", Super AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 12 MP + 5 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Samsung Galaxy A34": [
+    { "label": "Màn hình", "value": "6.6\", Super AMOLED" },
+    { "label": "Camera sau", "value": "48 MP + 8 MP + 5 MP" },
+    { "label": "Camera Selfie", "value": "13 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Samsung Galaxy M14": [
+    { "label": "Màn hình", "value": "6.6\", PLS LCD" },
+    { "label": "Camera sau", "value": "50 MP + 2 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "13 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "6000 mAh" }
+  ],
+  "Samsung Galaxy S21 FE": [
+    { "label": "Màn hình", "value": "6.4\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP + 8 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "Samsung Galaxy Z Flip5": [
+    { "label": "Màn hình", "value": "6.7\", Dynamic AMOLED 2X" },
+    { "label": "Camera sau", "value": "12 MP + 12 MP" },
+    { "label": "Camera Selfie", "value": "10 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "3700 mAh" }
+  ],
+  "Samsung Galaxy A14": [
+    { "label": "Màn hình", "value": "6.6\", PLS LCD" },
+    { "label": "Camera sau", "value": "50 MP + 5 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "13 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Samsung Galaxy M54": [
+    { "label": "Màn hình", "value": "6.7\", Super AMOLED Plus" },
+    { "label": "Camera sau", "value": "108 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "6000 mAh" }
+  ],
+  "OPPO Reno 8 Pro": [
+    { "label": "Màn hình", "value": "6.7\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "OPPO A78": [
+    { "label": "Màn hình", "value": "6.4\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "8 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "OPPO F21 Pro": [
+    { "label": "Màn hình", "value": "6.43\", AMOLED" },
+    { "label": "Camera sau", "value": "64 MP + 2 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "OPPO A57": [
+    { "label": "Màn hình", "value": "6.56\", IPS LCD" },
+    { "label": "Camera sau", "value": "13 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "8 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "OPPO Reno 8": [
+    { "label": "Màn hình", "value": "6.4\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "OPPO A17": [
+    { "label": "Màn hình", "value": "6.56\", IPS LCD" },
+    { "label": "Camera sau", "value": "50 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "5 MP" },
+    { "label": "RAM", "value": "4 GB" },
+    { "label": "Bộ nhớ trong", "value": "64 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "OPPO Find N2 Flip": [
+    { "label": "Màn hình", "value": "6.8\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 8 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4300 mAh" }
+  ],
+  "OPPO A96": [
+    { "label": "Màn hình", "value": "6.59\", IPS LCD" },
+    { "label": "Camera sau", "value": "50 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "16 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "OPPO F19 Pro": [
+    { "label": "Màn hình", "value": "6.43\", Super AMOLED" },
+    { "label": "Camera sau", "value": "48 MP + 8 MP + 2 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "16 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "4310 mAh" }
+  ],
+  "Xiaomi 13": [
+    { "label": "Màn hình", "value": "6.36\", OLED" },
+    { "label": "Camera sau", "value": "50 MP + 12 MP + 10 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "Xiaomi 12 Pro": [
+    { "label": "Màn hình", "value": "6.73\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 50 MP + 50 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4600 mAh" }
+  ],
+  "Xiaomi 12": [
+    { "label": "Màn hình", "value": "6.28\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 13 MP + 5 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "Redmi Note 12 Pro": [
+    { "label": "Màn hình", "value": "6.67\", AMOLED" },
+    { "label": "Camera sau", "value": "50 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "16 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Redmi 12": [
+    { "label": "Màn hình", "value": "6.79\", IPS LCD" },
+    { "label": "Camera sau", "value": "50 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "8 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ],
+  "Poco F4": [
+    { "label": "Màn hình", "value": "6.67\", AMOLED" },
+    { "label": "Camera sau", "value": "64 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "20 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "Xiaomi 12 Lite": [
+    { "label": "Màn hình", "value": "6.55\", AMOLED" },
+    { "label": "Camera sau", "value": "108 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "32 MP" },
+    { "label": "RAM", "value": "8 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "4300 mAh" }
+  ],
+  "Xiaomi Mix 4": [
+    { "label": "Màn hình", "value": "6.67\", AMOLED" },
+    { "label": "Camera sau", "value": "108 MP + 13 MP + 8 MP" },
+    { "label": "Camera Selfie", "value": "20 MP" },
+    { "label": "RAM", "value": "12 GB" },
+    { "label": "Bộ nhớ trong", "value": "256 GB" },
+    { "label": "Pin", "value": "4500 mAh" }
+  ],
+  "Redmi Note 12": [
+    { "label": "Màn hình", "value": "6.67\", AMOLED" },
+    { "label": "Camera sau", "value": "48 MP + 8 MP + 2 MP" },
+    { "label": "Camera Selfie", "value": "13 MP" },
+    { "label": "RAM", "value": "6 GB" },
+    { "label": "Bộ nhớ trong", "value": "128 GB" },
+    { "label": "Pin", "value": "5000 mAh" }
+  ]
+}

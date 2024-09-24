@@ -1,7 +1,11 @@
 import json
 import mysql.connector
 from mysql.connector import Error
-import pkg_resources
+from importlib.metadata import distributions
+
+# Đọc dữ liệu từ productDetails.json
+with open('productDetails.json', 'r', encoding='utf-8') as file:
+    product_details_data = json.load(file)
 
 def create_connection():
     try:
@@ -18,8 +22,8 @@ def create_connection():
 
 def create_requirements_file():
     try:
-        installed_packages = pkg_resources.working_set
-        installed_packages_list = sorted([f"{i.key}=={i.version}" for i in installed_packages])
+        installed_packages = distributions()
+        installed_packages_list = sorted([f"{dist.metadata['Name']}=={dist.version}" for dist in installed_packages])
         
         with open('requirements.txt', 'w') as f:
             for package in installed_packages_list:
@@ -31,22 +35,28 @@ def create_requirements_file():
 def insert_product_from_phonedetails(cursor, product):
     sql = """
     INSERT INTO Products (
-        id, title, description, price, stock, brand, thumbnail, images,
+        title, description, price, stock, brand, thumbnail, images,
+        screen, back_camera, front_camera, ram, storage, battery,
         category, sku, warranty_information, shipping_information,
         availability_status, return_policy, minimum_order_quantity,
         discount_percentage, is_featured, featured_sort_order
     )
     VALUES (
-        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
     )
     ON DUPLICATE KEY UPDATE
-    title = VALUES(title),
     description = VALUES(description),
     price = VALUES(price),
     stock = VALUES(stock),
     brand = VALUES(brand),
     thumbnail = VALUES(thumbnail),
     images = VALUES(images),
+    screen = VALUES(screen),
+    back_camera = VALUES(back_camera),
+    front_camera = VALUES(front_camera),
+    ram = VALUES(ram),
+    storage = VALUES(storage),
+    battery = VALUES(battery),
     category = VALUES(category),
     sku = VALUES(sku),
     warranty_information = VALUES(warranty_information),
@@ -58,23 +68,33 @@ def insert_product_from_phonedetails(cursor, product):
     is_featured = VALUES(is_featured),
     featured_sort_order = VALUES(featured_sort_order)
     """
+    
+    # Lấy thông tin chi tiết sản phẩm từ productDetails.json
+    product_details = product_details_data.get(product['title'], [])
+    details_dict = {item['label']: item['value'] for item in product_details}
+    
     values = (
-        product['id'],
         product['title'],
-        product['description'],
-        product['price'],
-        product['stock'],
-        product['brand'],
-        product['thumbnail'],
-        json.dumps(product['images']),
-        product['category'],
-        product['sku'],
-        product['warrantyInformation'],
-        product['shippingInformation'],
-        product['availabilityStatus'],
-        product['returnPolicy'],
-        product['minimumOrderQuantity'],
-        product['discountPercentage'],
+        product.get('description', ''),
+        product.get('price', 0),
+        product.get('stock', 0),
+        product.get('brand', ''),
+        product.get('thumbnail', ''),
+        json.dumps(product.get('images', [])),
+        details_dict.get('Màn hình', ''),
+        details_dict.get('Camera sau', ''),
+        details_dict.get('Camera Selfie', ''),
+        details_dict.get('RAM', ''),
+        details_dict.get('Bộ nhớ trong', ''),
+        details_dict.get('Pin', ''),
+        product.get('category', ''),
+        product.get('sku', ''),
+        product.get('warrantyInformation', ''),
+        product.get('shippingInformation', ''),
+        product.get('availabilityStatus', ''),
+        product.get('returnPolicy', ''),
+        product.get('minimumOrderQuantity', 1),
+        product.get('discountPercentage', 0),
         product.get('is_featured', False),
         product.get('featured_sort_order', 0)
     )

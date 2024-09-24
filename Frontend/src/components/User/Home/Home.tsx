@@ -17,6 +17,15 @@ interface Phone {
   quantity?: number;
 }
 
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  thumbnail: string;
+  brand: string;
+  quantity: number;
+}
+
 const Home: React.FC = () => {
     const { cartItems, setCartItems } = useCart();
     const [bestSellers, setBestSellers] = useState<Phone[]>([]);

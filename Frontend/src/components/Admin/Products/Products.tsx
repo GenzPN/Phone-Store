@@ -1,26 +1,197 @@
-import React from 'react';
-import { Table } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select, Upload } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 
-const Products = () => {
+const { Option } = Select;
+
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  stock: number;
+  thumbnail: string;
+  images: string[];
+  category: string;
+  screen: string;
+  back_camera: string;
+  front_camera: string;
+  ram: string;
+  storage: string;
+  battery: string;
+  sku: string;
+  warranty_information: string;
+  shipping_information: string;
+  availability_status: string;
+  return_policy: string;
+  minimum_order_quantity: number;
+  discount_percentage: number;
+  is_featured: number;
+  featured_sort_order: number;
+}
+
+
+const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ marginRight: 8, marginBottom: 8 }}>
+        <img
+          src={value || 'https://via.placeholder.com/100'}
+          alt="Preview"
+          style={{ width: 100, height: 100, objectFit: 'cover' }}
+        />
+      </div>
+      <Input
+        placeholder="Nhập URL ảnh"
+        value={value}
+        onChange={(e) => onChange && onChange(e.target.value)}
+        style={{ flex: 1 }}
+      />
+    </div>
+  );
+};
+
+const Products: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [form] = Form.useForm();
+  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+  const [isFeaturedFilter, setIsFeaturedFilter] = useState<string | null>(null);
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
+
+
+  const fetchProducts = useCallback(async (page = 1, pageSize = 20) => {
+    setLoading(true);
+    try {
+      const brandQuery = brandFilter.length > 0 ? `&brand=${brandFilter.join(',')}` : '';
+      const isFeaturedQuery = isFeaturedFilter !== null ? `&isFeatured=${isFeaturedFilter}` : '';
+      const response = await fetch(`http://localhost:5000/api/products?page=${page}&limit=${pageSize}${brandQuery}${isFeaturedQuery}`);
+      const data = await response.json();
+      setProducts(data.products);
+      setPagination({
+        current: data.currentPage,
+        pageSize: pageSize,
+        total: data.totalProducts,
+      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      message.error('Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  }, [brandFilter, isFeaturedFilter]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleTableChange = (pagination: any) => {
+    fetchProducts(pagination.current, pagination.pageSize); 
+  };    
+  
+  const handleBrandFilterChange = (value: string[]) => {    
+    setBrandFilter(value);  
+    fetchProducts(pagination.current, pagination.pageSize); 
+  };
+
+  const handleIsFeaturedFilterChange = (value: string | null) => {
+    setIsFeaturedFilter(value);
+    fetchProducts(pagination.current, pagination.pageSize);
+  };
+
+  const handleEdit = (record: Product) => {
+    setEditingProduct(record);
+    form.setFieldsValue({
+      ...record,
+      images: record.images || [],
+      category: record.category,
+      screen: record.screen,
+      back_camera: record.back_camera,
+      front_camera: record.front_camera,
+      ram: record.ram,
+      storage: record.storage,
+      battery: record.battery,
+      sku: record.sku,
+      warranty_information: record.warranty_information,
+      shipping_information: record.shipping_information,
+      availability_status: record.availability_status,
+      return_policy: record.return_policy,
+      minimum_order_quantity: record.minimum_order_quantity,
+      discount_percentage: record.discount_percentage,
+      is_featured: record.is_featured,
+      featured_sort_order: record.featured_sort_order
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleDelete = async (record: Product) => {
+    try {
+      await fetch(`http://localhost:5000/api/products/${record.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin': 'true'
+        }
+      });
+      message.success('Sản phẩm đã được xóa thành công');
+      fetchProducts(pagination.current, pagination.pageSize);
+    } catch (error) {
+      console.error('Lỗi khi xóa sản phẩm:', error);
+      message.error('Không thể xóa sản phẩm');
+    }
+  };
+
+  const handleEditModalOk = () => {
+    form.validateFields().then(async (values) => {
+      const updatedProduct = {
+        ...values,
+        images: JSON.stringify(values.images) // Chuyển images sang định dạng JSON
+      };
+      console.log('Updated Product:', updatedProduct); // Thêm dòng này để kiểm tra dữ liệu
+      try {
+        await fetch(`http://localhost:5000/api/products/${editingProduct?.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin': 'true'
+          },
+          body: JSON.stringify(updatedProduct)
+        });
+        message.success('Sản phẩm đã được cập nhật thành công');
+        setEditModalVisible(false);
+        fetchProducts(pagination.current, pagination.pageSize);
+      } catch (error) {
+        console.error('Lỗi khi cập nhật sản phẩm:', error);
+        message.error('Không thể cập nhật sản phẩm');
+      }
+    });
+  };
+
   const columns = [
     {
-      title: 'STT',
+      title: 'ID',
       dataIndex: 'id',
       key: 'id',
     },
     {
       title: 'Hình ảnh',
-      dataIndex: 'image',
-      key: 'image',
+      dataIndex: 'thumbnail',
+      key: 'thumbnail',
       render: (text: string) => (
-        <div style={{ width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 50, height: 50, overflow: 'hidden' }}>
           <img 
             src={text} 
             alt="Product" 
             style={{ 
-              maxWidth: '100%', 
-              maxHeight: '100%', 
-              objectFit: 'contain'
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              objectPosition: 'center'
             }} 
           />
         </div>
@@ -28,8 +199,8 @@ const Products = () => {
     },
     {
       title: 'Tên',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'title',
+      key: 'title',
     },
     {
       title: 'Giá',
@@ -38,228 +209,179 @@ const Products = () => {
     },
     {
       title: 'Số lượng',
-      dataIndex: 'amount',
-      key: 'amount',
-    },
-  ];
-
-  const data = [
-    {
-        "id": "1",
-        "name": "Samsung Galaxy S21 Ultra",
-        "price": "25,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-s21-ultra-5g-.jpg",
-        "amount": 302
+      dataIndex: 'stock',
+      key: 'stock',
     },
     {
-        "id": "2",
-        "name": "Xiaomi Mi 11 Ultra",
-        "price": "22,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/xiaomi-mi11-ultra-5g-k1.jpg",
-        "amount": 206
+      title: 'Danh mục',
+      dataIndex: 'category',
+      key: 'category',
     },
     {
-        "id": "3",
-        "name": "Google Pixel 6 Pro",
-        "price": "18,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/google-pixel-6-pro.jpg",
-        "amount": 255
+      title: 'Thao tác',
+      key: 'action',
+      render: (_: any, record: Product) => (
+        <Space size="middle">
+          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>
+            Sửa
+          </Button>
+          <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record)} danger>
+            Xóa
+          </Button>
+        </Space>
+      ),
     },
-    {
-        "id": "4",
-        "name": "OnePlus 9 Pro",
-        "price": "17,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/oneplus-9-pro-.jpg",
-        "amount": 153
-    },
-    {
-        "id": "5",
-        "name": "Sony Xperia 1 III",
-        "price": "28,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/sony-xperia-1-iii.jpg",
-        "amount": 106
-    },
-    {
-        "id": "6",
-        "name": "Huawei Mate 40 Pro",
-        "price": "21,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/huawei-mate40-pro.jpg",
-        "amount": 185
-    },
-    {
-        "id": "7",
-        "name": "Asus ROG Phone 5",
-        "price": "23,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/asus-rog-phone-5.jpg",
-        "amount": 229
-    },
-    {
-        "id": "8",
-        "name": "Oppo Find X3 Pro",
-        "price": "20,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/oppo-find-x3-pro.jpg",
-        "amount": 124
-    },
-    {
-        "id": "9",
-        "name": "Vivo X60 Pro+",
-        "price": "19,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/vivo-x60-pro-plus.jpg",
-        "amount": 1745
-    },
-    {
-        "id": "10",
-        "name": "iPhone 12 Pro Max",
-        "price": "19,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-12-pro-max-.jpg",
-        "amount": 455
-    },
-    {
-        "id": "11",
-        "name": "Realme GT 5G",
-        "price": "16,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/realme-gt-5g.jpg",
-        "amount": 307
-    },
-    {
-        "id": "12",
-        "name": "Motorola Edge 20 Pro",
-        "price": "15,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/motorola-edge20-pro-.jpg",
-        "amount": 208
-    },
-    {
-        "id": "13",
-        "name": "Nokia 8.3 5G",
-        "price": "13,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/nokia-83-5g.jpg",
-        "amount": 253
-    },
-    {
-        "id": "14",
-        "name": "Poco F3",
-        "price": "12,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/xiaomi-poco-f3.jpg",
-        "amount": 404
-    },
-    {
-        "id": "15",
-        "name": "ZTE Axon 30 Ultra",
-        "price": "14,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/zte-axon-30-ultra.jpg",
-        "amount": 183
-    },
-    {
-        "id": "16",
-        "name": "Honor Magic 3 Pro",
-        "price": "22,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/honor-magic3-pro.jpg",
-        "amount": 122
-    },
-    {
-        "id": "17",
-        "name": "Xiaomi Redmi Note 10 Pro",
-        "price": "9,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/xiaomi-redmi-note10-pro.jpg",
-        "amount": 355
-    },
-    {
-        "id": "18",
-        "name": "LG Wing 5G",
-        "price": "18,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/lg-wing.jpg",
-        "amount": 1047
-    },
-    {
-        "id": "19",
-        "name": "Lenovo Legion Duel 2",
-        "price": "19,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/lenovo-legion-2-pro-phone-duel2-1.jpg",
-        "amount": 254
-    },
-    {
-        "id": "20",
-        "name": "TCL 20 Pro 5G",
-        "price": "12,500,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/tcl-20-pro-5g.jpg",
-        "amount": 282
-    },
-    {
-        "id": "21",
-        "name": "iPhone 15 Pro Max",
-        "price": "27,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-15-pro-max.jpg",
-        "amount": 10920
-    },
-    {
-        "id": "22",
-        "name": "Samsung Galaxy Z Fold 6",
-        "price": "30,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-z-fold6.jpg",
-        "amount": 5556
-    },
-    {
-        "id": "23",
-        "name": "Xiaomi 13",
-        "price": "15,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/xiaomi-redmi-note-13-5g.jpg",
-        "amount": 833
-    },
-    {
-        "id": "24",
-        "name": "iPhone 7",
-        "price": "6,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-7r4.jpg",
-        "amount": 121
-    },
-    {
-        "id": "25",
-        "name": "Motorola G5S Plus",
-        "price": "5,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/motorola-moto-g5s.jpg",
-        "amount": 76
-    },
-    {
-        "id": "26",
-        "name": "Galaxy J7 Pro",
-        "price": "2,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-j7-pro.jpg",
-        "amount": 152
-    },
-    {
-        "id": "27",
-        "name": "Lenovo Legion Duel 2",
-        "price": "7,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/lenovo-legion-2-pro-phone-duel2-1.jpg",
-        "amount": 31
-    },
-    {
-        "id": "28",
-        "name": "Galaxy S8+",
-        "price": "5,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-s8-plus-.jpg",
-        "amount": 92
-    },
-    {
-        "id": "29",
-        "name": "iPhone 13 Pro Max",
-        "price": "20,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-13-pro-max.jpg",
-        "amount": 62
-    },
-    {
-        "id": "30",
-        "name": "iPhone 12 Pro Max",
-        "price": "19,000,000 VND",
-        "image": "https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-12-pro-max-.jpg",
-        "amount": 45
-    }
   ];
 
   return (
     <div>
-      <h2 style={{ marginRight: '20px', minWidth: '200px' }}>Danh sách sản phẩm</h2>
-      <Table columns={columns} dataSource={data} rowKey="id" />
+      <h2>Danh sách sản phẩm</h2>
+      <Space style={{ marginBottom: 16 }}>
+        <Select
+          mode="multiple"
+          placeholder="Lọc theo thương hiệu"
+          onChange={handleBrandFilterChange}
+          style={{ width: 200 }}
+        >
+          <Option value="Apple">Apple</Option>
+          <Option value="Samsung">Samsung</Option>
+          <Option value="Xiaomi">Xiaomi</Option>
+          {/* Thêm các thương hiệu khác nếu cần */}
+        </Select>
+        <Select
+          placeholder="Lọc theo nổi bật"
+          onChange={handleIsFeaturedFilterChange}
+          style={{ width: 200 }}
+          allowClear
+        >
+          <Option value="1">Nổi bật</Option>
+          <Option value="0">Không nổi bật</Option>
+        </Select>
+      </Space>
+      <Table 
+        columns={columns} 
+        dataSource={products} 
+        rowKey="id" 
+        pagination={pagination}
+        loading={loading}
+        onChange={handleTableChange}
+        style={{ background: 'white' }}
+        bordered
+      />
+      <Modal
+        title="Chỉnh sửa sản phẩm"
+        visible={editModalVisible}
+        onOk={handleEditModalOk}
+        onCancel={() => setEditModalVisible(false)}
+        width={800}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="id" label="ID" rules={[{ required: true }]}>
+            <Input disabled />
+          </Form.Item>
+          <Form.Item name="title" label="Tên" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="thumbnail" label="Ảnh Thumbnail" rules={[{ required: true }]}>
+            <CustomImageUpload />
+          </Form.Item>
+          <Form.Item name="images" label="Ảnh Chi tiết">
+            <Form.List name="images">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map((field, index) => (
+                    <Form.Item required={false} key={field.key}>
+                      <Form.Item
+                        {...field}
+                        validateTrigger={['onChange', 'onBlur']}
+                        rules={[
+                          {
+                            required: true,
+                            whitespace: true,
+                            message: "Vui lòng nhập URL ảnh hoặc xóa trường này.",
+                          },
+                        ]}
+                        noStyle
+                      >
+                        <CustomImageUpload />
+                      </Form.Item>
+                      {fields.length > 1 ? (
+                        <Button type="link" onClick={() => remove(field.name)} style={{ marginLeft: 8 }}>
+                          Xóa
+                        </Button>
+                      ) : null}
+                    </Form.Item>
+                  ))}
+                  <Form.Item>
+                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                      Thêm ảnh
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </Form.Item>
+          <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="category" label="Danh mục" rules={[{ required: true }]}>
+            <Select>
+              <Option value="smartphone">Điện thoại</Option>
+              <Option value="tablet">Máy tính bảng</Option>
+              <Option value="laptop">Laptop</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="sku" label="SKU" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="warranty_information" label="Thông tin bảo hành" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="shipping_information" label="Thông tin giao hàng" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="availability_status" label="Tình trạng" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="return_policy" label="Chính sách đổi trả" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="minimum_order_quantity" label="Số lượng đặt hàng tối thiểu" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="discount_percentage" label="Phần trăm giảm giá" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} addonAfter="%" />
+          </Form.Item>
+          <Form.Item name="is_featured" label="Nổi bật" rules={[{ required: true }]}>
+            <Select>
+              <Option value={1}>Có</Option>
+              <Option value={0}>Không</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="featured_sort_order" label="Thứ tự nổi bật" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} />
+          </Form.Item>
+          <h3>Chi tiết</h3>
+          <Form.Item name="screen" label="Màn hình">
+            <Input />
+          </Form.Item>
+          <Form.Item name="back_camera" label="Camera sau">
+            <Input />
+          </Form.Item>
+          <Form.Item name="front_camera" label="Camera trước">
+            <Input />
+          </Form.Item>
+          <Form.Item name="ram" label="RAM">
+            <Input />
+          </Form.Item>
+          <Form.Item name="storage" label="Bộ nhớ trong">
+            <Input />
+          </Form.Item>
+          <Form.Item name="battery" label="Pin">
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

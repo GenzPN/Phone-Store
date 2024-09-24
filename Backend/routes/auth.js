@@ -21,26 +21,13 @@ const authenticateToken = (req, res, next) => {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const [users] = await db.promise().query('SELECT * FROM Users WHERE username = ?', [username]);
+    const [users] = await db.promise().query('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password]);
     if (users.length === 0) {
-      return res.status(401).json({ message: 'Invalid username or password' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
     const user = users[0];
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: 'Invalid username or password' });
-    }
-    const token = jwt.sign({ id: user.id, username: user.username, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        email: user.email,
-        fullName: user.fullName,
-        isAdmin: user.isAdmin
-      }, 
-      accessToken: token 
-    });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    res.json({ token });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error' });
