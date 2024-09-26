@@ -135,3 +135,17 @@ CREATE TABLE PaymentGateways (
     INDEX idx_enable (enable),
     INDEX idx_sort (sort)
 ) ENGINE=InnoDB;
+
+CREATE TABLE ProductEditHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT,
+    edit_type ENUM('update', 'create', 'delete') NOT NULL,
+    changes JSON,
+    edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
+    INDEX idx_product_id (product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_edited_at (edited_at)
+) ENGINE=InnoDB;

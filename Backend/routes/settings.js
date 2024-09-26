@@ -1,29 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { getAdminSettings, updateAdminSettings } = require('../config/configManager');
-const authenticateToken = require('../middleware/auth');
+const db = require('../config/database');
+// const authenticateToken = require('../middleware/auth'); // Xóa dòng này
 
-// Lấy cài đặt admin
-router.get('/', authenticateToken, async (req, res) => {
+// Lấy cài đặt
+router.get('/', async (req, res) => {
   try {
-    const settings = await getAdminSettings();
+    const [settings] = await db.promise().query('SELECT * FROM Settings');
     res.json(settings);
   } catch (error) {
-    console.error('Error getting admin settings:', error);
+    console.error('Get settings error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Cập nhật cài đặt admin
-router.put('/', authenticateToken, async (req, res) => {
+// Cập nhật cài đặt
+router.put('/', async (req, res) => {
+  const { key, value } = req.body;
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    const [result] = await db.promise().query(
+      'UPDATE Settings SET value = ? WHERE key = ?',
+      [value, key]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Setting not found' });
     }
-    const updatedSettings = await updateAdminSettings(req.body);
-    res.json(updatedSettings);
+
+    res.json({ message: 'Setting updated' });
   } catch (error) {
-    console.error('Error updating admin settings:', error);
+    console.error('Update setting error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

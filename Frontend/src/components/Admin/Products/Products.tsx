@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { useAuth } from '../../../contexts/AuthContext';
+import { getToken, getCookie } from '../../../utils/tokenStorage';
 
 const { Option } = Select;
 
@@ -51,6 +53,7 @@ const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) =
 };
 
 const Products: React.FC = () => {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -70,12 +73,17 @@ const Products: React.FC = () => {
     try {
       const brandQuery = brandFilter.length > 0 ? `&brand=${brandFilter.join(',')}` : '';
       const isFeaturedQuery = isFeaturedFilter !== null ? `&isFeatured=${isFeaturedFilter}` : '';
-      const response = await axios.get(`http://localhost:5000/api/products?page=${page}&limit=${pageSize}${brandQuery}${isFeaturedQuery}`);
+      const token = getToken() || getCookie('accessToken');
+      const response = await axios.get(`http://localhost:5000/api/products?page=${page}&limit=${pageSize}${brandQuery}${isFeaturedQuery}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       setProducts(response.data.products);
       setPagination({
-        current: page,
-        pageSize,
-        total: response.data.total,
+        current: response.data.currentPage,
+        pageSize: pageSize,
+        total: response.data.totalProducts,
       });
     } catch (error) {
       console.error('Lỗi khi lấy danh sách sản phẩm:', error);
@@ -94,30 +102,17 @@ const Products: React.FC = () => {
     form.setFieldsValue({
       ...record,
       images: record.images || [],
-      category: record.category,
-      screen: record.screen,
-      back_camera: record.back_camera,
-      front_camera: record.front_camera,
-      ram: record.ram,
-      storage: record.storage,
-      battery: record.battery,
-      sku: record.sku,
-      warranty_information: record.warranty_information,
-      shipping_information: record.shipping_information,
-      availability_status: record.availability_status,
-      return_policy: record.return_policy,
-      minimum_order_quantity: record.minimum_order_quantity,
-      discount_percentage: record.discount_percentage,
-      is_featured: record.is_featured,
-      featured_sort_order: record.featured_sort_order
     });
     setEditModalVisible(true);
   };
 
   const handleDelete = async (record: Product) => {
     try {
+      const token = getToken() || getCookie('accessToken');
       await axios.delete(`http://localhost:5000/api/products/${record.id}`, {
-        headers: { 'x-admin': 'true' }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       message.success('Sản phẩm đã được xóa thành công');
       fetchProducts(pagination.current, pagination.pageSize);
@@ -141,7 +136,10 @@ const Products: React.FC = () => {
       };
       console.log('Updated Product:', updatedProduct);
 
-      const token = localStorage.getItem('token');
+      const token = getToken() || getCookie('accessToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
       await axios.put(`http://localhost:5000/api/products/${editingProduct?.id}`, updatedProduct, {
         headers: {

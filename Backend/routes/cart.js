@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const authenticateToken = require('../middleware/auth');
+// const authenticateToken = require('../middleware/auth'); // Xóa dòng này
 
 // Lấy giỏ hàng của người dùng
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/:userId', async (req, res) => {
   try {
-    const [cartItems] = await db.promise().query(
-      'SELECT c.id, c.product_id, c.quantity, p.title, p.price, p.thumbnail FROM Cart c JOIN Products p ON c.product_id = p.id WHERE c.user_id = ?',
-      [req.user.id]
-    );
+    const [cartItems] = await db.promise().query('SELECT * FROM Cart WHERE user_id = ?', [req.params.userId]);
     res.json(cartItems);
   } catch (error) {
     console.error('Get cart error:', error);
@@ -18,14 +15,14 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Thêm sản phẩm vào giỏ hàng
-router.post('/add', authenticateToken, async (req, res) => {
-  const { product_id, quantity } = req.body;
+router.post('/', async (req, res) => {
+  const { user_id, product_id, quantity } = req.body;
   try {
     const [result] = await db.promise().query(
-      'INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
-      [req.user.id, product_id, quantity]
+      'INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?)',
+      [user_id, product_id, quantity]
     );
-    res.status(201).json({ message: 'Product added to cart' });
+    res.status(201).json({ message: 'Product added to cart', id: result.insertId });
   } catch (error) {
     console.error('Add to cart error:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -33,13 +30,18 @@ router.post('/add', authenticateToken, async (req, res) => {
 });
 
 // Cập nhật số lượng sản phẩm trong giỏ hàng
-router.put('/update/:id', authenticateToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
   const { quantity } = req.body;
   try {
-    await db.promise().query(
-      'UPDATE Cart SET quantity = ? WHERE id = ? AND user_id = ?',
-      [quantity, req.params.id, req.user.id]
+    const [result] = await db.promise().query(
+      'UPDATE Cart SET quantity = ? WHERE id = ?',
+      [quantity, req.params.id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
     res.json({ message: 'Cart item updated' });
   } catch (error) {
     console.error('Update cart error:', error);
@@ -48,15 +50,17 @@ router.put('/update/:id', authenticateToken, async (req, res) => {
 });
 
 // Xóa sản phẩm khỏi giỏ hàng
-router.delete('/remove/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    await db.promise().query(
-      'DELETE FROM Cart WHERE id = ? AND user_id = ?',
-      [req.params.id, req.user.id]
-    );
-    res.json({ message: 'Cart item removed' });
+    const [result] = await db.promise().query('DELETE FROM Cart WHERE id = ?', [req.params.id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    res.json({ message: 'Cart item deleted' });
   } catch (error) {
-    console.error('Remove from cart error:', error);
+    console.error('Delete cart error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
