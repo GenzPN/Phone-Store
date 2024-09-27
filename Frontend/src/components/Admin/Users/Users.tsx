@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, Select } from 'antd';
 import axios from 'axios';
-import { useAuth } from '../../../contexts/AuthContext';
+// Remove this line:
+// import { useAuth } from '../../../contexts/AuthContext';
 import { getToken, getCookie } from '../../../utils/tokenStorage';
 
 const { Option } = Select;
@@ -17,7 +18,8 @@ interface User {
 }
 
 const Users: React.FC = () => {
-  const { user } = useAuth();
+  // Remove this line:
+  // const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);

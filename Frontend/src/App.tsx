@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
 import { CartProvider } from './contexts/CartContext';
-import { AuthProvider } from './contexts/AuthContext';
 // User
 import HeaderUser from './components/User/Header/Header';
 import FooterUser from './components/User/Footer/Footer';
@@ -144,57 +143,55 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <AuthProvider user={user} handleLogin={handleLogin} handleLogout={handleLogout}>
-        <CartProvider>
-          <Routes>
-            <Route path="/api/payment/*" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/api/payment' }} />} />
-            <Route 
-              path="/api/auth/*" 
-              element={
-                !user ? (
-                  <Routes>
-                    <Route path="login" element={<Auth onLogin={handleLogin} />} />
-                    <Route path="register" element={<Auth onLogin={handleLogin} />} />
-                    <Route path="" element={<Navigate to="/api/auth/login" />} />
-                  </Routes>
-                ) : (
-                  <Navigate to="/" />
-                )
-              } 
-            />
-            <Route path="/admin/*" element={<AdminLayout />} />
-            <Route path="*" element={
-              <Layout>
-                <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
-                <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/brand/:brandName" element={<BrandPage />} />
-                    <Route path="/details/:productName" element={<Details />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/products/checkout" element={<Checkout />} />
-                    {/* Removed the Address route */}
-                    <Route 
-                      path="/profile" 
-                      element={
-                        loading ? (
-                          <div>Loading...</div>
-                        ) : user ? (
-                          <Profile user={user} />
-                        ) : (
-                          <Navigate to="/api/auth/login" state={{ from: '/profile' }} />
-                        )
-                      } 
-                    />
-                  </Routes>
-                </Content>
-                <FooterUser />
-              </Layout>
-            } />
-          </Routes>
-        </CartProvider>
-      </AuthProvider>
+      <CartProvider>
+        <Routes>
+          <Route path="/api/payment/*" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/api/payment' }} />} />
+          <Route 
+            path="/api/auth/*" 
+            element={
+              !user ? (
+                <Routes>
+                  <Route path="login" element={<Auth onLogin={handleLogin} />} />
+                  <Route path="register" element={<Auth onLogin={handleLogin} />} />
+                  <Route path="" element={<Navigate to="/api/auth/login" />} />
+                </Routes>
+              ) : (
+                <Navigate to="/" />
+              )
+            } 
+          />
+          <Route path="/admin/*" element={<AdminLayout />} />
+          <Route path="*" element={
+            <Layout>
+              <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
+              <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/brand/:brandName" element={<BrandPage />} />
+                  <Route path="/details/:productName" element={<Details />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/checkout" element={<Checkout />} />
+                  {/* Removed the Address route */}
+                  <Route 
+                    path="/profile" 
+                    element={
+                      loading ? (
+                        <div>Loading...</div>
+                      ) : user ? (
+                        <Profile user={user} />
+                      ) : (
+                        <Navigate to="/api/auth/login" state={{ from: '/profile' }} />
+                      )
+                    } 
+                  />
+                </Routes>
+              </Content>
+              <FooterUser />
+            </Layout>
+          } />
+        </Routes>
+      </CartProvider>
     </Router>
   );
 };

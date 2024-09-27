@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { useAuth } from '../../../contexts/AuthContext';
 import { getToken, getCookie } from '../../../utils/tokenStorage';
 
 const { Option } = Select;
@@ -60,7 +59,6 @@ const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) =
 };
 
 const Products: React.FC = () => {
-  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -341,6 +339,7 @@ const Products: React.FC = () => {
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
               parser={(value) => value!.replace(/\./g, '')}
               step={1000}
+              addonAfter="đ"
             />
           </Form.Item>
           <Form.Item name="stock" label="Số lượng" rules={[{ required: true }]}>

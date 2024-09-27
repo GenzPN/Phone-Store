@@ -3,13 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { formatProductNameForUrl } = require('../utils/stringUtils');
 
-// Hàm định dạng giá
-const formatPrice = (price) => {
-  if (typeof price !== 'number' || isNaN(price)) {
-    return 'Giá không xác định';
-  }
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-};
+// Xóa hàm formatPrice vì chúng ta sẽ không sử dụng nó ở backend nữa
 
 // Lấy danh sách sản phẩm
 router.get('/', async (req, res) => {
@@ -46,7 +40,8 @@ router.get('/', async (req, res) => {
 
     const formattedProducts = products.map(product => ({
       ...product,
-      price: formatPrice(product.price),
+      // Gửi giá gốc, không định dạng
+      price: Number(product.price),
       images: JSON.parse(product.images || '[]'),
       category: product.category,
       screen: product.screen,
@@ -82,7 +77,8 @@ router.get('/:id', async (req, res) => {
     
     const formattedProduct = {
       ...products[0],
-      price: formatPrice(products[0].price),
+      // Gửi giá gốc, không định dạng
+      price: Number(products[0].price),
       images: JSON.parse(products[0].images || '[]'),
       category: products[0].category,
       screen: products[0].screen,
@@ -125,7 +121,8 @@ router.get('/brand/:brandName', async (req, res) => {
 
     const formattedProducts = products.map(product => ({
       ...product,
-      price: formatPrice(product.price),
+      // Gửi giá gốc, không định dạng
+      price: Number(product.price),
       thumbnail: JSON.parse(product.images || '[]')[0] || '', // Lấy ảnh đầu tiên làm thumbnail
     }));
 
@@ -173,6 +170,11 @@ router.put('/:id', async (req, res) => {
       discount_percentage, is_featured, featured_sort_order
     } = req.body;
 
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice)) {
+      return res.status(400).json({ message: 'Giá không hợp lệ' });
+    }
+
     const [result] = await db.promise().query(
       `UPDATE Products SET 
         title = ?, description = ?, price = ?, stock = ?, brand = ?, 
@@ -182,7 +184,7 @@ router.put('/:id', async (req, res) => {
         return_policy = ?, minimum_order_quantity = ?, discount_percentage = ?, is_featured = ?, featured_sort_order = ?
       WHERE id = ?`,
       [
-        title, description, price, stock, brand, thumbnail, 
+        title, description, numericPrice, stock, brand, thumbnail, 
         JSON.stringify(images), screen, back_camera, front_camera, 
         ram, storage, battery, category, sku, warranty_information, shipping_information, availability_status,
         return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id

@@ -1,6 +1,7 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getToken } from '../utils/tokenStorage';
-import { setCookie, getCookie } from '../utils/cookieUtils';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { message } from 'antd';
+import { setCookie } from '../utils/cookies';
 
 export interface CartItem {
   id: number;
@@ -26,40 +27,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [total, setTotal] = useState(0);
 
   const fetchCartItems = async () => {
-    const token = getToken();
-    if (token) {
-      try {
-        const response = await fetch('http://localhost:5000/api/cart', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch cart items');
-        }
-        const data = await response.json();
-        setCartItems(data);
-        updateTotal(data);
-        // Save to cookie after fetching from server
-        setCookie('cartItems', JSON.stringify(data));
-      } catch (error) {
-        console.error('Error fetching cart data:', error);
-        // If there's an error, try to load from cookie
-        const cookieCart = getCookie('cartItems');
-        if (cookieCart) {
-          const parsedCart = JSON.parse(cookieCart);
-          setCartItems(parsedCart);
-          updateTotal(parsedCart);
-        }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // Nếu không có token, có thể người dùng chưa đăng nhập
+        console.log('User not logged in');
+        return;
       }
-    } else {
-      // If no token, load from cookie
-      const cookieCart = getCookie('cartItems');
-      if (cookieCart) {
-        const parsedCart = JSON.parse(cookieCart);
-        setCartItems(parsedCart);
-        updateTotal(parsedCart);
-      }
+
+      const response = await axios.get('http://localhost:5000/api/cart', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCartItems(response.data);
+    } catch (error) {
+      console.error('Error fetching cart data:', error);
+      message.error('Failed to fetch cart items');
     }
   };
 
@@ -74,7 +56,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Save to cookie whenever cartItems changes
-    setCookie('cartItems', JSON.stringify(cartItems));
+    setCookie('cartItems', JSON.stringify(cartItems), 7);
     updateTotal(cartItems);
   }, [cartItems]);
 
