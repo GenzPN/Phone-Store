@@ -9,14 +9,8 @@ export const setToken = (token: string): void => {
   }
 };
 
-export const getToken = (): string | null => {
-  try {
-    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
-    return token;
-  } catch (error) {
-    console.error('Error getting token:', error);
-    return null;
-  }
+export const getToken = () => {
+  return localStorage.getItem('token') || getCookie('accessToken');
 };
 
 export const removeToken = (): void => {

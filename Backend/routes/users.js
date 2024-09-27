@@ -92,4 +92,54 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Thêm route để xóa người dùng
+router.delete('/:id', async (req, res) => {
+  try {
+    await db.promise().query('DELETE FROM Users WHERE id = ?', [req.params.id]);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Cập nhật route để thêm người dùng mới
+router.post('/', async (req, res) => {
+  const { username, email, fullName, gender, image, isAdmin, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await db.promise().query(
+      'INSERT INTO Users (username, email, fullName, gender, image, isAdmin, password) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username, email, fullName, gender, image, isAdmin, hashedPassword]
+    );
+    res.status(201).json({ message: 'User added successfully', id: result.insertId });
+  } catch (error) {
+    console.error('Add user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Cập nhật route để sửa thông tin người dùng
+router.put('/:id', async (req, res) => {
+  const { fullName, gender, image, isAdmin, password } = req.body;
+  try {
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.promise().query(
+        'UPDATE Users SET fullName = ?, gender = ?, image = ?, isAdmin = ?, password = ? WHERE id = ?',
+        [fullName, gender, image, isAdmin, hashedPassword, req.params.id]
+      );
+    } else {
+      await db.promise().query(
+        'UPDATE Users SET fullName = ?, gender = ?, image = ?, isAdmin = ? WHERE id = ?',
+        [fullName, gender, image, isAdmin, req.params.id]
+      );
+    }
+    res.json({ message: 'User information updated' });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;

@@ -32,6 +32,13 @@ interface Product {
   featured_sort_order: number;
 }
 
+const formatCurrency = (value: number | null | undefined) => {
+  if (value === null || value === undefined || isNaN(value)) {
+    return 'Chưa có giá';
+  }
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+};
+
 const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -101,6 +108,7 @@ const Products: React.FC = () => {
     setEditingProduct(record);
     form.setFieldsValue({
       ...record,
+      price: record.price,
       images: record.images || [],
     });
     setEditModalVisible(true);
@@ -127,7 +135,7 @@ const Products: React.FC = () => {
       const values = await form.validateFields();
       const updatedProduct = {
         ...values,
-        price: isNaN(Number(values.price)) ? 0 : Number(values.price),
+        price: Number(values.price) || 0,
         stock: Number(values.stock),
         minimum_order_quantity: Number(values.minimum_order_quantity),
         discount_percentage: Number(values.discount_percentage),
@@ -135,19 +143,20 @@ const Products: React.FC = () => {
         featured_sort_order: Number(values.featured_sort_order)
       };
       console.log('Updated Product:', updatedProduct);
-
+  
       const token = getToken() || getCookie('accessToken');
       if (!token) {
-        throw new Error('No authentication token found');
+        message.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        return;
       }
-
+  
       await axios.put(`http://localhost:5000/api/products/${editingProduct?.id}`, updatedProduct, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
-
+  
       message.success('Sản phẩm đã được cập nhật thành công');
       setEditModalVisible(false);
       fetchProducts(pagination.current, pagination.pageSize);
@@ -156,7 +165,7 @@ const Products: React.FC = () => {
       if (axios.isAxiosError(error) && error.response) {
         message.error(error.response.data.message || 'Không thể cập nhật sản phẩm');
       } else {
-        message.error('Không thể cập nhật sản phẩm');
+        message.error('Không thể cập nhật sản phẩm. Vui lòng thử lại sau.');
       }
     }
   };
@@ -200,6 +209,7 @@ const Products: React.FC = () => {
       title: 'Giá',
       dataIndex: 'price',
       key: 'price',
+      render: (price: number | null | undefined) => formatCurrency(price),
     },
     {
       title: 'Số lượng',
@@ -228,8 +238,8 @@ const Products: React.FC = () => {
   ];
 
   return (
-    <div>
-      <h2>Danh sách sản phẩm</h2>
+    <div style={{ padding: '20px' }}>
+      <h2 style={{ marginBottom: '20px' }}>Danh sách sản phẩm</h2>
       <Space style={{ marginBottom: 16 }}>
         <Select
           mode="multiple"
@@ -318,7 +328,22 @@ const Products: React.FC = () => {
               )}
             </Form.List>
           </Form.Item>
-          <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
+          <Form.Item 
+            name="price" 
+            label="Giá" 
+            rules={[
+              { required: true, message: 'Vui lòng nhập giá' },
+              { type: 'number', min: 0, message: 'Giá phải là số dương' }
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+              parser={(value) => value!.replace(/\./g, '')}
+              step={1000}
+            />
+          </Form.Item>
+          <Form.Item name="stock" label="Số lượng" rules={[{ required: true }]}>
             <InputNumber style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="category" label="Danh mục" rules={[{ required: true }]}>
