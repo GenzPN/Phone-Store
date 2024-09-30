@@ -2,3 +2,5 @@
 Frontend/package-lock.json
 Backend/package-lock.json
 /Backend/node_modules
+frontend-admin/package-lock.json
+frontend-user/package-lock.json
