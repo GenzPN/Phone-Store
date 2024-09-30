@@ -75,9 +75,11 @@ CREATE TABLE Orders (
     user_id INT,
     address_id INT,
     total_amount INT,
-    status ENUM('pending', 'paid', 'shipped', 'delivered') DEFAULT 'pending',
+    status ENUM('pending', 'paid', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
     note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    discount_type ENUM('percent', 'amount') DEFAULT 'amount',
+    discount_value DECIMAL(10, 2) DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
     FOREIGN KEY (address_id) REFERENCES UserAddresses(id) ON DELETE SET NULL,
     INDEX idx_status (status)
@@ -149,3 +151,4 @@ CREATE TABLE ProductEditHistory (
     INDEX idx_user_id (user_id),
     INDEX idx_edited_at (edited_at)
 ) ENGINE=InnoDB;
+

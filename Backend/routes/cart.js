@@ -6,8 +6,7 @@ const db = require('../config/database');
 // Lấy giỏ hàng của người dùng
 router.get('/', async (req, res) => {
   try {
-    // Giả sử bạn có user_id từ authentication middleware
-    const user_id = req.user.id; // Thay thế bằng cách lấy user_id thực tế
+    const user_id = req.user.id;
 
     const [cartItems] = await db.promise().query(`
       SELECT c.id, c.product_id, c.quantity, p.title, p.price, p.thumbnail
@@ -16,10 +15,11 @@ router.get('/', async (req, res) => {
       WHERE c.user_id = ?
     `, [user_id]);
 
+    console.log('Cart items fetched:', cartItems);
     res.json(cartItems);
   } catch (error) {
     console.error('Get cart error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -43,20 +43,19 @@ router.post('/', async (req, res) => {
 
 // Cập nhật số lượng sản phẩm trong giỏ hàng
 router.put('/:id', async (req, res) => {
-  const { quantity } = req.body;
   try {
-    const [result] = await db.promise().query(
-      'UPDATE Cart SET quantity = ? WHERE id = ?',
-      [quantity, req.params.id]
+    const { quantity } = req.body;
+    const user_id = req.user.id;
+    const cart_item_id = req.params.id;
+
+    await db.promise().query(
+      'UPDATE Cart SET quantity = ? WHERE id = ? AND user_id = ?',
+      [quantity, cart_item_id, user_id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Cart item not found' });
-    }
-
-    res.json({ message: 'Cart item updated' });
+    res.json({ message: 'Cart item updated successfully' });
   } catch (error) {
-    console.error('Update cart error:', error);
+    console.error('Update cart item error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -64,15 +63,17 @@ router.put('/:id', async (req, res) => {
 // Xóa sản phẩm khỏi giỏ hàng
 router.delete('/:id', async (req, res) => {
   try {
-    const [result] = await db.promise().query('DELETE FROM Cart WHERE id = ?', [req.params.id]);
+    const user_id = req.user.id;
+    const cart_item_id = req.params.id;
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Cart item not found' });
-    }
+    await db.promise().query(
+      'DELETE FROM Cart WHERE id = ? AND user_id = ?',
+      [cart_item_id, user_id]
+    );
 
-    res.json({ message: 'Cart item removed' });
+    res.json({ message: 'Cart item removed successfully' });
   } catch (error) {
-    console.error('Remove from cart error:', error);
+    console.error('Remove cart item error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
