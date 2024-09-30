@@ -2,20 +2,10 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
+const { authenticateUser } = require('../middleware/auth');
 const router = express.Router();
 
-// Middleware để xác thực token
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token == null) return res.sendStatus(401);
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
+// Remove the authenticateToken middleware from this file
 
 // Đăng nhập
 router.post('/login', async (req, res) => {
@@ -71,7 +61,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Lấy thông tin người dùng hiện tại
-router.get('/me', authenticateToken, async (req, res) => {
+router.get('/me', authenticateUser, async (req, res) => {
   try {
     const [users] = await db.promise().query('SELECT id, username, email, fullName, gender, image, isAdmin FROM Users WHERE id = ?', [req.user.id]);
     if (users.length === 0) {

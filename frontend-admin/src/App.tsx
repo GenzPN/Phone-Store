@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from 'antd';
-import HeaderAdmin from './components/Admin/Header/Header';
-import SidebarAdmin from './components/Admin/Sidebar/Sidebar';
-import DashboardAdmin from './components/Admin/Dashboard/Dashboard';
-import LoginAdmin from './components/Admin/Login/Login';
-import ProductsAdmin from './components/Admin/Products/Products';
-import SettingsAdmin from './components/Admin/Settings/Settings';
-import OrdersAdmin from './components/Admin/Orders/Orders';
-import UsersAdmin from './components/Admin/Users/Users';
-import AddressUser from './components/Admin/AddressUser/AddressUser';
+import HeaderAdmin from './components/Header/Header';
+import SidebarAdmin from './components/Sidebar/Sidebar';
+import DashboardAdmin from './components/Dashboard/Dashboard';
+import LoginAdmin from './components/Login/Login';
+import ProductsAdmin from './components/Products/Products';
+import SettingsAdmin from './components/Settings/Settings';
+import OrdersAdmin from './components/Orders/Orders';
+import UsersAdmin from './components/Users/Users';
+import AddressUser from './components/AddressUser/AddressUser';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 
@@ -34,7 +34,7 @@ const App: React.FC = () => {
 
       if (accessToken) {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/admin/me', {
+          const response = await fetch('http://localhost:5000/api/auth/me', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -96,11 +96,11 @@ const App: React.FC = () => {
 
   const AdminLayout = () => {
     const location = useLocation();
-    const isLoginPage = location.pathname === '/admin/auth';
+    const isLoginPage = location.pathname === '/auth';
 
     return (
       <Layout style={{ minHeight: '100vh' }}>
-        {!isLoginPage && <HeaderAdmin onToggleSidebar={toggleSidebar} onLogout={handleLogout} />}
+        {!isLoginPage && <HeaderAdmin onToggleSidebar={toggleSidebar} />}
         <Layout>
           {!isLoginPage && (
             <SidebarAdmin collapsed={isSidebarCollapsed} />
@@ -114,7 +114,7 @@ const App: React.FC = () => {
                 <Route path="/users" element={<UsersAdmin />} />
                 <Route path="/settings" element={<SettingsAdmin />} />
                 <Route path="/addressuser" element={<AddressUser />} />
-                <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+                <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </Content>
           </Layout>
@@ -127,18 +127,18 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         <Route 
-          path="/admin/auth" 
+          path="/auth" 
           element={
-            !admin ? <LoginAdmin onLogin={handleLogin} /> : <Navigate to="/admin/dashboard" />
+            !admin ? <LoginAdmin /> : <Navigate to="/dashboard" />
           } 
         />
         <Route 
-          path="/admin/*" 
+          path="/*" 
           element={
-            admin ? <AdminLayout /> : <Navigate to="/admin/auth" />
+            admin ? <AdminLayout /> : <Navigate to="/auth" />
           } 
         />
-        <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+        <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );

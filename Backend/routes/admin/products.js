@@ -1,11 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
-// const authenticateToken = require('../middleware/auth'); // Uncomment nếu bạn muốn bảo vệ route này
-
-// Xóa hàm formatPrice vì chúng ta sẽ không sử dụng nó ở backend nữa
-
-// Lấy danh sách sản phẩm (không yêu cầu xác thực)
+const db = require('../../config/database');
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 20, brand, isFeatured } = req.query;
@@ -213,4 +208,12 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+// ... rest of the code ...
+
+router.get('/test', (req, res) => {
+  res.json({ message: 'Test route is working' });
+});
+
+const adminProductRoutes = router;
+
+module.exports = adminProductRoutes;

@@ -1,19 +1,23 @@
 const mysql = require('mysql2');
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '',
   database: 'phone_store',
-  port: 3306
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect((err) => {
+// Kiểm tra kết nối
+pool.getConnection((err, connection) => {
   if (err) {
-    console.error('Error connecting to database:', err);
-    return;
+    console.error('Lỗi kết nối cơ sở dữ liệu:', err);
+  } else {
+    console.log('Kết nối cơ sở dữ liệu thành công!');
+    connection.release();
   }
-  console.log('Connected to database');
 });
 
-module.exports = db;
+module.exports = pool;

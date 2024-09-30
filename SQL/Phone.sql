@@ -18,14 +18,14 @@ CREATE TABLE Users (
 
 CREATE TABLE UserAddresses (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT,
     fullName VARCHAR(150) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     address TEXT NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
     address_type ENUM('home', 'company') DEFAULT 'home',
     company_name VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
     INDEX idx_user_id (user_id),
     INDEX idx_is_default (is_default)
 ) ENGINE=InnoDB;

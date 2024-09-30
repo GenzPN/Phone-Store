@@ -10,8 +10,7 @@ interface ProfileProps {
     id: number;
     username: string;
     email: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     gender: string;
     image: string;
   } | null;
@@ -29,7 +28,7 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
           <Avatar size={120} src={user.image} icon={<UserOutlined />} />
         </Col>
         <Col xs={24} sm={16} md={18} lg={20}>
-          <Title level={2}>{`${user.firstName} ${user.lastName}`}</Title>
+          <Title level={2}>{user.fullName}</Title>
           <Text strong>Username: </Text><Text>{user.username}</Text><br />
           <Text strong>Email: </Text><Text>{user.email}</Text><br />
           <Text strong>Gender: </Text><Text>{user.gender}</Text><br />

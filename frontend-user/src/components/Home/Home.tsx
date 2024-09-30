@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "antd";
 import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { formatProductNameForUrl } from '../../../utils/stringUtils';
-import { useCart } from '../../../contexts/CartContext';
+import { formatProductNameForUrl } from '../../utils/stringUtils';
+import { useCart } from '../../contexts/CartContext';
+import { getToken } from '../../utils/tokenStorage';
+import axios from 'axios'; // Import axios
 
 const { Title, Text } = Typography;
 
 interface Phone {
   id: number;
   title: string;
-  name: string; // Thêm trường này
+  name: string;
   price: string | number;
   thumbnail: string;
   brand: string;
@@ -38,12 +40,21 @@ const Home: React.FC = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/products?page=${currentPage}&limit=20`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                const response = await axios.get(`http://localhost:5000/api/products`, {
+                    params: {
+                        page: currentPage,
+                        limit: 20
+                    }
+                });
+
+                console.log('Raw API response:', response.data);
+                const data = response.data;
+                
+                if (!data.products || data.products.length === 0) {
+                    console.warn('No products received from API');
+                    return;
                 }
-                const data = await response.json();
-                console.log('Received products:', data.products);
+
                 const products: Phone[] = data.products;
                 
                 setBestSellers(products.slice(0, 4));
@@ -63,6 +74,7 @@ const Home: React.FC = () => {
                 setTotalPages(data.totalPages);
             } catch (error) {
                 console.error('Error fetching products:', error);
+                message.error('Có lỗi xảy ra khi tải sản phẩm. Vui lòng thử lại sau.');
             }
         };
 
@@ -78,7 +90,7 @@ const Home: React.FC = () => {
         let updatedCart: CartItem[];
         if (existingItem) {
             updatedCart = cartItems.map((item: CartItem) =>
-                item.id === phone.id ? { ...item, quantity: (item.quantity || 0) + 1 } : item
+                item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
             );
         } else {
             const newCartItem: CartItem = {
@@ -93,20 +105,20 @@ const Home: React.FC = () => {
         }
         setCartItems(updatedCart);
 
-        // Lưu đơn hàng vào cookie
+        // Save order to cookie
         fetch('http://localhost:5000/api/cookie/save-order', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(updatedCart),
-            credentials: 'include', // Quan trọng để gửi và nhận cookies
+            credentials: 'include',
         })
             .then(response => response.json())
             .then(data => console.log(data.message))
             .catch(error => console.error('Error saving order to cookie:', error));
 
-        message.success(`Đã thêm ${phone.title} vào giỏ hàng`);
+        message.success(`Added ${phone.title} to cart`);
     };
 
     const renderPhoneCard = (phone: Phone) => (

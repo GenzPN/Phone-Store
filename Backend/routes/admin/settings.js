@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
+const db = require('../../config/database');
 // const authenticateToken = require('../middleware/auth'); // Xóa dòng này
 
 // Lấy cài đặt
@@ -34,4 +34,5 @@ router.put('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+const adminSettingsRoutes = router;
+module.exports = adminSettingsRoutes;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
+const db = require('../../config/database');
 
 // Get all orders with detailed information (for admin)
 router.get('/all', async (req, res) => {
@@ -150,4 +150,5 @@ router.put('/:id/items', async (req, res) => {
   }
 });
 
-module.exports = router;
+const adminOrderRoutes = router;
+module.exports = adminOrderRoutes;

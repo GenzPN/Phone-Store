@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, Empty, message } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
-import { useCart } from '../../../contexts/CartContext';
+import { useCart } from '../../contexts/CartContext';
 
 const { Meta } = Card;
 const { Title } = Typography;

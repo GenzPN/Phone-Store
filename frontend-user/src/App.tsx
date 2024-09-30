@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
 import { CartProvider } from './contexts/CartContext';
@@ -16,6 +16,7 @@ import Products from './components/Products/Products';
 import Checkout from './components/Checkout/Checkout';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
+import axios from 'axios';
 
 const { Content } = Layout;
 
@@ -37,36 +38,35 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const accessToken = getToken() || getCookie('accessToken');
+      const accessToken = getToken() || getCookie('accessToken') || localStorage.getItem('token');
       console.log('Access token:', accessToken);
 
       if (accessToken) {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
-            method: 'GET',
+          const response = await axios.get('http://localhost:5000/api/auth/me', {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
             },
           });
-          console.log('Response status:', response.status);
+          console.log('User data response:', response);
 
-          if (response.ok) {
-            const userData = await response.json();
-            console.log('User data:', userData);
-            setUser(userData);
+          if (response.status === 200 && response.data) {
+            setUser(response.data);
             setToken(accessToken);
             setCookie('accessToken', accessToken, 7);
+            localStorage.setItem('token', accessToken);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
           } else {
-            console.log('Invalid token, clearing data');
-            removeToken();
-            removeCookie('accessToken');
-            setUser(null);
+            throw new Error('Invalid user data response');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
-          removeToken();
-          removeCookie('accessToken');
-          setUser(null);
+          if (axios.isAxiosError(error) && error.response?.status === 401) {
+            console.log('Token expired or invalid, logging out user');
+            handleLogout();
+          } else {
+            console.error('Unexpected error:', error);
+          }
         }
       } else {
         console.log('No access token found');
@@ -78,11 +78,13 @@ const App: React.FC = () => {
     fetchCurrentUser();
   }, []);
 
-  const handleLogin = (userData: UserData, accessToken: string) => {
+  const handleLogin = useCallback((userData: UserData, accessToken: string) => {
     setUser(userData);
     setToken(accessToken);
     setCookie('accessToken', accessToken, 7);
-  };
+    localStorage.setItem('token', accessToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+  }, []);
 
   const handleLogout = () => {
     setUser(null);
@@ -98,8 +100,17 @@ const App: React.FC = () => {
     <Router>
       <CartProvider>
         <Layout>
-          <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
-          <Content style={{ padding: '20px 50px', backgroundColor: '#fff' }}>
+          {/* Conditionally render Header based on the current route */}
+          {!window.location.pathname.startsWith('/api/auth') && (
+            <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
+          )}
+          <Content 
+            style={{ 
+              padding: window.location.pathname.startsWith('/api/auth') ? 0 : '20px 50px', 
+              backgroundColor: '#fff',
+              minHeight: window.location.pathname.startsWith('/api/auth') ? '100vh' : 'auto'
+            }}
+          >
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/brand/:brandName" element={<BrandPage />} />
@@ -133,7 +144,8 @@ const App: React.FC = () => {
               />
             </Routes>
           </Content>
-          <FooterUser />
+          {/* Conditionally render Footer based on the current route */}
+          {!window.location.pathname.startsWith('/api/auth') && <FooterUser />}
         </Layout>
       </CartProvider>
     </Router>

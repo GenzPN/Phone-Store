@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, Select } from 'antd';
 import axios from 'axios';
-// Remove this line:
-// import { useAuth } from '../../../contexts/AuthContext';
-import { getToken, getCookie } from '../../../utils/tokenStorage';
+import { getToken, getCookie } from '../../utils/tokenStorage';
 
 const { Option } = Select;
 

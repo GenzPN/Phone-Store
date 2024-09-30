@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
+const db = require('../../config/database');
 // const authenticateToken = require('../middleware/auth'); // Xóa dòng này
 
 // Lấy giỏ hàng của người dùng
@@ -77,5 +77,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+const userCartRoutes = router;
 
-module.exports = router;
+module.exports = userCartRoutes;

@@ -43,10 +43,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           headers: { Authorization: `Bearer ${token}` }
         });
         
+        console.log('Cart API response:', response); // Add this line for debugging
+
         if (response.status === 200 && Array.isArray(response.data)) {
           setCartItems(response.data);
           saveCartToCookie(response.data);
         } else {
+          console.error('Invalid response data:', response.data);
           throw new Error('Invalid response data');
         }
       } else {
@@ -58,6 +61,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error fetching cart data:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', error.response?.data);
+      }
       message.error('Failed to fetch cart items. Please try again later.');
       setCartItems([]);
     }

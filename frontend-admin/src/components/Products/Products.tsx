@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { getToken, getCookie } from '../../../utils/tokenStorage';
+import { getToken, getCookie } from '../../utils/tokenStorage';
 
 const { Option } = Select;
 

@@ -3,50 +3,65 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes = require('./routes/auth');
-const productRoutes = require('./routes/products');
-const userRoutes = require('./routes/users');
-const orderRoutes = require('./routes/orders');
-const cartRoutes = require('./routes/cart');
-const hashExistingPasswords = require('./hashExistingPasswords');
-const cookieRoutes = require('./routes/cookie');
-const settingsRoutes = require('./routes/settings');
-
-if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET is not set. Please set it in your .env file.');
-  process.exit(1);
-}
+const { authenticateUser, authenticateAdmin } = require('./middleware/auth');
 
 const app = express();
 
-// Cấu hình CORS
+// Admin routes
+const adminProductRoutes = require('./routes/admin/products');
+const adminUserRoutes = require('./routes/admin/users');
+const adminOrderRoutes = require('./routes/admin/orders');
+const adminSettingsRoutes = require('./routes/admin/settings');
+
+// User routes
+const userProfileRoutes = require('./routes/user/profile');
+const userAddressRoutes = require('./routes/user/addresses');
+const userOrderRoutes = require('./routes/user/orders');
+const userCartRoutes = require('./routes/user/cart');
+
+// Public routes
+const authRoutes = require('./routes/auth');
+const publicProductRoutes = require('./routes/products');
+
+// Cấu hình CORS và middleware khác
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1', 'http://0.0.0.0'], // Danh sách URL của frontend được phép truy cập
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
+// Public routes
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/cookie', cookieRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/products', publicProductRoutes);
+
+// Admin routes
+app.use('/api/admin/products', authenticateAdmin, adminProductRoutes);
+app.use('/api/admin/users', authenticateAdmin, adminUserRoutes);
+app.use('/api/admin/orders', authenticateAdmin, adminOrderRoutes);
+app.use('/api/admin/settings', authenticateAdmin, adminSettingsRoutes);
+
+// User routes
+app.use('/api/user/profile', authenticateUser, userProfileRoutes);
+app.use('/api/user/addresses', authenticateUser, userAddressRoutes);
+app.use('/api/user/orders', authenticateUser, userOrderRoutes);
+app.use('/api/user/cart', authenticateUser, userCartRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 // Function to start the server
 async function startServer() {
   try {
-    // Run the hash password function before starting the server
+    async function hashExistingPasswords() {
+      console.log("Hashing existing passwords...");
+      // Add your password hashing logic here
+    }
+
     await hashExistingPasswords();
-    
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`JWT_SECRET is ${process.env.JWT_SECRET ? 'set' : 'not set'}`);

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
+const db = require('../../config/database');
 const bcrypt = require('bcrypt');
 
 // Cập nhật thông tin người dùng
@@ -142,4 +142,5 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+const adminUserRoutes = router;
+module.exports = adminUserRoutes;
