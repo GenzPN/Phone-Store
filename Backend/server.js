@@ -1,27 +1,29 @@
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-const { authenticateUser, authenticateAdmin } = require('./middleware/auth');
-
-const app = express();
+import { authenticateUser, authenticateAdmin } from './middleware/auth.js';
 
 // Admin routes
-const adminProductRoutes = require('./routes/admin/products');
-const adminUserRoutes = require('./routes/admin/users');
-const adminOrderRoutes = require('./routes/admin/orders');
-const adminSettingsRoutes = require('./routes/admin/settings');
+import adminProductRoutes from './routes/admin/products.js';
+import adminUserRoutes from './routes/admin/users.js';
+import * as adminOrderRoutes from './routes/admin/orders.js';
+import adminSettingsRoutes from './routes/admin/settings.js';
 
 // User routes
-const userProfileRoutes = require('./routes/user/profile');
-const userAddressRoutes = require('./routes/user/addresses');
-const userOrderRoutes = require('./routes/user/orders');
-const userCartRoutes = require('./routes/user/cart');
+import userProfileRoutes from './routes/user/profile.js';
+import userAddressRoutes from './routes/user/addresses.js';
+import userOrderRoutes from './routes/user/orders.js';
+import userCartRoutes from './routes/user/cart.js';
 
 // Public routes
-const authRoutes = require('./routes/auth');
-const publicProductRoutes = require('./routes/products');
+import authRoutes from './routes/auth.js';
+import publicProductRoutes from './routes/products.js';
+
+dotenv.config();
+
+const app = express();
 
 // Cấu hình CORS và middleware khác
 app.use(cors({

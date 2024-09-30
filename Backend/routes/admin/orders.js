@@ -151,4 +151,4 @@ router.put('/:id/items', async (req, res) => {
 });
 
 const adminOrderRoutes = router;
-module.exports = adminOrderRoutes;
+export default adminOrderRoutes;
