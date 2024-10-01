@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "antd";
 import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { formatProductNameForUrl } from '../../utils/stringUtils';
-import { useCart } from '../../contexts/CartContext';
-import { getToken } from '../../utils/tokenStorage';
-import axios from 'axios'; // Import axios
+import { useCart, CartItem } from '../../contexts/CartContext';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 
@@ -16,20 +15,10 @@ interface Phone {
   price: string | number;
   thumbnail: string;
   brand: string;
-  quantity?: number;
-}
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  thumbnail: string;
-  brand: string;
-  quantity: number;
 }
 
 const Home: React.FC = () => {
-    const { cartItems, setCartItems } = useCart();
+    const { cartItems, addToCart } = useCart();
     const [bestSellers, setBestSellers] = useState<Phone[]>([]);
     const [phonesByBrand, setPhonesByBrand] = useState<Record<string, Phone[]>>({});
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -47,7 +36,6 @@ const Home: React.FC = () => {
                     }
                 });
 
-                console.log('Raw API response:', response.data);
                 const data = response.data;
                 
                 if (!data.products || data.products.length === 0) {
@@ -81,47 +69,29 @@ const Home: React.FC = () => {
         fetchProducts();
     }, [currentPage]);
 
-    const handleImageClick = (productName: string) => {
+    const formatPrice = useCallback((price: number | string): string => {
+        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(numPrice);
+    }, []);
+
+    const handleImageClick = useCallback((productName: string) => {
         navigate(`/details/${formatProductNameForUrl(productName)}`);
-    };
+    }, [navigate]);
 
-    const handleAddToCart = (phone: Phone) => {
-        const existingItem = cartItems.find((item: CartItem) => item.id === phone.id);
-        let updatedCart: CartItem[];
-        if (existingItem) {
-            updatedCart = cartItems.map((item: CartItem) =>
-                item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
-            );
-        } else {
-            const newCartItem: CartItem = {
-                id: phone.id,
-                name: phone.title,
-                price: typeof phone.price === 'string' ? parseFloat(phone.price) : phone.price,
-                thumbnail: phone.thumbnail,
-                brand: phone.brand,
-                quantity: 1
-            };
-            updatedCart = [...cartItems, newCartItem];
-        }
-        setCartItems(updatedCart);
+    const handleAddToCart = useCallback((phone: Phone) => {
+        const newCartItem: CartItem = {
+            id: phone.id,
+            product_id: phone.id,
+            quantity: 1,
+            title: phone.title,
+            price: typeof phone.price === 'string' ? parseFloat(phone.price) : phone.price,
+            thumbnail: phone.thumbnail
+        };
+        addToCart(newCartItem);
+        message.success(`Đã thêm ${phone.title} (${formatPrice(phone.price)}) vào giỏ hàng`);
+    }, [addToCart, formatPrice]);
 
-        // Save order to cookie
-        fetch('http://localhost:5000/api/cookie/save-order', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedCart),
-            credentials: 'include',
-        })
-            .then(response => response.json())
-            .then(data => console.log(data.message))
-            .catch(error => console.error('Error saving order to cookie:', error));
-
-        message.success(`Added ${phone.title} to cart`);
-    };
-
-    const renderPhoneCard = (phone: Phone) => (
+    const renderPhoneCard = useCallback((phone: Phone) => (
         <div key={phone.id} style={{ padding: '0 10px' }}>
             <Card
                 hoverable
@@ -139,7 +109,7 @@ const Home: React.FC = () => {
                     >
                         <Image 
                             alt={phone.title} 
-                            src={phone.thumbnail} 
+                            src={phone.thumbnail || 'đường_dẫn_đến_ảnh_mặc_định'} 
                             preview={false}
                             style={{ 
                                 width: '100%', 
@@ -170,8 +140,8 @@ const Home: React.FC = () => {
                 <Title level={5} style={{ color: "#219ebc", textAlign: "center", marginBottom: '5px' }}>
                     {phone.title}
                 </Title>
-                <Text style={{ display: "block", textAlign: "center", marginBottom: '15px' }}>
-                    {phone.price !== null && phone.price !== undefined ? phone.price : 'Giá không xác định'}
+                <Text style={{ display: "block", textAlign: "center", marginBottom: '15px', fontSize: '16px', fontWeight: 'bold', color: '#f5222d' }}>
+                    {phone.price !== null && phone.price !== undefined ? formatPrice(phone.price) : 'Giá không xác định'}
                 </Text>
                 <Row justify="center" style={{ marginTop: 'auto' }}>
                     <Link to={`/details/${formatProductNameForUrl(phone.title)}`}>
@@ -187,7 +157,7 @@ const Home: React.FC = () => {
                 </Row>
             </Card>
         </div>
-    );
+    ), [formatPrice, handleImageClick, handleAddToCart]);
 
     const settings = {
         dots: true,

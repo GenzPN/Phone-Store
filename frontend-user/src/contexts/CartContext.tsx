@@ -1,141 +1,145 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { message } from 'antd';
-import { setCookie, getCookie } from '../utils/cookies';
 
 export interface CartItem {
   id: number;
-  name: string;
+  product_id: number;
+  quantity: number;
+  title: string;
   price: number;
   thumbnail: string;
-  brand: string;
-  quantity: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
-  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  total: number;
-  setTotal: React.Dispatch<React.SetStateAction<number>>;
-  fetchCartItems: () => Promise<void>;
-  updateCartItem: (id: number, quantity: number) => Promise<void>;
-  removeCartItem: (id: number) => Promise<void>;
+  addToCart: (item: CartItem) => Promise<void>;
+  removeFromCart: (id: number) => Promise<void>;
+  updateQuantity: (id: number, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const CART_COOKIE_NAME = 'cart_items';
-
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [total, setTotal] = useState(0);
 
-  const saveCartToCookie = useCallback((items: CartItem[]) => {
-    setCookie(CART_COOKIE_NAME, JSON.stringify(items), 7); // Save for 7 days
+  useEffect(() => {
+    fetchCart();
   }, []);
 
-  const fetchCartItems = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Fetch cart items from server if user is logged in
-        const response = await axios.get('http://localhost:5000/api/cart', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        console.log('Cart API response:', response); // Add this line for debugging
-
-        if (response.status === 200 && Array.isArray(response.data)) {
-          setCartItems(response.data);
-          saveCartToCookie(response.data);
-        } else {
-          console.error('Invalid response data:', response.data);
-          throw new Error('Invalid response data');
-        }
-      } else {
-        // Load cart items from cookie if user is not logged in
-        const cookieCart = getCookie(CART_COOKIE_NAME);
-        if (cookieCart) {
-          setCartItems(JSON.parse(cookieCart));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching cart data:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Axios error details:', error.response?.data);
-      }
-      message.error('Failed to fetch cart items. Please try again later.');
-      setCartItems([]);
-    }
-  }, [saveCartToCookie]);
-
-  const updateCartItem = useCallback(async (id: number, quantity: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Update cart item on server if user is logged in
-        await axios.put(`http://localhost:5000/api/cart/${id}`, { quantity }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
-
-      // Update local state
-      const updatedItems = cartItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      );
-      setCartItems(updatedItems);
-      saveCartToCookie(updatedItems);
-    } catch (error) {
-      console.error('Error updating cart item:', error);
-      message.error('Failed to update cart item. Please try again.');
-    }
-  }, [cartItems, saveCartToCookie]);
-
-  const removeCartItem = useCallback(async (id: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Remove cart item from server if user is logged in
-        await axios.delete(`http://localhost:5000/api/cart/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
-
-      // Update local state
-      const updatedItems = cartItems.filter(item => item.id !== id);
-      setCartItems(updatedItems);
-      saveCartToCookie(updatedItems);
-    } catch (error) {
-      console.error('Error removing cart item:', error);
-      message.error('Failed to remove cart item. Please try again.');
-    }
-  }, [cartItems, saveCartToCookie]);
-
-  const updateTotal = (items: CartItem[]) => {
-    const newTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    setTotal(newTotal);
-  };
-
   useEffect(() => {
-    fetchCartItems();
-  }, [fetchCartItems]);
-
-  useEffect(() => {
-    // Save to cookie whenever cartItems changes
-    saveCartToCookie(cartItems);
-    updateTotal(cartItems);
+    Cookies.set('cart', JSON.stringify(cartItems), { expires: 7 });
   }, [cartItems]);
 
+  const fetchCart = async () => {
+    try {
+      const token = Cookies.get('token');
+      console.log('Fetching cart with token:', token); // Log để kiểm tra token
+      const response = await axios.get('http://localhost:5000/api/cart', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('Cart response:', response.data); // Log response để kiểm tra
+      setCartItems(response.data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+        console.error('Response status:', error.response?.status);
+      }
+      message.error('Không thể tải giỏ hàng. Vui lòng thử lại sau.');
+    }
+  };
+
+  const addToCart = async (item: CartItem) => {
+    try {
+      const token = Cookies.get('token');
+      if (!token) {
+        message.error('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+        return;
+      }
+
+      const response = await axios.post('/api/cart', 
+        { product_id: item.product_id, quantity: item.quantity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        await fetchCart(); // Cập nhật giỏ hàng từ server
+        message.success(`Đã thêm ${item.title} vào giỏ hàng`);
+      } else {
+        throw new Error('Unexpected response status');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Error data:', error.response.data);
+          console.error('Error status:', error.response.status);
+          message.error(`Lỗi: ${error.response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng'}`);
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error('Error request:', error.request);
+          message.error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Error message:', error.message);
+          message.error('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+        }
+      } else {
+        message.error('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
+      }
+    }
+  };
+
+  const removeFromCart = async (id: number) => {
+    try {
+      const token = Cookies.get('token');
+      await axios.delete(`/api/cart/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchCart();
+      message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      message.error('Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.');
+    }
+  };
+
+  const updateQuantity = async (id: number, quantity: number) => {
+    try {
+      const token = Cookies.get('token');
+      await axios.put(`/api/cart/${id}`, { quantity }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchCart();
+      message.success('Đã cập nhật số lượng sản phẩm');
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      message.error('Không thể cập nhật số lượng sản phẩm. Vui lòng thử lại.');
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const token = Cookies.get('token');
+      await axios.delete('/api/cart', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCartItems([]);
+      Cookies.remove('cart');
+      message.success('Đã xóa toàn bộ giỏ hàng');
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      message.error('Không thể xóa giỏ hàng. Vui lòng thử lại.');
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      setCartItems, 
-      total, 
-      setTotal, 
-      fetchCartItems, 
-      updateCartItem, 
-      removeCartItem 
-    }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );

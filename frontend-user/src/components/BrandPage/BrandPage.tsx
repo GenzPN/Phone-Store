@@ -18,7 +18,7 @@ interface Phone {
 
 const BrandPage: React.FC = () => {
   const { brandName: urlBrandName } = useParams<{ brandName: string }>();
-  const { cartItems, setCartItems } = useCart();
+  const { cartItems, addToCart } = useCart();
   const [phones, setPhones] = useState<Phone[]>([]);
   const [filteredPhones, setFilteredPhones] = useState<Phone[]>([]);
   const [priceFilter, setPriceFilter] = useState('all');
@@ -105,31 +105,15 @@ const BrandPage: React.FC = () => {
     }
   };
 
-  const addToCart = (phone: Phone) => {
-    const existingItem = cartItems.find(item => item.id === phone.id);
-    let updatedCart;
-    if (existingItem) {
-      updatedCart = cartItems.map(item =>
-        item.id === phone.id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-    } else {
-      updatedCart = [...cartItems, { ...phone, quantity: 1 }];
-    }
-    setCartItems(updatedCart);
-
-    // Lưu đơn hàng vào cookie
-    fetch('http://localhost:5000/api/cookie/save-order', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedCart),
-      credentials: 'include', // Quan trọng để gửi và nhận cookies
-    })
-      .then(response => response.json())
-      .then(data => console.log(data.message))
-      .catch(error => console.error('Error saving order to cookie:', error));
-
+  const handleAddToCart = (phone: Phone) => {
+    addToCart({
+      id: phone.id,
+      product_id: phone.id,
+      quantity: 1,
+      title: phone.name,
+      price: phone.price,
+      thumbnail: phone.thumbnail
+    });
     message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
   };
 
@@ -234,7 +218,7 @@ const BrandPage: React.FC = () => {
                           backgroundColor: '#1890ff', 
                           borderColor: '#1890ff'
                         }} 
-                        onClick={() => addToCart(phone)}
+                        onClick={() => handleAddToCart(phone)}
                       >
                         Thêm vào giỏ
                       </Button>

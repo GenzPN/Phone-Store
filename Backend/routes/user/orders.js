@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import db from '../../config/database.js';
+
 const router = express.Router();
-const db = require('../../config/database');
 
 // Get all orders with detailed information (for admin)
 router.get('/all', async (req, res) => {
@@ -149,5 +150,5 @@ router.put('/:id/items', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-const userOrderRoutes = router;
-module.exports = userOrderRoutes;
+
+export const userOrderRoutes = router;

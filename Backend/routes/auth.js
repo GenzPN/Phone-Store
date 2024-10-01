@@ -1,11 +1,9 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../config/database');
-const { authenticateUser } = require('../middleware/auth');
-const router = express.Router();
+import express from 'express';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import db from '../config/database.js';
 
-// Remove the authenticateToken middleware from this file
+const router = express.Router();
 
 // Đăng nhập
 router.post('/login', async (req, res) => {
@@ -23,7 +21,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-    const token = jwt.sign({ id: user.id, role: user.isAdmin ? 'admin' : 'user' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
     console.error('Login error:', error);
@@ -61,9 +59,15 @@ router.post('/register', async (req, res) => {
 });
 
 // Lấy thông tin người dùng hiện tại
-router.get('/me', authenticateUser, async (req, res) => {
+router.get('/me', async (req, res) => {
+  const userId = req.user?.id;  // Use optional chaining
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
   try {
-    const [users] = await db.promise().query('SELECT id, username, email, fullName, gender, image, isAdmin FROM Users WHERE id = ?', [req.user.id]);
+    const [users] = await db.promise().query('SELECT id, username, email, fullName, gender, image, isAdmin FROM Users WHERE id = ?', [userId]);
     if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -74,4 +78,4 @@ router.get('/me', authenticateUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export { router as authRoutes };

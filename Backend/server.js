@@ -3,23 +3,20 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import { authenticateUser, authenticateAdmin } from './middleware/auth.js';
-
 // Admin routes
-import adminProductRoutes from './routes/admin/products.js';
-import adminUserRoutes from './routes/admin/users.js';
-import * as adminOrderRoutes from './routes/admin/orders.js';
-import adminSettingsRoutes from './routes/admin/settings.js';
+import { adminProductRoutes } from './routes/admin/products.js';
+import { adminUserRoutes } from './routes/admin/users.js';
+import { adminOrderRoutes } from './routes/admin/orders.js';
 
 // User routes
-import userProfileRoutes from './routes/user/profile.js';
-import userAddressRoutes from './routes/user/addresses.js';
-import userOrderRoutes from './routes/user/orders.js';
-import userCartRoutes from './routes/user/cart.js';
+import { userProfileRoutes } from './routes/user/profile.js';
+import { userAddressRoutes } from './routes/user/addresses.js';
+import { userOrderRoutes } from './routes/user/orders.js';
+import { userCartRoutes } from './routes/user/cart.js';
 
 // Public routes
-import authRoutes from './routes/auth.js';
-import publicProductRoutes from './routes/products.js';
+import { authRoutes } from './routes/auth.js';
+import { publicProductRoutes } from './routes/products.js';
 
 dotenv.config();
 
@@ -41,16 +38,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', publicProductRoutes);
 
 // Admin routes
-app.use('/api/admin/products', authenticateAdmin, adminProductRoutes);
-app.use('/api/admin/users', authenticateAdmin, adminUserRoutes);
-app.use('/api/admin/orders', authenticateAdmin, adminOrderRoutes);
-app.use('/api/admin/settings', authenticateAdmin, adminSettingsRoutes);
+app.use('/api/admin/products', adminProductRoutes);
+app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/orders', adminOrderRoutes);
 
 // User routes
-app.use('/api/user/profile', authenticateUser, userProfileRoutes);
-app.use('/api/user/addresses', authenticateUser, userAddressRoutes);
-app.use('/api/user/orders', authenticateUser, userOrderRoutes);
-app.use('/api/user/cart', authenticateUser, userCartRoutes);
+app.use('/api/user/profile', userProfileRoutes);
+app.use('/api/user/addresses', userAddressRoutes);
+app.use('/api/user/orders', userOrderRoutes);
+app.use('/api/user/cart', userCartRoutes);
 
 const PORT = process.env.PORT || 5000;
 

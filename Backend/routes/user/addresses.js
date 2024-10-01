@@ -1,100 +1,73 @@
-const express = require('express');
+import express from 'express';
+import db from '../../config/database.js';
+
 const router = express.Router();
-const db = require('../../config/database');
 
 // Get all addresses (for a user if logged in)
 router.get('/', async (req, res) => {
     try {
-        let query = 'SELECT * FROM UserAddresses';
-        const params = [];
-        
-        if (req.user && req.user.id) {
-            query += ' WHERE user_id = ?';
-            params.push(req.user.id);
-        } else {
-            query += ' WHERE user_id IS NULL';
-        }
-        
-        const [addresses] = await db.query(query, params);
+        const userId = 1; // Thay thế bằng ID người dùng thực tế sau khi xác thực
+        const [addresses] = await db.promise().query('SELECT * FROM UserAddresses WHERE user_id = ?', [userId]);
         res.json(addresses);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching addresses', error: error.message });
+        console.error('Get user addresses error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
 // Create a new address
 router.post('/', async (req, res) => {
     try {
-        const { fullName, phone, address, is_default, address_type, company_name } = req.body;
-        const userId = req.user ? req.user.id : null;
-
-        const [result] = await db.query(
-            'INSERT INTO UserAddresses (user_id, fullName, phone, address, is_default, address_type, company_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [userId, fullName, phone, address, is_default, address_type, company_name]
+        const userId = 1; // Thay thế bằng ID người dùng thực tế sau khi xác thực
+        const { fullName, phone, address } = req.body;
+        const [result] = await db.promise().query(
+            'INSERT INTO UserAddresses (user_id, fullName, phone, address) VALUES (?, ?, ?, ?)',
+            [userId, fullName, phone, address]
         );
-
-        res.status(201).json({ id: result.insertId, message: 'Address created successfully' });
+        res.status(201).json({ id: result.insertId, fullName, phone, address });
     } catch (error) {
-        res.status(500).json({ message: 'Error creating address', error: error.message });
+        console.error('Add user address error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
 // Update an address
 router.put('/:id', async (req, res) => {
     try {
-        const { fullName, phone, address, is_default, address_type, company_name } = req.body;
+        const userId = 1; // Thay thế bằng ID người dùng thực tế sau khi xác thực
         const addressId = req.params.id;
-        const userId = req.user ? req.user.id : null;
-
-        let query = 'UPDATE UserAddresses SET fullName = ?, phone = ?, address = ?, is_default = ?, address_type = ?, company_name = ? WHERE id = ?';
-        const params = [fullName, phone, address, is_default, address_type, company_name, addressId];
-
-        if (userId) {
-            query += ' AND user_id = ?';
-            params.push(userId);
-        } else {
-            query += ' AND user_id IS NULL';
-        }
-
-        const [result] = await db.query(query, params);
-
+        const { fullName, phone, address } = req.body;
+        const [result] = await db.promise().query(
+            'UPDATE UserAddresses SET fullName = ?, phone = ?, address = ? WHERE id = ? AND user_id = ?',
+            [fullName, phone, address, addressId, userId]
+        );
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Address not found or you do not have permission to update it' });
+            return res.status(404).json({ message: 'Address not found or not owned by user' });
         }
-
         res.json({ message: 'Address updated successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Error updating address', error: error.message });
+        console.error('Update user address error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
 // Delete an address
 router.delete('/:id', async (req, res) => {
     try {
+        const userId = 1; // Thay thế bằng ID người dùng thực tế sau khi xác thực
         const addressId = req.params.id;
-        const userId = req.user ? req.user.id : null;
-
-        let query = 'DELETE FROM UserAddresses WHERE id = ?';
-        const params = [addressId];
-
-        if (userId) {
-            query += ' AND user_id = ?';
-            params.push(userId);
-        } else {
-            query += ' AND user_id IS NULL';
-        }
-
-        const [result] = await db.query(query, params);
-
+        const [result] = await db.promise().query(
+            'DELETE FROM UserAddresses WHERE id = ? AND user_id = ?',
+            [addressId, userId]
+        );
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Address not found or you do not have permission to delete it' });
+            return res.status(404).json({ message: 'Address not found or not owned by user' });
         }
-
         res.json({ message: 'Address deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting address', error: error.message });
+        console.error('Delete user address error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-const userAddressRoutes = router;
-module.exports = userAddressRoutes;
+export { router as userAddressRoutes };

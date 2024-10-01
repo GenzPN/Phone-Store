@@ -1,53 +1,36 @@
-const express = require('express');
+import express from 'express';
+import db from '../config/database.js';
+
 const router = express.Router();
-const db = require('../config/database');
-// const authenticateToken = require('../middleware/auth'); // Uncomment nếu bạn muốn bảo vệ route này
 
-// Xóa hàm formatPrice vì chúng ta sẽ không sử dụng nó ở backend nữa
-
-// Lấy danh sách sản phẩm (không yêu cầu xác thực)
+// Lấy danh sách sản phẩm
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 20, brand, isFeatured } = req.query;
-    console.log('Query params:', { page, limit, brand, isFeatured });
-
+    const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
 
-    let query = 'SELECT * FROM Products WHERE 1=1';
-    const queryParams = [];
-
-    if (brand) {
-      query += ' AND brand IN (?)';
-      queryParams.push(brand.split(','));
-    }
-
-    if (isFeatured !== undefined) {
-      query += ' AND is_featured = ?';
-      queryParams.push(isFeatured);
-    }
-
-    query += ' LIMIT ? OFFSET ?';
-    queryParams.push(Number(limit), offset);
-
-    console.log('SQL Query:', query);
-    console.log('Query Params:', queryParams);
-
-    const [products] = await db.promise().query(query, queryParams);
-    console.log('Products fetched:', products.length);
+    const [products] = await db.promise().query(
+      'SELECT * FROM Products LIMIT ? OFFSET ?',
+      [Number(limit), offset]
+    );
 
     const [countResult] = await db.promise().query(
-      'SELECT COUNT(*) as total FROM Products WHERE 1=1' +
-      (brand ? ' AND brand IN (?)' : '') +
-      (isFeatured !== undefined ? ' AND is_featured = ?' : ''),
-      brand ? [brand.split(','), isFeatured] : [isFeatured]
+      'SELECT COUNT(*) as total FROM Products'
     );
 
     const totalProducts = countResult[0].total;
 
+    if (!products || products.length === 0) {
+      return res.status(404).json({ message: 'No products found' });
+    }
+
     const formattedProducts = products.map(product => ({
-      ...product,
+      id: product.id,
+      title: product.title,
+      name: product.title,
       price: Number(product.price),
-      images: JSON.parse(product.images || '[]'),
+      thumbnail: product.thumbnail, // Sử dụng trực tiếp trường thumbnail
+      brand: product.brand
     }));
 
     res.json({
@@ -57,8 +40,8 @@ router.get('/', async (req, res) => {
       totalProducts
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error('Get products error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -117,7 +100,7 @@ router.get('/brand/:brandName', async (req, res) => {
     const formattedProducts = products.map(product => ({
       ...product,
       price: Number(product.price),
-      thumbnail: JSON.parse(product.images || '[]')[0] || '', // Lấy ảnh đầu tiên làm thumbnail
+      thumbnail: product.thumbnail, // Sử dụng trực tiếp trường thumbnail
     }));
 
     res.json({
@@ -132,85 +115,4 @@ router.get('/brand/:brandName', async (req, res) => {
   }
 });
 
-// Thêm đánh giá sản phẩm
-router.post('/:id/reviews', async (req, res) => {
-  const { rating, comment, reviewer_name } = req.body;
-  try {
-    const [result] = await db.promise().query(
-      'INSERT INTO ProductReviews (product_id, rating, comment, reviewer_name) VALUES (?, ?, ?, ?)',
-      [req.params.id, rating, comment, reviewer_name]
-    );
-    res.status(201).json({ message: 'Review added', id: result.insertId });
-  } catch (error) {
-    console.error('Add review error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Cập nhật sản phẩm
-router.put('/:id', async (req, res) => {
-  try {
-    // Get the current product data
-    const [currentProduct] = await db.promise().query('SELECT * FROM Products WHERE id = ?', [req.params.id]);
-    
-    if (currentProduct.length === 0) {
-      return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
-    }
-
-    const {
-      title, description, price, stock, brand, thumbnail, images, screen, back_camera, 
-      front_camera, ram, storage, battery, category, sku, warranty_information, 
-      shipping_information, availability_status, return_policy, minimum_order_quantity, 
-      discount_percentage, is_featured, featured_sort_order
-    } = req.body;
-
-    const numericPrice = Number(price);
-    if (isNaN(numericPrice)) {
-      return res.status(400).json({ message: 'Giá không hợp lệ' });
-    }
-
-    const [result] = await db.promise().query(
-      `UPDATE Products SET 
-        title = ?, description = ?, price = ?, stock = ?, brand = ?, 
-        thumbnail = ?, images = ?, screen = ?, back_camera = ?, 
-        front_camera = ?, ram = ?, storage = ?, battery = ?, category = ?,
-        sku = ?, warranty_information = ?, shipping_information = ?, availability_status = ?,
-        return_policy = ?, minimum_order_quantity = ?, discount_percentage = ?, is_featured = ?, featured_sort_order = ?
-      WHERE id = ?`,
-      [
-        title, description, numericPrice, stock, brand, thumbnail, 
-        JSON.stringify(images), screen, back_camera, front_camera, 
-        ram, storage, battery, category, sku, warranty_information, shipping_information, availability_status,
-        return_policy, minimum_order_quantity, discount_percentage, is_featured, featured_sort_order, req.params.id
-      ]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
-    }
-
-    // Calculate changes
-    const changes = {};
-    for (const [key, value] of Object.entries(req.body)) {
-      if (JSON.stringify(currentProduct[0][key]) !== JSON.stringify(value)) {
-        changes[key] = {
-          from: currentProduct[0][key],
-          to: value
-        };
-      }
-    }
-
-    // Insert edit history
-    await db.promise().query(
-      'INSERT INTO ProductEditHistory (product_id, user_id, edit_type, changes) VALUES (?, ?, ?, ?)',
-      [req.params.id, 1, 'update', JSON.stringify(changes)] // Giả lập user_id là 1
-    );
-
-    res.status(200).json({ message: 'Sản phẩm đã được cập nhật' });
-  } catch (error) {
-    console.error('Lỗi khi cập nhật sản phẩm:', error);
-    res.status(500).json({ message: 'Lỗi server nội bộ', error: error.message });
-  }
-});
-
-module.exports = router;
+export { router as publicProductRoutes };

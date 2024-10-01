@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Table, Typography, Space, Button, InputNumber, Popconfirm, Row, Col, message } from 'antd';
 import { ShoppingCartOutlined, ShoppingOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -9,7 +9,12 @@ const { Title, Text } = Typography;
 const MAX_PRODUCTS = 10;
 
 const Cart: React.FC = () => {
-  const { cartItems, setCartItems, total, updateCartItem, removeCartItem } = useCart();
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, [cartItems]);
 
   const handleQuantityChange = useCallback((id: number, newQuantity: number | null) => {
     if (newQuantity === null) return;
@@ -22,18 +27,18 @@ const Cart: React.FC = () => {
       return;
     }
 
-    updateCartItem(id, newQuantity);
-  }, [cartItems, updateCartItem]);
+    updateQuantity(id, newQuantity);
+  }, [cartItems, updateQuantity]);
 
   const handleDelete = useCallback((id: number) => {
-    removeCartItem(id);
-  }, [removeCartItem]);
+    removeFromCart(id);
+  }, [removeFromCart]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: 'Sản phẩm',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'title',
+      key: 'title',
       render: (text: string, record: CartItem) => (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <img src={record.thumbnail} alt={text} style={{ width: 50, marginRight: 10 }} />
@@ -79,9 +84,12 @@ const Cart: React.FC = () => {
         </Popconfirm>
       ),
     },
-  ];
+  ], [handleQuantityChange, handleDelete]);
 
-  const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const total = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
+  const totalQuantity = useMemo(() => cartItems.reduce((total, item) => total + item.quantity, 0), [cartItems]);
+
+  if (isLoading) return <div>Đang tải...</div>;
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -110,7 +118,7 @@ const Cart: React.FC = () => {
             </Button>
           </Col>
           <Col>
-            <Button type="primary">
+            <Button type="primary" disabled={cartItems.length === 0}>
               <Link to="/products/checkout/">Thanh toán</Link>
             </Button>
           </Col>

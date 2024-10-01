@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Input, Form, Select } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -18,11 +18,15 @@ interface AddressData {
 }
 
 const Checkout: React.FC = () => {
-  const { cartItems, total, fetchCartItems } = useCart();
+  const { cartItems, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [addressType, setAddressType] = useState<string>('home');
   const [form] = Form.useForm();
   const navigate = useNavigate();
+
+  const total = useMemo(() => {
+    return cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  }, [cartItems]);
 
   const columns = [
     {
@@ -92,8 +96,7 @@ const Checkout: React.FC = () => {
       const result = await response.json();
       if (result.success) {
         message.success('Đơn hàng đã được đặt thành công.');
-        // Clear the cart after successful order
-        await fetchCartItems();
+        clearCart(); // Use clearCart from CartContext
         navigate('/order-confirmation', { state: { orderId: result.orderId } });
       } else {
         message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');

@@ -6,7 +6,6 @@ CREATE TABLE Users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    password_hashed BOOLEAN DEFAULT FALSE,
     fullName VARCHAR(150),
     gender ENUM('male', 'female', 'other'),
     image VARCHAR(255),
@@ -150,5 +149,15 @@ CREATE TABLE ProductEditHistory (
     INDEX idx_product_id (product_id),
     INDEX idx_user_id (user_id),
     INDEX idx_edited_at (edited_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE PriceHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT,
+    price INT,
+    effective_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE,
+    INDEX idx_product_id (product_id),
+    INDEX idx_effective_from (effective_from)
 ) ENGINE=InnoDB;
 

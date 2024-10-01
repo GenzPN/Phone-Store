@@ -1,12 +1,17 @@
-const express = require('express');
+import express from 'express';
+import db from '../../config/database.js';
+import { authenticateToken } from '../../middleware/auth.js'; // Thêm middleware xác thực
+
 const router = express.Router();
-const db = require('../../config/database');
-// const authenticateToken = require('../middleware/auth'); // Xóa dòng này
+
+// Áp dụng middleware xác thực cho tất cả các route
+router.use(authenticateToken);
 
 // Lấy giỏ hàng của người dùng
 router.get('/', async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const user_id = req.user.id; // Lấy user_id từ token đã được xác thực
+    console.log('User ID:', user_id); // Thêm dòng này để kiểm tra
 
     const [cartItems] = await db.promise().query(`
       SELECT c.id, c.product_id, c.quantity, p.title, p.price, p.thumbnail
@@ -77,6 +82,9 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-const userCartRoutes = router;
 
-module.exports = userCartRoutes;
+// Check if the export is correctly named
+export const userCartRoutes = router;
+
+// Or if it's a default export, it should look like this:
+// export default router;

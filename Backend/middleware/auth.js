@@ -1,32 +1,28 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-function verifyToken(token, requireAdmin = false) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) reject(err);
-      if (requireAdmin && !user.isAdmin) reject(new Error('Admin access required'));
-      resolve(user);
-    });
-  });
-}
+export const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  console.log('Auth Header:', authHeader); // Kiểm tra header
 
-function createAuthMiddleware(requireAdmin = false) {
-  return async (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+  if (!authHeader) {
+    console.log('No Authorization header');
+    return res.sendStatus(401);
+  }
 
-    if (!token) return res.sendStatus(401);
+  const token = authHeader.split(' ')[1];
+  console.log('Extracted Token:', token); // Kiểm tra token đã trích xuất
 
-    try {
-      req.user = await verifyToken(token, requireAdmin);
-      next();
-    } catch (error) {
+  if (!token) {
+    console.log('No token found in Authorization header');
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.error('JWT verification error:', err);
       return res.sendStatus(403);
     }
-  };
-}
-
-module.exports = {
-  authenticateUser: createAuthMiddleware(false),
-  authenticateAdmin: createAuthMiddleware(true)
+    req.user = user;
+    next();
+  });
 };

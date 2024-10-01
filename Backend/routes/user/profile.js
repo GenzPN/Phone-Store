@@ -1,26 +1,25 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../../config/database');
-const authMiddleware = require('../../middleware/adminAuth');
+import express from 'express';
+import db from '../../config/database.js';
 
-router.get('/', authMiddleware, async (req, res) => {
+const router = express.Router();
+
+router.get('/', async (req, res) => {
   try {
-    const userId = req.user.id;
-    const [user] = await db.query(
+    const userId = 1; // Dummy user ID for testing
+    const [users] = await db.promise().query(
       'SELECT id, username, email, fullName, gender, image FROM Users WHERE id = ?',
       [userId]
     );
 
-    if (!user) {
+    if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    res.json(users[0]);
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-const userProfileRoutes = router;
-module.exports = userProfileRoutes;
+export const userProfileRoutes = router;

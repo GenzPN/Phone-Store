@@ -13,4 +13,4 @@ router.post('/', (req, res) => {
 
 // Thêm các route khác nếu cần
 
-export default router;
+export { router as adminProductRoutes };
