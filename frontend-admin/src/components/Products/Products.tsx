@@ -148,7 +148,7 @@ const Products: React.FC = () => {
         return;
       }
   
-      await axios.put(`http://localhost:5000/api/products/${editingProduct?.id}`, updatedProduct, {
+      await axios.put(`http://localhost:5000/api/admin/products/${editingProduct?.id}`, updatedProduct, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

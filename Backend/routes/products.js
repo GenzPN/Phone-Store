@@ -6,17 +6,37 @@ const router = express.Router();
 // Lấy danh sách sản phẩm
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, brand, isFeatured } = req.query;
     const offset = (page - 1) * limit;
 
-    const [products] = await db.promise().query(
-      'SELECT * FROM Products LIMIT ? OFFSET ?',
-      [Number(limit), offset]
-    );
+    let query = 'SELECT * FROM Products';
+    let queryParams = [];
+    let countQuery = 'SELECT COUNT(*) as total FROM Products';
 
-    const [countResult] = await db.promise().query(
-      'SELECT COUNT(*) as total FROM Products'
-    );
+    if (brand || isFeatured !== undefined) {
+      query += ' WHERE';
+      countQuery += ' WHERE';
+      const conditions = [];
+
+      if (brand) {
+        conditions.push('brand = ?');
+        queryParams.push(brand);
+      }
+
+      if (isFeatured !== undefined) {
+        conditions.push('is_featured = ?');
+        queryParams.push(isFeatured === '1' ? 1 : 0);
+      }
+
+      query += ' ' + conditions.join(' AND ');
+      countQuery += ' ' + conditions.join(' AND ');
+    }
+
+    query += ' LIMIT ? OFFSET ?';
+    queryParams.push(Number(limit), offset);
+
+    const [products] = await db.promise().query(query, queryParams);
+    const [countResult] = await db.promise().query(countQuery, queryParams.slice(0, -2));
 
     const totalProducts = countResult[0].total;
 
@@ -27,10 +47,28 @@ router.get('/', async (req, res) => {
     const formattedProducts = products.map(product => ({
       id: product.id,
       title: product.title,
-      name: product.title,
       price: Number(product.price),
-      thumbnail: product.thumbnail, // Sử dụng trực tiếp trường thumbnail
-      brand: product.brand
+      stock: product.stock,
+      thumbnail: product.thumbnail,
+      images: JSON.parse(product.images || '[]'),
+      category: product.category,
+      screen: product.screen,
+      back_camera: product.back_camera,
+      front_camera: product.front_camera,
+      ram: product.ram,
+      storage: product.storage,
+      battery: product.battery,
+      sku: product.sku,
+      warranty_information: product.warranty_information,
+      shipping_information: product.shipping_information,
+      availability_status: product.availability_status,
+      return_policy: product.return_policy,
+      minimum_order_quantity: product.minimum_order_quantity,
+      discount_percentage: Number(product.discount_percentage),
+      is_featured: product.is_featured,
+      featured_sort_order: product.featured_sort_order,
+      brand: product.brand,
+      description: product.description
     }));
 
     res.json({

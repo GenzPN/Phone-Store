@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Switch, Button, message } from 'antd';
+import { Form, Input, InputNumber, Button, message, Tabs } from 'antd';
 import axios from 'axios';
 
+const { TabPane } = Tabs;
+
+interface WebsiteSettings {
+  name: string;
+  logo: string;
+}
+
+interface BankSettings {
+  name: string;
+  logo: string;
+  token: string;
+  accountHolder: string;
+  accountNumber: string;
+  transferContent: string;
+  orderTimeout: number;
+}
+
+interface MomoSettings {
+  name: string;
+  logo: string;
+  accountHolder: string;
+  accountNumber: string;
+  transferContent: string;
+  orderTimeout: number;
+}
+
 interface AdminSettings {
-  siteName: string;
-  logoUrl: string;
-  theme: string;
-  language: string;
-  itemsPerPage: number;
-  enableNotifications: boolean;
+  website: WebsiteSettings;
+  bank: BankSettings;
+  momo: MomoSettings;
 }
 
 const Settings: React.FC = () => {
@@ -19,12 +42,10 @@ const Settings: React.FC = () => {
     const fetchSettings = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get<AdminSettings>('http://localhost:5000/api/settings', {
+        const response = await axios.get<AdminSettings>('http://localhost:5000/api/admin/settings', {
           headers: { 
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
-          },
-          withCredentials: true
+          }
         });
         form.setFieldsValue(response.data);
       } catch (error) {
@@ -40,15 +61,16 @@ const Settings: React.FC = () => {
 
   const onFinish = async (values: AdminSettings) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/settings', values, {
+      const response = await axios.put('http://localhost:5000/api/admin/settings', values, {
         headers: { 
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        withCredentials: true
+        }
       });
-      message.success('Settings updated successfully');
+      if (response.data.message === 'Settings updated successfully') {
+        message.success('Settings updated successfully');
+      } else {
+        message.error('Failed to update settings');
+      }
     } catch (error) {
       console.error('Error updating settings:', error);
       message.error('Failed to update settings');
@@ -63,24 +85,59 @@ const Settings: React.FC = () => {
     <div>
       <h1>Admin Settings</h1>
       <Form form={form} onFinish={onFinish} layout="vertical">
-        <Form.Item name="siteName" label="Site Name" rules={[{ required: true }]}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="logoUrl" label="Logo URL">
-          <Input />
-        </Form.Item>
-        <Form.Item name="theme" label="Theme">
-          <Input />
-        </Form.Item>
-        <Form.Item name="language" label="Language">
-          <Input />
-        </Form.Item>
-        <Form.Item name="itemsPerPage" label="Items Per Page" rules={[{ type: 'number', min: 1 }]}>
-          <InputNumber />
-        </Form.Item>
-        <Form.Item name="enableNotifications" label="Enable Notifications" valuePropName="checked">
-          <Switch />
-        </Form.Item>
+        <Tabs defaultActiveKey="1">
+          <TabPane tab="Website" key="1">
+            <Form.Item name={['website', 'name']} label="Website Name" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name={['website', 'logo']} label="Logo URL">
+              <Input />
+            </Form.Item>
+          </TabPane>
+          <TabPane tab="Bank" key="2">
+            <Form.Item name={['bank', 'name']} label="Bank Name">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'logo']} label="Bank Logo URL">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'token']} label="Bank Token">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'accountHolder']} label="Account Holder">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'accountNumber']} label="Account Number">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'transferContent']} label="Transfer Content">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['bank', 'orderTimeout']} label="Order Timeout (minutes)">
+              <InputNumber min={1} />
+            </Form.Item>
+          </TabPane>
+          <TabPane tab="Momo" key="3">
+            <Form.Item name={['momo', 'name']} label="Momo Name">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['momo', 'logo']} label="Momo Logo URL">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['momo', 'accountHolder']} label="Account Holder">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['momo', 'accountNumber']} label="Account Number">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['momo', 'transferContent']} label="Transfer Content">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['momo', 'orderTimeout']} label="Order Timeout (minutes)">
+              <InputNumber min={1} />
+            </Form.Item>
+          </TabPane>
+        </Tabs>
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Save Settings

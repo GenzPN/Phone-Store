@@ -1,145 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
 import HeaderAdmin from './components/Header/Header';
 import SidebarAdmin from './components/Sidebar/Sidebar';
 import DashboardAdmin from './components/Dashboard/Dashboard';
-import LoginAdmin from './components/Login/Login';
 import ProductsAdmin from './components/Products/Products';
 import SettingsAdmin from './components/Settings/Settings';
 import OrdersAdmin from './components/Orders/Orders';
 import UsersAdmin from './components/Users/Users';
-import AddressUser from './components/AddressUser/AddressUser';
-
-import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
-
 const { Content } = Layout;
 
-interface AdminData {
-  id: number;
-  username: string;
-  email: string;
-  isAdmin: boolean;
-}
-
 const App: React.FC = () => {
-  const [admin, setAdmin] = useState<AdminData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  useEffect(() => {
-    const fetchCurrentAdmin = async () => {
-      const accessToken = getToken() || getCookie('accessToken');
-      console.log('Access token:', accessToken);
-
-      if (accessToken) {
-        try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          });
-          console.log('Response status:', response.status);
-
-          if (response.ok) {
-            const adminData = await response.json();
-            console.log('Admin data:', adminData);
-            if (adminData.isAdmin) {
-              setAdmin(adminData);
-              setToken(accessToken);
-              setCookie('accessToken', accessToken, 7);
-            } else {
-              throw new Error('User is not an admin');
-            }
-          } else {
-            console.log('Invalid token, clearing data');
-            removeToken();
-            removeCookie('accessToken');
-            setAdmin(null);
-          }
-        } catch (error) {
-          console.error('Error fetching admin data:', error);
-          removeToken();
-          removeCookie('accessToken');
-          setAdmin(null);
-        }
-      } else {
-        console.log('No access token found');
-        setAdmin(null);
-      }
-      setLoading(false);
-    };
-
-    fetchCurrentAdmin();
-  }, []);
-
-  const handleLogin = (adminData: AdminData, accessToken: string) => {
-    setAdmin(adminData);
-    setToken(accessToken);
-    setCookie('accessToken', accessToken, 7);
-  };
-
-  const handleLogout = () => {
-    setAdmin(null);
-    removeToken();
-    removeCookie('accessToken');
-  };
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  const AdminLayout = () => {
-    const location = useLocation();
-    const isLoginPage = location.pathname === '/auth';
-
-    return (
+  return (
+    <Router>
       <Layout style={{ minHeight: '100vh' }}>
-        {!isLoginPage && <HeaderAdmin onToggleSidebar={toggleSidebar} />}
+        <HeaderAdmin onToggleSidebar={toggleSidebar} />
         <Layout>
-          {!isLoginPage && (
-            <SidebarAdmin collapsed={isSidebarCollapsed} />
-          )}
+          <SidebarAdmin collapsed={isSidebarCollapsed} />
           <Layout style={{ marginLeft: isSidebarCollapsed ? 80 : 200, marginTop: 64 }}>
             <Content style={{ padding: 24, margin: 0, minHeight: 280 }}>
               <Routes>
-                <Route path="/dashboard" element={<DashboardAdmin />} />
-                <Route path="/products" element={<ProductsAdmin />} />
-                <Route path="/orders" element={<OrdersAdmin />} />
-                <Route path="/users" element={<UsersAdmin />} />
-                <Route path="/settings" element={<SettingsAdmin />} />
-                <Route path="/addressuser" element={<AddressUser />} />
-                <Route path="*" element={<Navigate to="/dashboard" />} />
+                <Route path="/admin/dashboard" element={<DashboardAdmin />} />
+                <Route path="/admin/products" element={<ProductsAdmin />} />
+                <Route path="/admin/orders" element={<OrdersAdmin />} />
+                <Route path="/admin/users" element={<UsersAdmin />} />
+                <Route path="/admin/settings" element={<SettingsAdmin />} />
+                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
               </Routes>
             </Content>
           </Layout>
         </Layout>
       </Layout>
-    );
-  };
-
-  return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/auth" 
-          element={
-            !admin ? <LoginAdmin /> : <Navigate to="/dashboard" />
-          } 
-        />
-        <Route 
-          path="/*" 
-          element={
-            admin ? <AdminLayout /> : <Navigate to="/auth" />
-          } 
-        />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-      </Routes>
     </Router>
   );
 };

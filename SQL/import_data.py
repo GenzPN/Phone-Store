@@ -33,114 +33,132 @@ def create_requirements_file():
         print(f"Error creating requirements.txt: {e}")
 
 def insert_product_from_phonedetails(cursor, product):
-    sql = """
+    query = """
     INSERT INTO Products (
-        title, description, price, stock, brand, thumbnail, images,
-        screen, back_camera, front_camera, ram, storage, battery,
-        category, sku, warranty_information, shipping_information,
-        availability_status, return_policy, minimum_order_quantity,
-        discount_percentage, is_featured, featured_sort_order
-    )
-    VALUES (
-        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-    )
+        title, description, category, price, stock, brand, sku, 
+        warranty_information, shipping_information, availability_status, return_policy, 
+        minimum_order_quantity, thumbnail, is_featured, featured_sort_order,
+        discount_percentage, images
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE
     description = VALUES(description),
     price = VALUES(price),
     stock = VALUES(stock),
-    brand = VALUES(brand),
-    thumbnail = VALUES(thumbnail),
-    images = VALUES(images),
-    screen = VALUES(screen),
-    back_camera = VALUES(back_camera),
-    front_camera = VALUES(front_camera),
-    ram = VALUES(ram),
-    storage = VALUES(storage),
-    battery = VALUES(battery),
-    category = VALUES(category),
-    sku = VALUES(sku),
     warranty_information = VALUES(warranty_information),
     shipping_information = VALUES(shipping_information),
     availability_status = VALUES(availability_status),
     return_policy = VALUES(return_policy),
     minimum_order_quantity = VALUES(minimum_order_quantity),
-    discount_percentage = VALUES(discount_percentage),
+    thumbnail = VALUES(thumbnail),
     is_featured = VALUES(is_featured),
-    featured_sort_order = VALUES(featured_sort_order)
+    featured_sort_order = VALUES(featured_sort_order),
+    discount_percentage = VALUES(discount_percentage),
+    images = VALUES(images)
     """
-    
-    # Lấy thông tin chi tiết sản phẩm từ productDetails.json
-    product_details = product_details_data.get(product['title'], [])
-    details_dict = {item['label']: item['value'] for item in product_details}
-    
     values = (
         product['title'],
-        product.get('description', ''),
-        product.get('price', 0),
-        product.get('stock', 0),
-        product.get('brand', ''),
-        product.get('thumbnail', ''),
-        json.dumps(product.get('images', [])),
-        details_dict.get('Màn hình', ''),
-        details_dict.get('Camera sau', ''),
-        details_dict.get('Camera Selfie', ''),
-        details_dict.get('RAM', ''),
-        details_dict.get('Bộ nhớ trong', ''),
-        details_dict.get('Pin', ''),
-        product.get('category', ''),
-        product.get('sku', ''),
-        product.get('warrantyInformation', ''),
-        product.get('shippingInformation', ''),
-        product.get('availabilityStatus', ''),
-        product.get('returnPolicy', ''),
-        product.get('minimumOrderQuantity', 1),
-        product.get('discountPercentage', 0),
-        product.get('is_featured', False),
-        product.get('featured_sort_order', 0)
+        product['description'],
+        product['category'],
+        product['price'],
+        product['stock'],
+        product['brand'],
+        product['sku'],
+        product['warrantyInformation'],
+        product['shippingInformation'],
+        product['availabilityStatus'],
+        product['returnPolicy'],
+        product['minimumOrderQuantity'],
+        product['thumbnail'],
+        product.get('is_featured', False),  # Sử dụng False nếu không có giá trị
+        product.get('featured_sort_order', 0),  # Sử dụng 0 nếu không có giá trị
+        product.get('discountPercentage', 0),  # Sử dụng 0 nếu không có giá trị
+        json.dumps(product['images'])  # Chuyển đổi danh sách hình ảnh thành JSON
     )
-    cursor.execute(sql, values)
+    cursor.execute(query, values)
+    return cursor.lastrowid
 
-def insert_user(connection, user):
+# Thêm hàm mới để chèn hình ảnh sản phẩm
+def insert_product_images(cursor, product_id, images):
+    query = """
+    INSERT INTO ProductImages (product_id, image_url) 
+    VALUES (%s, %s)
+    ON DUPLICATE KEY UPDATE image_url = VALUES(image_url)
+    """
+    for image_url in images:
+        cursor.execute(query, (product_id, image_url))
+
+def insert_product_details(cursor, product_id, product_name):
+    # Đọc dữ liệu từ file productDetails.json
+    with open('productDetails.json', 'r', encoding='utf-8') as file:
+        product_details = json.load(file)
+    
+    if product_name in product_details:
+        details = product_details[product_name]
+        update_query = """
+        UPDATE Products SET 
+        screen = %s, 
+        back_camera = %s, 
+        front_camera = %s, 
+        ram = %s, 
+        storage = %s, 
+        battery = %s 
+        WHERE id = %s
+        """
+        values = (
+            next((detail['value'] for detail in details if detail['label'] == 'Màn hình'), None),
+            next((detail['value'] for detail in details if detail['label'] == 'Camera sau'), None),
+            next((detail['value'] for detail in details if detail['label'] == 'Camera Selfie'), None),
+            next((detail['value'] for detail in details if detail['label'] == 'RAM'), None),
+            next((detail['value'] for detail in details if detail['label'] == 'Bộ nhớ trong'), None),
+            next((detail['value'] for detail in details if detail['label'] == 'Pin'), None),
+            product_id
+        )
+        cursor.execute(update_query, values)
+        print(f"Updated details for product: {product_name}")
+
+def insert_or_update_user(connection, user):
     try:
         cursor = connection.cursor()
         query = """INSERT INTO Users 
                    (username, email, password, fullName, gender, image, isAdmin) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   ON DUPLICATE KEY UPDATE
+                   email = VALUES(email),
+                   password = VALUES(password),
+                   fullName = VALUES(fullName),
+                   gender = VALUES(gender),
+                   image = VALUES(image),
+                   isAdmin = VALUES(isAdmin)"""
         values = (user['username'], user['email'], user['password'],
                   user['fullName'], user.get('gender'), user.get('image'),
                   user.get('isAdmin', False))
         cursor.execute(query, values)
         connection.commit()
-        return cursor.lastrowid
+        print(f"Inserted/Updated user: {user['username']}")
     except Error as e:
-        print(f"Error inserting user: {e}")
+        print(f"Error inserting/updating user: {e}")
         connection.rollback()
-        return None
 
 def insert_product_reviews(connection, product_id, reviews):
-    try:
-        cursor = connection.cursor()
-        for review in reviews:
-            query = """INSERT INTO ProductReviews 
-                       (product_id, user_id, rating, comment, reviewer_name) 
-                       VALUES (%s, NULL, %s, %s, %s)"""
-            values = (product_id, review['rating'], review['comment'], review.get('username', 'Anonymous'))
-            cursor.execute(query, values)
-        connection.commit()
-        print(f"Inserted {len(reviews)} reviews for product ID: {product_id}")
-    except Error as e:
-        print(f"Error inserting product reviews: {e}")
-        connection.rollback()
+    cursor = connection.cursor()
+    for review in reviews:
+        query = """INSERT INTO ProductReviews 
+                   (product_id, user_id, rating, comment, reviewer_name) 
+                   VALUES (%s, %s, %s, %s, %s)
+                   ON DUPLICATE KEY UPDATE
+                   rating = VALUES(rating),
+                   comment = VALUES(comment)"""
+        cursor.execute(query, (product_id, None, review['rating'], review['comment'], review['user']))
+    connection.commit()
 
 def insert_user_address(connection, address):
     try:
         cursor = connection.cursor()
         query = """INSERT INTO UserAddresses 
-                   (user_id, fullName, phone, address, is_default, address_type, company_name) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+                   (user_id, full_name, phone, address_line1, city, postal_code, country, is_default) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
         values = (address['user_id'], address['fullName'], address['phone'],
-                  address['address'], address['is_default'], address['address_type'],
-                  address.get('company_name'))
+                  address['address'], 'Default City', '00000', 'Default Country', address['is_default'])
         cursor.execute(query, values)
         connection.commit()
         print(f"Inserted address for user ID: {address['user_id']}")
@@ -151,11 +169,20 @@ def insert_user_address(connection, address):
 def insert_order(connection, order):
     try:
         cursor = connection.cursor()
+        
+        # Kiểm tra xem tất cả product_id có tồn tại trong bảng Products không
+        for item in order['order_items']:
+            cursor.execute("SELECT id FROM Products WHERE id = %s", (item['product_id'],))
+            if not cursor.fetchone():
+                print(f"Product with id {item['product_id']} does not exist. Skipping order.")
+                return
+
+        # Tiếp tục với việc chèn đơn hàng nếu tất cả product_id đều hợp lệ
         query = """INSERT INTO Orders 
-                   (user_id, address_id, total_amount, status, note, created_at) 
+                   (user_id, shipping_address_id, total_amount, status, note, created_at) 
                    VALUES (%s, %s, %s, %s, %s, %s)"""
-        values = (order['user_id'], order['address_id'], order['total_amount'],
-                  order['status'], order['note'], order['created_at'])
+        values = (order['user_id'], order.get('shipping_address_id'), order['total_amount'],
+                  order['status'], order.get('note'), order['created_at'])
         cursor.execute(query, values)
         order_id = cursor.lastrowid
 
@@ -166,13 +193,14 @@ def insert_order(connection, order):
             item_values = (order_id, item['product_id'], item['quantity'], item['price'])
             cursor.execute(item_query, item_values)
 
-        payment_query = """INSERT INTO Payments 
-                           (order_id, amount, payment_method, status, transaction_id, created_at) 
-                           VALUES (%s, %s, %s, %s, %s, %s)"""
-        payment_values = (order_id, order['payment']['amount'], order['payment']['payment_method'],
-                          order['payment']['status'], order['payment']['transaction_id'],
-                          order['payment']['created_at'])
-        cursor.execute(payment_query, payment_values)
+        if 'payment' in order:
+            payment_query = """INSERT INTO Payments 
+                               (order_id, amount, payment_method, status, transaction_id, created_at) 
+                               VALUES (%s, %s, %s, %s, %s, %s)"""
+            payment_values = (order_id, order['payment']['amount'], order['payment']['payment_method'],
+                              order['payment']['status'], order['payment']['transaction_id'],
+                              order['payment']['created_at'])
+            cursor.execute(payment_query, payment_values)
 
         connection.commit()
         print(f"Inserted order ID: {order_id} for user ID: {order['user_id']}")
@@ -181,8 +209,6 @@ def insert_order(connection, order):
         connection.rollback()
 
 def main():
-    create_requirements_file()
-
     connection = create_connection()
     if connection is None:
         return
@@ -193,21 +219,22 @@ def main():
     with open('phoneDetails.json', 'r', encoding='utf-8') as file:
         phone_data = json.load(file)
         for product in phone_data['products']:
-            insert_product_from_phonedetails(cursor, product)
+            product_id = insert_product_from_phonedetails(cursor, product)
+            insert_product_details(cursor, product_id, product['title'])
             print(f"Inserted/Updated product: {product['title']}")
 
     # Đọc và xử lý dữ liệu người dùng từ sample_users.json
     with open('sample_users.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
         for user in user_data['users']:
-            user_id = insert_user(connection, user)
+            user_id = insert_or_update_user(connection, user)
             if user_id:
-                print(f"Inserted user: {user['username']}")
+                print(f"Inserted/Updated user: {user['username']}")
 
-    # Đọc và xử lý dữ liệu từ productReviews.json
+    # Đọc và xử lý dữ liệu đánh giá sản phẩm từ productReviews.json
     with open('productReviews.json', 'r', encoding='utf-8') as file:
-        product_reviews = json.load(file)
-        for product_name, reviews in product_reviews.items():
+        review_data = json.load(file)
+        for product_name, reviews in review_data.items():
             cursor.execute("SELECT id FROM Products WHERE title = %s", (product_name,))
             result = cursor.fetchone()
             if result:
@@ -215,20 +242,27 @@ def main():
                 insert_product_reviews(connection, product_id, reviews)
                 print(f"Inserted reviews for product: {product_name}")
 
-    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.json
-    with open('address.json', 'r', encoding='utf-8') as file:
-        address_data = json.load(file)
-        for address in address_data['user_addresses']:
-            insert_user_address(connection, address)
+    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.json (nếu có)
+    try:
+        with open('address.json', 'r', encoding='utf-8') as file:
+            address_data = json.load(file)
+            for address in address_data['user_addresses']:
+                insert_user_address(connection, address)
+    except FileNotFoundError:
+        print("address.json not found. Skipping address import.")
 
-    # Đọc và xử lý dữ liệu đơn hàng từ order.json
-    with open('order.json', 'r', encoding='utf-8') as file:
-        order_data = json.load(file)
-        for order in order_data['orders']:
-            insert_order(connection, order)
+    # Đọc và xử lý dữ liệu đơn hàng từ order.json (nếu có)
+    try:
+        with open('order.json', 'r', encoding='utf-8') as file:
+            order_data = json.load(file)
+            for order in order_data['orders']:
+                insert_order(connection, order)
+    except FileNotFoundError:
+        print("order.json not found. Skipping order import.")
 
     connection.commit()
     connection.close()
+    print("Data import completed successfully.")
 
 if __name__ == "__main__":
     main()

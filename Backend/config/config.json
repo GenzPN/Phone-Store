@@ -1,0 +1,23 @@
+{
+  "website": {
+    "name": "E-commerce Trùm",
+    "logo": "http://localhost:3000/logo192.png"
+  },
+  "bank": {
+    "name": "VietinBank",
+    "logo": "https://api.vietqr.io/img/ICB.png",
+    "token": "c247cc027c0a32983f37ff0724ddb7fa",
+    "accountHolder": "NGUYEN VO ANH SON",
+    "accountNumber": "107875185067",
+    "transferContent": "GEN",
+    "orderTimeout": 30
+  },
+  "momo": {
+    "name": "MoMo",
+    "logo": "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png",
+    "accountHolder": "Nguyen Vo Anh Son",
+    "accountNumber": "0964747524",
+    "transferContent": "GEN",
+    "orderTimeout": 30
+  }
+}

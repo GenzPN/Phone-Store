@@ -1,11 +1,7 @@
 import express from 'express';
 import db from '../../config/database.js';
-import { authenticateToken } from '../../middleware/auth.js'; // Thêm middleware xác thực
 
 const router = express.Router();
-
-// Áp dụng middleware xác thực cho tất cả các route
-router.use(authenticateToken);
 
 // Lấy giỏ hàng của người dùng
 router.get('/', async (req, res) => {

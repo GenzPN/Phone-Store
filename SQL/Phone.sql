@@ -15,20 +15,6 @@ CREATE TABLE Users (
     INDEX idx_email (email)
 ) ENGINE=InnoDB;
 
-CREATE TABLE UserAddresses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    fullName VARCHAR(150) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address TEXT NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
-    address_type ENUM('home', 'company') DEFAULT 'home',
-    company_name VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
-    INDEX idx_user_id (user_id),
-    INDEX idx_is_default (is_default)
-) ENGINE=InnoDB;
-
 CREATE TABLE Products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -69,18 +55,34 @@ CREATE TABLE Cart (
     FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE UserAddresses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE Orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
-    address_id INT,
+    shipping_address_id INT,
     total_amount INT,
     status ENUM('pending', 'paid', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
     note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    discount_type ENUM('percent', 'amount') DEFAULT 'amount',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    discount_type ENUM('percentage', 'fixed_amount') DEFAULT 'percentage',
     discount_value DECIMAL(10, 2) DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
-    FOREIGN KEY (address_id) REFERENCES UserAddresses(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY (shipping_address_id) REFERENCES UserAddresses(id) ON DELETE SET NULL,
+    INDEX idx_user_id (user_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB;
 

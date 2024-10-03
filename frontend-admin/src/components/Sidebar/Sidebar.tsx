@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Menu } from 'antd';
 import { SettingOutlined, UsergroupAddOutlined, HomeOutlined, ProfileOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
 const { Sider } = Layout;
@@ -11,6 +11,40 @@ interface SidebarAdminProps {
 }
 
 const SidebarAdmin: React.FC<SidebarAdminProps> = ({ collapsed }) => {
+  const location = useLocation();
+  const [selectedKey, setSelectedKey] = useState('1');
+
+  useEffect(() => {
+    const path = location.pathname;
+    const key = getKeyFromPath(path);
+    setSelectedKey(key);
+    localStorage.setItem('selectedMenuKey', key);
+  }, [location]);
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem('selectedMenuKey');
+    if (savedKey) {
+      setSelectedKey(savedKey);
+    }
+  }, []);
+
+  const getKeyFromPath = (path: string) => {
+    switch (true) {
+      case path.includes('/admin/dashboard'):
+        return '1';
+      case path.includes('/admin/products'):
+        return '2';
+      case path.includes('/admin/orders'):
+        return '3';
+      case path.includes('/admin/users'):
+        return '4';
+      case path.includes('/admin/settings'):
+        return '6';
+      default:
+        return '1';
+    }
+  };
+
   const menuItems = [
     {
       key: '1',
@@ -33,11 +67,6 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ collapsed }) => {
       label: <Link to="/admin/users">Users</Link>,
     },
     {
-      key: '5',
-      icon: <UsergroupAddOutlined />,
-      label: <Link to="/admin/addressuser">Address User</Link>,
-    },
-    {
       key: '6',
       icon: <SettingOutlined />,
       label: <Link to="/admin/settings">Settings</Link>,
@@ -55,7 +84,7 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ collapsed }) => {
     >
       <Menu
         mode="inline"
-        defaultSelectedKeys={['1']}
+        selectedKeys={[selectedKey]}
         style={{ height: '100%', borderRight: 0 }}
         theme="dark"
         items={menuItems}
