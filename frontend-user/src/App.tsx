@@ -99,54 +99,40 @@ const App: React.FC = () => {
   return (
     <Router>
       <CartProvider>
-        <Layout>
-          {/* Conditionally render Header based on the current route */}
-          {!window.location.pathname.startsWith('/api/auth') && (
-            <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
-          )}
-          <Content 
-            style={{ 
-              padding: window.location.pathname.startsWith('/api/auth') ? 0 : '20px 50px', 
-              backgroundColor: '#fff',
-              minHeight: window.location.pathname.startsWith('/api/auth') ? '100vh' : 'auto'
-            }}
-          >
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/brand/:brandName" element={<BrandPage />} />
-              <Route path="/details/:productName" element={<Details />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/checkout" element={<Checkout />} />
-              <Route 
-                path="/profile" 
-                element={
-                  user ? <Profile user={user} /> : <Navigate to="/api/auth/login" state={{ from: '/profile' }} />
-                } 
-              />
-              <Route 
-                path="/api/payment/*" 
-                element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/api/payment' }} />} 
-              />
-              <Route 
-                path="/api/auth/*" 
-                element={
-                  !user ? (
-                    <Routes>
-                      <Route path="login" element={<Auth onLogin={handleLogin} />} />
-                      <Route path="register" element={<Auth onLogin={handleLogin} />} />
-                      <Route path="" element={<Navigate to="/api/auth/login" />} />
-                    </Routes>
-                  ) : (
-                    <Navigate to="/" />
-                  )
-                } 
-              />
-            </Routes>
-          </Content>
-          {/* Conditionally render Footer based on the current route */}
-          {!window.location.pathname.startsWith('/api/auth') && <FooterUser />}
-        </Layout>
+        <Routes>
+          <Route path="/api/payment/*" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/api/payment' }} />} />
+          <Route path="/api/auth/*" element={!user ? <Auth onLogin={handleLogin} /> : <Navigate to="/" />} />
+          <Route path="*" element={
+            <Layout style={{ minHeight: '100vh' }}>
+              <HeaderUser brands={brands} user={user} onLogout={handleLogout} />
+              <Content 
+                style={{ 
+                  padding: 0,
+                  backgroundColor: '#fff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                }}
+              >
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/brand/:brandName" element={<BrandPage />} />
+                  <Route path="/details/:productName" element={<Details />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/checkout" element={<Checkout />} />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      user ? <Profile user={user} /> : <Navigate to="/api/auth/login" state={{ from: '/profile' }} />
+                    } 
+                  />
+                </Routes>
+              </Content>
+              <FooterUser />
+            </Layout>
+          } />
+        </Routes>
       </CartProvider>
     </Router>
   );
