@@ -16,7 +16,9 @@
       { "id": 14, "user": "Quang", "rating": 3, "comment": "Ổn, nhưng pin hơi yếu." },
       { "id": 15, "user": "Ngọc", "rating": 4, "comment": "Camera chụp đẹp, rất hài lòng." },
       { "id": 16, "user": "Trung", "rating": 2, "comment": "Giao hàng chậm, sản phẩm tạm được." },
-      { "id": 17, "user": "Hạnh", "rating": 5, "comment": "Màn hình sắc nét, âm thanh tuyệt vời!" },
+      { "id": 17, "user": "Hạnh", "rating": 5, "comment": "Màn hình sắc nét, âm thanh tuyệt vời!" }
+    ],
+    "Samsung S24 Ultra": [
       { "id": 18, "user": "Dũng", "rating": 4, "comment": "Đáng tiền, sẽ giới thiệu cho bạn bè." },
       { "id": 19, "user": "Thủy", "rating": 3, "comment": "Không tệ, nhưng cũng không quá xuất sắc." },
       { "id": 20, "user": "Sơn", "rating": 5, "comment": "Cấu hình mạnh mẽ, chơi game rất mượt." },

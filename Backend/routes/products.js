@@ -35,8 +35,8 @@ router.get('/', async (req, res) => {
     query += ' LIMIT ? OFFSET ?';
     queryParams.push(Number(limit), offset);
 
-    const [products] = await db.promise().query(query, queryParams);
-    const [countResult] = await db.promise().query(countQuery, queryParams.slice(0, -2));
+    const [products] = await db.query(query, queryParams);
+    const [countResult] = await db.query(countQuery, queryParams.slice(0, -2));
 
     const totalProducts = countResult[0].total;
 
@@ -86,11 +86,11 @@ router.get('/', async (req, res) => {
 // Lấy chi tiết sản phẩm
 router.get('/:id', async (req, res) => {
   try {
-    const [products] = await db.promise().query('SELECT * FROM Products WHERE id = ?', [req.params.id]);
+    const [products] = await db.query('SELECT * FROM Products WHERE id = ?', [req.params.id]);
     if (products.length === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    const [reviews] = await db.promise().query('SELECT * FROM ProductReviews WHERE product_id = ?', [req.params.id]);
+    const [reviews] = await db.query('SELECT * FROM ProductReviews WHERE product_id = ?', [req.params.id]);
     
     const formattedProduct = {
       ...products[0],
@@ -119,12 +119,12 @@ router.get('/brand/:brandName', async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
 
-    const [products] = await db.promise().query(
+    const [products] = await db.query(
       'SELECT * FROM Products WHERE brand = ? LIMIT ? OFFSET ?',
       [brandName, Number(limit), offset]
     );
 
-    const [countResult] = await db.promise().query(
+    const [countResult] = await db.query(
       'SELECT COUNT(*) as total FROM Products WHERE brand = ?',
       [brandName]
     );

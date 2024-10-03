@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select, List } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, StarOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { getToken, getCookie } from '../../utils/tokenStorage';
 
@@ -29,6 +29,14 @@ interface Product {
   discount_percentage: number;
   is_featured: number;
   featured_sort_order: number;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  reviewer_name: string;
+  created_at: string;
 }
 
 const formatCurrency = (value: number | null | undefined) => {
@@ -66,6 +74,9 @@ const Products: React.FC = () => {
   const [form] = Form.useForm();
   const [brandFilter, setBrandFilter] = useState<string[]>([]);
   const [isFeaturedFilter, setIsFeaturedFilter] = useState<string | null>(null);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [currentReviews, setCurrentReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -173,6 +184,20 @@ const Products: React.FC = () => {
     fetchProducts(pagination.current, pagination.pageSize);
   };
 
+  const handleViewReviews = async (productId: number) => {
+    setReviewsLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:5000/api/reviews/product/${productId}`);
+      setCurrentReviews(response.data);
+      setReviewModalVisible(true);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      message.error('Không thể lấy đánh giá sản phẩm');
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -229,6 +254,9 @@ const Products: React.FC = () => {
           </Button>
           <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record)} danger>
             Xóa
+          </Button>
+          <Button icon={<StarOutlined />} onClick={() => handleViewReviews(record.id)}>
+            Đánh giá
           </Button>
         </Space>
       ),
@@ -402,6 +430,44 @@ const Products: React.FC = () => {
             <Input />
           </Form.Item>
         </Form>
+      </Modal>
+      
+      <Modal
+        title="Đánh giá sản phẩm"
+        open={reviewModalVisible}
+        onCancel={() => setReviewModalVisible(false)}
+        footer={null}
+        width={800}
+      >
+        {reviewsLoading ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Đang tải đánh giá...
+          </div>
+        ) : currentReviews.length > 0 ? (
+          <List
+            itemLayout="horizontal"
+            dataSource={currentReviews}
+            renderItem={(review) => (
+              <List.Item>
+                <List.Item.Meta
+                  title={
+                    <span>
+                      {review.reviewer_name} - {review.rating} sao
+                      <span style={{ float: 'right', fontSize: '0.8em', color: '#888' }}>
+                        {new Date(review.created_at).toLocaleString()}
+                      </span>
+                    </span>
+                  }
+                  description={<p>{review.comment}</p>}
+                />
+              </List.Item>
+            )}
+          />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Không có đánh giá nào cho sản phẩm này.
+          </div>
+        )}
       </Modal>
     </div>
   );

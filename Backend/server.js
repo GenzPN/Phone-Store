@@ -20,6 +20,9 @@ import { userCartRoutes } from './routes/user/cart.js';
 import { authRoutes } from './routes/auth.js';
 import { publicProductRoutes } from './routes/products.js';
 
+// Review routes
+import { reviewRoutes } from './routes/reviews.js';
+
 dotenv.config();
 
 const app = express();
@@ -55,8 +58,17 @@ app.use('/api/user/addresses', userAddressRoutes);
 app.use('/api/user/orders', userOrderRoutes);
 app.use('/api/user/cart', userCartRoutes);
 
+// Review routes
+app.use('/api/reviews', reviewRoutes);
+
 // Use the admin order routes
 app.use('/api/orders', adminOrderRoutes);
+
+// Thêm middleware này sau tất cả các routes
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Đã xảy ra lỗi server' });
+});
 
 const PORT = process.env.PORT || 5000;
 

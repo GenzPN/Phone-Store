@@ -6,10 +6,10 @@ const router = express.Router();
 // Get admin dashboard stats
 router.get('/stats', async (req, res) => {
   try {
-    const [totalOrdersResult] = await db.promise().query('SELECT COUNT(*) as total FROM Orders');
-    const [totalRevenueResult] = await db.promise().query('SELECT SUM(total_amount) as total FROM Orders WHERE status != "cancelled"');
-    const [totalCustomersResult] = await db.promise().query('SELECT COUNT(DISTINCT user_id) as total FROM Orders');
-    const [completedOrdersResult] = await db.promise().query('SELECT COUNT(*) as total FROM Orders WHERE status = "delivered"');
+    const [totalOrdersResult] = await db.query('SELECT COUNT(*) as total FROM Orders');
+    const [totalRevenueResult] = await db.query('SELECT SUM(total_amount) as total FROM Orders WHERE status != "cancelled"');
+    const [totalCustomersResult] = await db.query('SELECT COUNT(DISTINCT user_id) as total FROM Orders');
+    const [completedOrdersResult] = await db.query('SELECT COUNT(*) as total FROM Orders WHERE status = "delivered"');
 
     res.json({
       totalOrders: totalOrdersResult[0].total,
@@ -26,7 +26,7 @@ router.get('/stats', async (req, res) => {
 // Get all orders with detailed information (for admin)
 router.get('/all', async (req, res) => {
   try {
-    const [orders] = await db.promise().query(`
+    const [orders] = await db.query(`
       SELECT o.*, 
              u.username AS customer_name, 
              u.email AS customer_email,
@@ -38,7 +38,7 @@ router.get('/all', async (req, res) => {
     `);
 
     const ordersWithItems = await Promise.all(orders.map(async (order) => {
-      const [items] = await db.promise().query(`
+      const [items] = await db.query(`
         SELECT oi.*, p.title, p.thumbnail
         FROM OrderItems oi
         JOIN Products p ON oi.product_id = p.id
@@ -69,7 +69,7 @@ router.get('/:id', async (req, res) => {
 
   try {
     console.log('Fetching order with ID:', req.params.id);  // Thêm log
-    const [orders] = await db.promise().query(`
+    const [orders] = await db.query(`
       SELECT o.*, u.username, u.email AS customer_email, 
              ua.full_name, ua.phone, ua.address, ua.city
       FROM Orders o
@@ -87,7 +87,7 @@ router.get('/:id', async (req, res) => {
 
     const order = orders[0];
 
-    const [items] = await db.promise().query(`
+    const [items] = await db.query(`
       SELECT oi.*, p.title, p.thumbnail
       FROM OrderItems oi
       JOIN Products p ON oi.product_id = p.id
@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
     items
   } = req.body;
 
-  const connection = await db.promise().getConnection();
+  const connection = await db.getConnection();
 
   try {
     await connection.beginTransaction();
@@ -173,7 +173,7 @@ router.put('/:id', async (req, res) => {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  const connection = await db.promise().getConnection();
+  const connection = await db.getConnection();
 
   try {
     await connection.beginTransaction();
@@ -281,7 +281,7 @@ router.put('/:id/status', async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       'UPDATE Orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [status, id]
     );
@@ -302,7 +302,7 @@ router.put('/:id/cancel', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       'UPDATE Orders SET status = "cancelled", updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [id]
     );

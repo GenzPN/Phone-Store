@@ -1,4 +1,4 @@
-import mysql from 'mysql2';
+import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
   host: 'localhost',
@@ -11,13 +11,16 @@ const pool = mysql.createPool({
 });
 
 // Kiểm tra kết nối
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('Lỗi kết nối cơ sở dữ liệu:', err);
-  } else {
+async function checkConnection() {
+  try {
+    const connection = await pool.getConnection();
     console.log('Kết nối cơ sở dữ liệu thành công!');
     connection.release();
+  } catch (err) {
+    console.error('Lỗi kết nối cơ sở dữ liệu:', err);
   }
-});
+}
+
+checkConnection();
 
 export default pool;

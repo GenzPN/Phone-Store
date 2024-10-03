@@ -140,25 +140,34 @@ def insert_or_update_user(connection, user):
         connection.rollback()
 
 def insert_product_reviews(connection, product_id, reviews):
-    cursor = connection.cursor()
-    for review in reviews:
-        query = """INSERT INTO ProductReviews 
-                   (product_id, user_id, rating, comment, reviewer_name) 
-                   VALUES (%s, %s, %s, %s, %s)
-                   ON DUPLICATE KEY UPDATE
-                   rating = VALUES(rating),
-                   comment = VALUES(comment)"""
-        cursor.execute(query, (product_id, None, review['rating'], review['comment'], review['user']))
-    connection.commit()
+    try:
+        cursor = connection.cursor()
+        for review in reviews:
+            query = """INSERT INTO ProductReviews 
+                       (product_id, user_id, rating, comment, reviewer_name) 
+                       VALUES (%s, %s, %s, %s, %s)
+                       ON DUPLICATE KEY UPDATE
+                       rating = VALUES(rating),
+                       comment = VALUES(comment)"""
+            cursor.execute(query, (product_id, None, review['rating'], review['comment'], review['user']))
+        connection.commit()
+        cursor.close()
+    except Error as e:
+        print(f"Error inserting product reviews: {e}")
+        connection.rollback()
+    finally:
+        # Ensure the cursor is closed
+        if cursor:
+            cursor.close()
 
 def insert_user_address(connection, address):
     try:
         cursor = connection.cursor()
         query = """INSERT INTO UserAddresses 
-                   (user_id, full_name, phone, address_line1, city, postal_code, country, is_default) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                   (user_id, full_name, phone, address, city, is_default) 
+                   VALUES (%s, %s, %s, %s, %s, %s)"""
         values = (address['user_id'], address['fullName'], address['phone'],
-                  address['address'], 'Default City', '00000', 'Default Country', address['is_default'])
+                  address['address'], address.get('city', 'Default City'), address['is_default'])
         cursor.execute(query, values)
         connection.commit()
         print(f"Inserted address for user ID: {address['user_id']}")
@@ -213,56 +222,64 @@ def main():
     if connection is None:
         return
 
-    cursor = connection.cursor()
-
-    # Đọc và xử lý dữ liệu từ phoneDetails.json
-    with open('phoneDetails.json', 'r', encoding='utf-8') as file:
-        phone_data = json.load(file)
-        for product in phone_data['products']:
-            product_id = insert_product_from_phonedetails(cursor, product)
-            insert_product_details(cursor, product_id, product['title'])
-            print(f"Inserted/Updated product: {product['title']}")
-
-    # Đọc và xử lý dữ liệu người dùng từ sample_users.json
-    with open('sample_users.json', 'r', encoding='utf-8') as file:
-        user_data = json.load(file)
-        for user in user_data['users']:
-            user_id = insert_or_update_user(connection, user)
-            if user_id:
-                print(f"Inserted/Updated user: {user['username']}")
-
-    # Đọc và xử lý dữ liệu đánh giá sản phẩm từ productReviews.json
-    with open('productReviews.json', 'r', encoding='utf-8') as file:
-        review_data = json.load(file)
-        for product_name, reviews in review_data.items():
-            cursor.execute("SELECT id FROM Products WHERE title = %s", (product_name,))
-            result = cursor.fetchone()
-            if result:
-                product_id = result[0]
-                insert_product_reviews(connection, product_id, reviews)
-                print(f"Inserted reviews for product: {product_name}")
-
-    # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.json (nếu có)
     try:
-        with open('address.json', 'r', encoding='utf-8') as file:
-            address_data = json.load(file)
-            for address in address_data['user_addresses']:
-                insert_user_address(connection, address)
-    except FileNotFoundError:
-        print("address.json not found. Skipping address import.")
+        # Your existing code here...
 
-    # Đọc và xử lý dữ liệu đơn hàng từ order.json (nếu có)
-    try:
-        with open('order.json', 'r', encoding='utf-8') as file:
-            order_data = json.load(file)
-            for order in order_data['orders']:
-                insert_order(connection, order)
-    except FileNotFoundError:
-        print("order.json not found. Skipping order import.")
+        # Đọc và xử lý dữ liệu từ phoneDetails.json
+        with open('phoneDetails.json', 'r', encoding='utf-8') as file:
+            phone_data = json.load(file)
+            for product in phone_data['products']:
+                product_id = insert_product_from_phonedetails(connection.cursor(), product)
+                insert_product_details(connection.cursor(), product_id, product['title'])
+                print(f"Inserted/Updated product: {product['title']}")
 
-    connection.commit()
-    connection.close()
-    print("Data import completed successfully.")
+        # Đọc và xử lý dữ liệu người dùng từ sample_users.json
+        with open('sample_users.json', 'r', encoding='utf-8') as file:
+            user_data = json.load(file)
+            for user in user_data['users']:
+                user_id = insert_or_update_user(connection, user)
+                if user_id:
+                    print(f"Inserted/Updated user: {user['username']}")
+
+        # Đọc và xử lý dữ liệu đánh giá sản phẩm từ productReviews.json
+        with open('productReviews.json', 'r', encoding='utf-8') as file:
+            review_data = json.load(file)
+            for product_name, reviews in review_data.items():
+                cursor = connection.cursor(buffered=True)
+                cursor.execute("SELECT id FROM Products WHERE title = %s", (product_name,))
+                result = cursor.fetchone()
+                if result:
+                    product_id = result[0]
+                    insert_product_reviews(connection, product_id, reviews)
+                    print(f"Inserted reviews for product: {product_name}")
+                cursor.close()
+
+        # Đọc và xử lý dữ liệu địa chỉ người dùng từ address.json (nếu có)
+        try:
+            with open('address.json', 'r', encoding='utf-8') as file:
+                address_data = json.load(file)
+                for address in address_data['user_addresses']:
+                    insert_user_address(connection, address)
+        except FileNotFoundError:
+            print("address.json not found. Skipping address import.")
+
+        # Đọc và xử lý dữ liệu đơn hàng từ order.json (nếu có)
+        try:
+            with open('order.json', 'r', encoding='utf-8') as file:
+                order_data = json.load(file)
+                for order in order_data['orders']:
+                    insert_order(connection, order)
+        except FileNotFoundError:
+            print("order.json not found. Skipping order import.")
+
+        connection.commit()
+        print("Data import completed successfully.")
+    except Error as e:
+        print(f"Error in main function: {e}")
+    finally:
+        if connection.is_connected():
+            connection.close()
+        print("Data import completed successfully.")
 
 if __name__ == "__main__":
     main()
