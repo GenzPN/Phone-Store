@@ -1,10 +1,10 @@
 import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'phone_store',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '1029',
+  database: process.env.DB_NAME || 'phone_store',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -18,6 +18,9 @@ async function checkConnection() {
     connection.release();
   } catch (err) {
     console.error('Lỗi kết nối cơ sở dữ liệu:', err);
+    console.error('Host:', process.env.DB_HOST);
+    console.error('User:', process.env.DB_USER);
+    console.error('Database:', process.env.DB_NAME);
   }
 }
 

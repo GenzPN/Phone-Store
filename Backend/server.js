@@ -3,6 +3,18 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';  // Thêm morgan để log requests
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: __dirname + '/.env' });
+
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
+console.log('DB_NAME:', process.env.DB_NAME);
 
 // Admin routes
 import { adminProductRoutes } from './routes/admin/products.js';
@@ -27,14 +39,15 @@ dotenv.config();
 
 const app = express();
 
-// Cấu hình CORS và middleware khác
+// Cấu hình CORS
 app.use(cors({
-  origin: '*',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: '*', // Địa chỉ của frontend
+  credentials: true, // Cho phép gửi credentials (cookies, headers xác thực)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Các phương thức HTTP được phép
+  allowedHeaders: ['Content-Type', 'Authorization'], // Các header được phép
 }));
-app.use(express.json({ limit: '50mb' }));
+
+app.use(express.json());
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 

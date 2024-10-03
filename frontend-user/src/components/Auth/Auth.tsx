@@ -3,6 +3,9 @@ import { Form, Input, Button, Checkbox, message, Tabs, Radio } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Auth.css';
+import { useCart } from '../../contexts/CartContext';
+import api from '../../utils/api';
+import axios from 'axios';  // Thêm import này
 
 interface AuthProps {
   onLogin: (userData: any, accessToken: string) => void;
@@ -13,6 +16,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeKey, setActiveKey] = useState('login');
+  const { login } = useCart();
 
   useEffect(() => {
     // Set active key based on the current path
@@ -27,26 +31,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const { username, password } = values;
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await api.post('/api/auth/login', { email: username, password });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Login successful, data:', data);
+      if (response.data.user) {
         message.success('Đăng nhập thành công');
-        localStorage.setItem('token', data.accessToken); // Store the token
-        onLogin(data.user, data.accessToken);
+        login();
+        onLogin(response.data.user, response.data.token); // Thêm token vào đây
         navigate('/');
       } else {
-        message.error(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
+        message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
       }
     } catch (error) {
       console.error('Lỗi đăng nhập:', error);
-      message.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          message.error(`Lỗi: ${error.response.data.message || 'Đã xảy ra lỗi khi đăng nhập'}`);
+        } else if (error.request) {
+          message.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
+        } else {
+          message.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+        }
+      } else {
+        message.error('Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.');
+      }
     }
   };
 

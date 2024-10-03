@@ -21,7 +21,8 @@
     "express-async-handler": "^1.2.0",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.11.3"
+    "mysql2": "^3.11.3",
+    "node-cache": "^5.1.2"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",

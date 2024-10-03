@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { message } from 'antd';
+import api from '../utils/api';
 
 export interface CartItem {
   id: number;
@@ -18,56 +18,38 @@ interface CartContextType {
   removeFromCart: (id: number) => Promise<void>;
   updateQuantity: (id: number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  login: () => void;
+  logout: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  const fetchCart = async () => {
+    try {
+      const response = await api.get('/api/cart');
+      setCartItems(response.data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
 
   useEffect(() => {
     fetchCart();
   }, []);
 
-  useEffect(() => {
-    Cookies.set('cart', JSON.stringify(cartItems), { expires: 7 });
-  }, [cartItems]);
-
-  const fetchCart = async () => {
-    try {
-      const token = Cookies.get('token');
-      console.log('Fetching cart with token:', token); // Log để kiểm tra token
-      const response = await axios.get('http://localhost:5000/api/cart', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      console.log('Cart response:', response.data); // Log response để kiểm tra
-      setCartItems(response.data);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response data:', error.response?.data);
-        console.error('Response status:', error.response?.status);
-      }
-      message.error('Không thể tải giỏ hàng. Vui lòng thử lại sau.');
-    }
-  };
-
   const addToCart = async (item: CartItem) => {
     try {
-      const token = Cookies.get('token');
-      if (!token) {
-        message.error('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
-        return;
-      }
-
-      const response = await axios.post('/api/cart', 
-        { product_id: item.product_id, quantity: item.quantity },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        await fetchCart(); // Cập nhật giỏ hàng từ server
-        message.success(`Đã thêm ${item.title} vào giỏ hàng`);
+      const response = await api.post('/api/cart', {
+        product_id: item.product_id,
+        quantity: item.quantity
+      });
+      if (response.status === 201) {
+        await fetchCart();
+        message.success('Đã thêm sản phẩm vào giỏ hàng');
       } else {
         throw new Error('Unexpected response status');
       }
@@ -75,19 +57,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error adding to cart:', error);
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Error data:', error.response.data);
-          console.error('Error status:', error.response.status);
           message.error(`Lỗi: ${error.response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng'}`);
         } else if (error.request) {
-          // The request was made but no response was received
-          console.error('Error request:', error.request);
-          message.error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
+          message.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
         } else {
-          // Something happened in setting up the request that triggered an Error
-          console.error('Error message:', error.message);
-          message.error('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+          message.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
         }
       } else {
         message.error('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
@@ -97,10 +71,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = async (id: number) => {
     try {
-      const token = Cookies.get('token');
-      await axios.delete(`/api/cart/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/api/cart/${id}`);
       await fetchCart();
       message.success('Đã xóa sản phẩm khỏi giỏ hàng');
     } catch (error) {
@@ -111,10 +82,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQuantity = async (id: number, quantity: number) => {
     try {
-      const token = Cookies.get('token');
-      await axios.put(`/api/cart/${id}`, { quantity }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/api/cart/${id}`, { quantity });
       await fetchCart();
       message.success('Đã cập nhật số lượng sản phẩm');
     } catch (error) {
@@ -125,12 +93,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = async () => {
     try {
-      const token = Cookies.get('token');
-      await axios.delete('/api/cart', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete('/api/cart');
       setCartItems([]);
-      Cookies.remove('cart');
       message.success('Đã xóa toàn bộ giỏ hàng');
     } catch (error) {
       console.error('Error clearing cart:', error);
@@ -138,8 +102,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const login = async () => {
+    setIsLoggedIn(true);
+    try {
+      await api.post('/api/cart/merge');
+      await fetchCart();
+    } catch (error) {
+      console.error('Error merging cart:', error);
+    }
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+    setCartItems([]);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart }}>
+    <CartContext.Provider value={{ 
+      cartItems, 
+      addToCart, 
+      removeFromCart, 
+      updateQuantity, 
+      clearCart, 
+      login, 
+      logout 
+    }}>
       {children}
     </CartContext.Provider>
   );

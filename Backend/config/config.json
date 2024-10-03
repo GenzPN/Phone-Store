@@ -10,6 +10,7 @@
     "accountHolder": "NGUYEN VO ANH SON",
     "accountNumber": "107875185067",
     "transferContent": "GEN",
+    "domain": "https://api.dvsteam.vn/api/historyviettin/",
     "orderTimeout": 30
   },
   "momo": {
