@@ -4,6 +4,7 @@ import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } fr
 import { useNavigate } from 'react-router-dom';
 import { getToken } from '../../utils/tokenStorage';
 import { useCart, CartItem } from '../../contexts/CartContext';
+import api from '../../utils/api';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -19,7 +20,7 @@ interface AddressData {
 
 const Checkout: React.FC = () => {
   const { cartItems, clearCart } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('cod'); // Đặt 'cod' làm giá trị mặc định
   const [addressType, setAddressType] = useState<string>('home');
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ const Checkout: React.FC = () => {
   ];
 
   const handlePaymentMethodChange = (e: any) => {
+    console.log('Selected payment method:', e.target.value);
     setPaymentMethod(e.target.value);
   };
 
@@ -80,30 +82,36 @@ const Checkout: React.FC = () => {
       };
 
       const token = getToken();
-      const response = await fetch('http://localhost:5000/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(orderData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create order');
+      if (!token) {
+        message.error('Vui lòng đăng nhập để tiếp tục');
+        navigate('/login');
+        return;
       }
 
-      const result = await response.json();
-      if (result.success) {
-        message.success('Đơn hàng đã được đặt thành công.');
-        clearCart(); // Use clearCart from CartContext
-        navigate('/order-confirmation', { state: { orderId: result.orderId } });
+      const response = await api.post('/api/user/orders', orderData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 201) {
+        message.success('Đơn hàng đã được tạo thành công.');
+        clearCart();
+
+        // Đảm bảo rằng paymentMethod được gửi đúng cách
+        navigate('/payment', { 
+          state: { 
+            orderId: response.data.orderId,
+            total: total,
+            paymentMethod: paymentMethod // Đảm bảo giá trị này là 'bank' khi chọn thanh toán ngân hàng
+          } 
+        });
       } else {
-        message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+        throw new Error('Failed to create order');
       }
     } catch (error) {
       console.error('Error during payment:', error);
-      message.error('Có lỗi xảy ra. Vui lòng thử lại.');
+      message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
     }
   };
 
@@ -174,12 +182,14 @@ const Checkout: React.FC = () => {
                 <DollarOutlined /> Thanh toán khi nhận hàng (COD)
               </Radio>
             </Radio.Group>
+            <div style={{ marginTop: '10px' }}>
+              Phương thức thanh toán đã chọn: {paymentMethod}
+            </div>
             <Space direction="vertical" style={{ width: '100%', marginTop: '20px' }}>
               <Button 
                 type="primary" 
                 onClick={handlePayment} 
                 style={{ width: '100%' }}
-                disabled={!paymentMethod}
               >
                 {paymentMethod === 'cod' ? 'Đặt hàng' : 'Tiến hành thanh toán'}
               </Button>

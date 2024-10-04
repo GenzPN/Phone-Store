@@ -123,21 +123,6 @@ CREATE TABLE ProductReviews (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB;
 
-CREATE TABLE PaymentGateways (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    payment_method ENUM('bank_transfer', 'momo', 'cod') UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    icon VARCHAR(255),
-    config JSON,
-    handling_fee_fixed DECIMAL(10, 2) DEFAULT 0,
-    handling_fee_percent DECIMAL(5, 2) DEFAULT 0,
-    enable BOOLEAN DEFAULT TRUE,
-    sort INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_payment_method (payment_method),
-    INDEX idx_enable (enable),
-    INDEX idx_sort (sort)
-) ENGINE=InnoDB;
 
 CREATE TABLE ProductEditHistory (
     id INT AUTO_INCREMENT PRIMARY KEY,

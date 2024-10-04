@@ -30,8 +30,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchCart = async () => {
     try {
-      const response = await api.get('/api/cart');
-      setCartItems(response.data);
+      if (isLoggedIn) {
+        const response = await api.get('/api/cart');
+        setCartItems(response.data);
+      } else {
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        setCartItems(localCart);
+      }
     } catch (error) {
       console.error('Error fetching cart:', error);
     }
@@ -39,19 +44,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [isLoggedIn]); // Thêm isLoggedIn vào dependencies
 
   const addToCart = async (item: CartItem) => {
     try {
-      const response = await api.post('/api/cart', {
-        product_id: item.product_id,
-        quantity: item.quantity
-      });
-      if (response.status === 201) {
-        await fetchCart();
-        message.success('Đã thêm sản phẩm vào giỏ hàng');
+      if (isLoggedIn) {
+        const response = await api.post('/api/cart', {
+          product_id: item.product_id,
+          quantity: item.quantity
+        });
+        if (response.status === 201) {
+          await fetchCart();
+          message.success('Đã thêm sản phẩm vào giỏ hàng');
+        } else {
+          throw new Error('Unexpected response status');
+        }
       } else {
-        throw new Error('Unexpected response status');
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const existingItemIndex = localCart.findIndex((cartItem: CartItem) => cartItem.product_id === item.product_id);
+        if (existingItemIndex > -1) {
+          localCart[existingItemIndex].quantity += item.quantity;
+        } else {
+          localCart.push(item);
+        }
+        localStorage.setItem('cart', JSON.stringify(localCart));
+        setCartItems(localCart);
+        message.success('Đã thêm sản phẩm vào giỏ hàng');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);

@@ -86,28 +86,10 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Function to start the server
-async function startServer() {
-  try {
-    async function hashExistingPasswords() {
-      console.log("Hashing existing passwords...");
-      // Add your password hashing logic here
-    }
-
-    await hashExistingPasswords();
-
-    app.listen(PORT, () => {
-      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-      console.log(`JWT_SECRET is ${process.env.JWT_SECRET ? 'set' : 'not set'}`);
-    });
-  } catch (err) {
-    console.error('Error starting server:', err);
-    process.exit(1);
-  }
-}
-
-// Start the server
-startServer();
+const server = app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`JWT_SECRET is ${process.env.JWT_SECRET ? 'set' : 'not set'}`);
+});
 
 // Xử lý lỗi không được xử lý
 process.on('unhandledRejection', (reason, promise) => {

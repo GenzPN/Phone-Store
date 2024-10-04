@@ -5,6 +5,7 @@
   },
   "bank": {
     "name": "VietinBank",
+    "shortName": "ICB",
     "logo": "https://api.vietqr.io/img/ICB.png",
     "token": "c247cc027c0a32983f37ff0724ddb7fa",
     "accountHolder": "NGUYEN VO ANH SON",
