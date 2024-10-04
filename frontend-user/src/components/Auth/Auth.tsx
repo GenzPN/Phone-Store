@@ -31,20 +31,26 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     const { username, password } = values;
 
     try {
-      const response = await api.post('/api/auth/login', { email: username, password });
+      console.log('Attempting login with:', { username, password });
+      const response = await api.post('/api/auth/login', { username, password });
+      console.log('Login response:', response.data);
 
-      if (response.data.user) {
+      if (response.data.user && response.data.token) {
         message.success('Đăng nhập thành công');
         login();
-        onLogin(response.data.user, response.data.token); // Thêm token vào đây
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        onLogin(response.data.user, response.data.token);
         navigate('/');
       } else {
-        message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.');
+        message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập/email và mật khẩu.');
       }
     } catch (error) {
       console.error('Lỗi đăng nhập:', error);
       if (axios.isAxiosError(error)) {
         if (error.response) {
+          console.error('Error response:', error.response.data);
           message.error(`Lỗi: ${error.response.data.message || 'Đã xảy ra lỗi khi đăng nhập'}`);
         } else if (error.request) {
           message.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
@@ -97,6 +103,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       navigate(state.from);
     } else {
       navigate('/'); // Điều hướng về trang chủ nếu không có trang trước đó
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+      // Clear local storage
+      localStorage.removeItem('user');
+      // Clear any auth-related state in your app
+      // For example, if you're using a context:
+      // setUser(null);
+      navigate('/');
+      message.success('Đăng xuất thành công');
+    } catch (error) {
+      console.error('Logout error:', error);
+      message.error('Đã xảy ra lỗi khi đăng xuất');
     }
   };
 

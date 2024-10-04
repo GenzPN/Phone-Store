@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';  // Thêm morgan để log requests
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { readFile } from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,7 +42,7 @@ const app = express();
 
 // Cấu hình CORS
 app.use(cors({
-  origin: '*', // Địa chỉ của frontend
+  origin: 'http://localhost:3000', // Địa chỉ của frontend
   credentials: true, // Cho phép gửi credentials (cookies, headers xác thực)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Các phương thức HTTP được phép
   allowedHeaders: ['Content-Type', 'Authorization'], // Các header được phép
@@ -119,4 +120,15 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   // Đóng server một cách graceful
   server.close(() => process.exit(1));
+});
+
+app.get('/api/config', async (req, res) => {
+  try {
+    const configFile = await readFile('./config/config.json', 'utf8');
+    const config = JSON.parse(configFile);
+    res.json(config.website);
+  } catch (error) {
+    console.error('Error reading config file:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });

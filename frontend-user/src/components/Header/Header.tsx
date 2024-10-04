@@ -4,6 +4,7 @@ import { Row, Col, Image, AutoComplete, Tabs, Button, Input, Avatar } from "antd
 import { SearchOutlined, UserOutlined, ShoppingOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Dropdown } from 'antd';
 import styles from './Header.module.css';
+import { useConfig } from '../../hook/useConfig';
 
 interface User {
   image: string;
@@ -14,12 +15,13 @@ interface User {
 interface HeaderProps {
   brands: string[];
   user: User | null;
-  onLogout: () => void;
+  onLogout: () => Promise<void>;
 }
 
 const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const config = useConfig();
 
   // Sample data for AutoComplete
   const options = [
@@ -65,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
     {
       key: 'logout',
       label: (
-        <span onClick={onLogout}>
+        <span onClick={() => onLogout()}>
           <LogoutOutlined /> Logout
         </span>
       ),
@@ -78,8 +80,8 @@ const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
         <Col span={4} className={styles.logoCol}>
           <Image
             width={80}
-            src="https://github.com/fluidicon.png"
-            alt="Apple Logo"
+            src={config?.logo || "https://github.com/fluidicon.png"}
+            alt={config?.name || "Store Logo"}
             preview={false}
           />
         </Col>
