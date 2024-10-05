@@ -1,13 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getToken } from '../../utils/tokenStorage';
 import { useCart, CartItem } from '../../contexts/CartContext';
 import api from '../../utils/api';
+import axios, { AxiosError } from 'axios';
 
 const { Title } = Typography;
 const { Option } = Select;
+
+interface Address {
+  id: number;
+  full_name: string;
+  phone: string;
+  address: string;
+  city: string;
+  is_default: boolean;
+}
 
 const Checkout: React.FC = () => {
   const { cartItems, clearCart } = useCart();
@@ -15,6 +25,11 @@ const Checkout: React.FC = () => {
   const [addressType, setAddressType] = useState<string>('home');
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
 
   const total = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
@@ -65,8 +80,30 @@ const Checkout: React.FC = () => {
     }
 
     try {
-      const addressData = await form.validateFields();
-      const orderData = { items: cartItems, total, paymentMethod, address: addressData };
+      const values = await form.validateFields();
+      let shipping_address_id = values.id;
+
+      if (shipping_address_id === 'new' || !shipping_address_id) {
+        // Gọi API để tạo địa chỉ mới và lấy ID
+        const response = await api.post('/api/user/addresses', {
+          fullName: values.fullName,
+          phone: values.phone,
+          address: values.newAddress,
+          city: values.city,
+          isDefault: false // hoặc true nếu bạn muốn đặt làm địa chỉ mặc định
+        });
+        shipping_address_id = response.data.id;
+      }
+
+      const orderData = { 
+        items: cartItems, 
+        total_amount: total,
+        paymentMethod, 
+        shipping_address_id,
+        note: values.note
+      };
+
+      console.log('Sending order data:', orderData);
 
       const token = getToken();
       if (!token) {
@@ -86,14 +123,65 @@ const Checkout: React.FC = () => {
           state: { 
             orderId: response.data.orderId,
             transactionId: response.data.transactionId,
-            total,
+            total: total,
             paymentMethod
           } 
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error during payment:', error);
-      message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError;
+        if (axiosError.response) {
+          console.error('Error response:', axiosError.response.data);
+          message.error((axiosError.response.data as any).message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+        } else {
+          message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+        }
+      } else {
+        message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      }
+    }
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      const token = getToken();
+      if (!token) {
+        message.error('Vui lòng đăng nhập để tiếp tục');
+        navigate('/login');
+        return;
+      }
+
+      const response = await api.get('/api/user/addresses', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      setAddresses(response.data);
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      message.error('Không thể tải danh sách địa chỉ');
+    }
+  };
+
+  const handleAddressChange = (value: string) => {
+    if (value === 'new') {
+      form.setFieldsValue({
+        fullName: '',
+        phone: '',
+        newAddress: '',
+        city: '',
+      });
+    } else {
+      const selectedAddress = addresses.find(addr => addr.id === parseInt(value));
+      if (selectedAddress) {
+        form.setFieldsValue({
+          fullName: selectedAddress.full_name,
+          phone: selectedAddress.phone,
+          newAddress: selectedAddress.address,
+          city: selectedAddress.city,
+        });
+      }
     }
   };
 
@@ -107,34 +195,33 @@ const Checkout: React.FC = () => {
           </Card>
           <Card title="Địa chỉ giao hàng" style={{ marginTop: '20px' }}>
             <Form form={form} layout="vertical">
-              <Form.Item name="addressType" label="Loại địa chỉ">
-                <Select style={{ width: 120 }} onChange={handleAddressTypeChange}>
-                  <Option value="home">Nhà riêng</Option>
-                  <Option value="company">Công ty</Option>
+              <Form.Item name="id" label="Địa chỉ giao hàng">
+                <Select 
+                  placeholder="Chọn địa chỉ giao hàng"
+                  onChange={handleAddressChange}
+                >
+                  {addresses.map((address: Address) => (
+                    <Option key={address.id} value={address.id}>
+                      {address.full_name} - {address.address}, {address.city}
+                    </Option>
+                  ))}
+                  <Option value="new">Thêm địa chỉ mới</Option>
                 </Select>
               </Form.Item>
               <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}>
-                <Input placeholder="Nhập họ và tên" />
+                <Input />
               </Form.Item>
               <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
-                <Input placeholder="Nhập số điện thoại" />
+                <Input />
               </Form.Item>
-              {addressType === 'company' && (
-                <Form.Item name="companyName" label="Tên công ty" rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}>
-                  <Input placeholder="Nhập tên công ty" />
-                </Form.Item>
-              )}
-              <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
-                <Input.TextArea 
-                  placeholder={addressType === 'home' ? "Nhập địa chỉ nhà" : "Nhập địa chỉ công ty"} 
-                  rows={4} 
-                />
+              <Form.Item name="newAddress" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
+                <Input.TextArea />
+              </Form.Item>
+              <Form.Item name="city" label="Thành phố" rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}>
+                <Input />
               </Form.Item>
               <Form.Item name="note" label="Ghi chú">
-                <Input.TextArea 
-                  placeholder="Nhập ghi chú cho đơn hàng (nếu có)" 
-                  rows={3} 
-                />
+                <Input.TextArea />
               </Form.Item>
             </Form>
           </Card>
@@ -148,7 +235,7 @@ const Checkout: React.FC = () => {
               <Radio value="momo" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
                 <MobileOutlined /> Thanh toán MoMo
               </Radio>
-              <Radio value="bank" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+              <Radio value="bank_transfer" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
                 <BankOutlined /> Thanh toán ngân hàng
               </Radio>
               <Radio value="cod" style={{display: 'block', height: '30px', lineHeight: '30px'}}>

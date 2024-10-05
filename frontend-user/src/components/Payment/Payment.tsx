@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Card, Image, Row, Col, Space, Button, Divider, Statistic, message, Select } from 'antd';
-import { CopyOutlined, MobileOutlined } from '@ant-design/icons';
+import { Layout, Typography, Card, Image, Row, Col, Space, Button, Divider, Statistic, message, Progress } from 'antd';
+import { CopyOutlined, QrcodeOutlined, BankOutlined, MobileOutlined, ClockCircleOutlined, ArrowLeftOutlined, CheckOutlined } from '@ant-design/icons';
 import api from '../../utils/api';
 import './Payment.css';
-import axios, { AxiosError } from 'axios';  // Import AxiosError
+import axios, { AxiosError } from 'axios';
 
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
@@ -19,6 +19,8 @@ interface PaymentInfo {
   return_url: string;
   notify_url: string;
   orderTimeout: number;
+  transactionId: string;
+  payment_status: string;
 }
 
 function Payment() {
@@ -34,6 +36,7 @@ function Payment() {
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [totalTimeout, setTotalTimeout] = useState<number>(30 * 60); // 30 phút
 
   useEffect(() => {
     const fetchPaymentInfo = async () => {
@@ -42,9 +45,9 @@ function Payment() {
         setPaymentInfo(response.data);
         setLoading(false);
 
-        // Bắt đầu đếm ngược
         if (response.data.orderTimeout) {
-          setCountdown(response.data.orderTimeout * 60);
+          setCountdown(response.data.orderTimeout);
+          setTotalTimeout(30 * 60); // 30 phút
         }
       } catch (error) {
         let errorMessage = 'Đã xảy ra lỗi không xác định';
@@ -68,7 +71,13 @@ function Payment() {
     let timer: NodeJS.Timeout;
     if (countdown !== null && countdown > 0) {
       timer = setInterval(() => {
-        setCountdown(prev => prev !== null ? prev - 1 : null);
+        setCountdown(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     } else if (countdown === 0) {
       // Hết thời gian, chuyển hướng về trang chủ hoặc trang đơn hàng
@@ -86,6 +95,43 @@ function Payment() {
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    message.success('Đã sao chép vào clipboard');
+  };
+
+  const getPaymentMethodDisplay = (method: string) => {
+    switch (method) {
+      case 'bank_transfer':
+        return 'Ngân Hàng';
+      case 'momo':
+        return 'Momo';
+      default:
+        return method;
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate(-1); // Quay lại trang trước đó
+  };
+
+  const handleCheckPayment = async () => {
+    try {
+      const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
+      if (response.data.payment_status === 'completed') {
+        message.success('Thanh toán đã được xác nhận!');
+        navigate(`/order-confirmation/${orderId}`);
+      } else if (response.data.status === 'paid') {
+        message.success('Đơn hàng đã được thanh toán và đang được xử lý!');
+        navigate(`/order-confirmation/${orderId}`);
+      } else {
+        message.info('Thanh toán chưa được xác nhận. Vui lòng thử lại sau.');
+      }
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi kiểm tra thanh toán.');
+    }
+  };
+
   if (loading) {
     return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Đang tải thông tin thanh toán...</div>;
   }
@@ -95,73 +141,88 @@ function Payment() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
       <Content style={{ padding: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Card style={{ width: '100%', maxWidth: 800 }}>
+        <Card style={{ width: '100%', maxWidth: 1000, boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
           <Row gutter={24}>
-            <Col xs={24} sm={24} md={12}>
-              <Title level={3}>Thông tin thanh toán</Title>
-              <Paragraph>
-                Mã đơn hàng: <Text strong>{orderId}</Text>
-              </Paragraph>
-              <Paragraph>
-                Mã giao dịch: <Text strong>{transactionId}</Text>
-              </Paragraph>
-              <Paragraph>
-                Tổng tiền: <Text strong>{total.toLocaleString('vi-VN')} đ</Text>
-              </Paragraph>
-              <Paragraph>
-                Phương thức thanh toán: <Text strong>{paymentMethod}</Text>
-              </Paragraph>
-              {paymentMethod === 'bank' && (
-                <>
+            <Col xs={24} md={14}>
+              <Space style={{ marginBottom: 20 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={handleGoBack}>Quay lại</Button>
+                <Button icon={<CheckOutlined />} onClick={handleCheckPayment} type="primary">Kiểm tra thanh toán</Button>
+              </Space>
+              <Title level={3}><ClockCircleOutlined /> Thông tin thanh toán</Title>
+              <Card style={{ marginBottom: 20 }}>
+                <Paragraph>
+                  <strong>Mã đơn hàng:</strong> {orderId}
+                </Paragraph>
+                <Paragraph>
+                  <strong>Mã giao dịch:</strong> {paymentInfo.transactionId}
+                </Paragraph>
+                <Paragraph>
+                  <strong>Tổng tiền:</strong> <Text type="danger">{total.toLocaleString('vi-VN')} đ</Text>
+                </Paragraph>
+                <Paragraph>
+                  <strong>Phương thức thanh toán:</strong> {paymentMethod === 'bank_transfer' ? <BankOutlined /> : <MobileOutlined />} {getPaymentMethodDisplay(paymentMethod)}
+                </Paragraph>
+              </Card>
+              
+              {paymentMethod === 'bank_transfer' && (
+                <Card title="Thông tin chuyển khoản" extra={<BankOutlined />}>
                   <Paragraph>
-                    Số tài khoản: 
-                    <Button type="link" onClick={() => navigator.clipboard.writeText(paymentInfo.accountNumber)}>
-                      <Text strong>{paymentInfo.accountNumber}</Text>
-                      <CopyOutlined />
-                    </Button>
+                    <Space>
+                      <Text strong>Số tài khoản:</Text>
+                      <Text copyable>{paymentInfo.accountNumber}</Text>
+                    </Space>
                   </Paragraph>
                   <Paragraph>
-                    Chủ tài khoản: <Text strong>{paymentInfo.accountHolder}</Text>
+                    <Text strong>Chủ tài khoản:</Text> {paymentInfo.accountHolder}
                   </Paragraph>
                   <Paragraph>
-                    Nội dung chuyển khoản:
-                    <Button type="link" onClick={() => navigator.clipboard.writeText(paymentInfo.transferContent)}>
-                      <Text strong>{paymentInfo.transferContent}</Text>
-                      <CopyOutlined />
-                    </Button>
+                    <Space>
+                      <Text strong>Nội dung chuyển khoản:</Text>
+                      <Text copyable>{paymentInfo.transferContent}</Text>
+                    </Space>
                   </Paragraph>
-                  <div className="qr-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Image
-                      src={paymentInfo.linkQR}
-                      alt="QR Code for payment"
-                      style={{ width: '100%', maxWidth: 300 }}
-                    />
-                  </div>
-                </>
+                </Card>
               )}
+              
               {paymentMethod === 'momo' && (
-                <>
+                <Card title="Thông tin MoMo" extra={<MobileOutlined />}>
                   <Paragraph>
-                    Số điện thoại MoMo: 
-                    <Button type="link" onClick={() => navigator.clipboard.writeText(paymentInfo.accountNumber)}>
-                      <Text strong>{paymentInfo.accountNumber}</Text>
-                      <CopyOutlined />
-                    </Button>
+                    <Space>
+                      <Text strong>Số điện thoại MoMo:</Text>
+                      <Text copyable>{paymentInfo.accountNumber}</Text>
+                    </Space>
                   </Paragraph>
-                  <div className="qr-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Image
-                      src={paymentInfo.linkQR}
-                      alt="QR Code for MoMo payment"
-                      style={{ width: '100%', maxWidth: 300 }}
-                    />
-                  </div>
-                </>
+                </Card>
               )}
+              
               {countdown !== null && (
-                <Statistic title="Thời gian còn lại" value={formatTime(countdown)} style={{ marginTop: 20 }} />
+                <Card style={{ marginTop: 20 }}>
+                  <Statistic
+                    title="Thời gian còn lại"
+                    value={formatTime(countdown)}
+                    prefix={<ClockCircleOutlined />}
+                    suffix=""
+                  />
+                  <Progress 
+                    percent={Math.round((countdown / totalTimeout) * 100)} 
+                    showInfo={false} 
+                    status="active" 
+                  />
+                </Card>
               )}
+            </Col>
+            <Col xs={24} md={10}>
+              <Card title="Mã QR thanh toán" extra={<QrcodeOutlined />}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <Image
+                    src={paymentInfo.linkQR}
+                    alt="QR Code for payment"
+                    style={{ width: '100%', maxWidth: 250 }}
+                  />
+                </div>
+              </Card>
             </Col>
           </Row>
         </Card>

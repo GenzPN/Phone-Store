@@ -20,6 +20,7 @@ interface CartContextType {
   clearCart: () => Promise<void>;
   login: () => void;
   logout: () => void;
+  clearCartAfterPayment: () => Promise<void>; // Add this new function
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -120,6 +121,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const clearCartAfterPayment = async () => {
+    try {
+      if (isLoggedIn) {
+        await api.delete('/api/cart');
+      } else {
+        localStorage.removeItem('cart');
+      }
+      setCartItems([]);
+      message.success('Đơn hàng đã được xử lý và giỏ hàng đã được xóa');
+    } catch (error) {
+      console.error('Error clearing cart after payment:', error);
+      message.error('Không thể xóa giỏ hàng sau khi thanh toán. Vui lòng thử lại.');
+    }
+  };
+
   const login = async () => {
     setIsLoggedIn(true);
     try {
@@ -141,7 +157,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addToCart, 
       removeFromCart, 
       updateQuantity, 
-      clearCart, 
+      clearCart,
+      clearCartAfterPayment, // Add this new function to the context
       login, 
       logout 
     }}>

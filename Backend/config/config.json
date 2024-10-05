@@ -1,7 +1,8 @@
 {
   "website": {
     "name": "E-commerce Trùm",
-    "logo": "http://localhost:3000/logo192.png"
+    "logo": "http://localhost:3000/logo192.png",
+    "url": "http://localhost:3000"
   },
   "bank": {
     "name": "VietinBank",

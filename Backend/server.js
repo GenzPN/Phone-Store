@@ -100,13 +100,13 @@ const server = app.listen(PORT, () => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Đóng server một cách graceful
-  server.close(() => process.exit(1));
+  app.close(() => process.exit(1));
 });
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   // Đóng server một cách graceful
-  server.close(() => process.exit(1));
+  app.close(() => process.exit(1));
 });
 
 app.get('/api/config', async (req, res) => {
