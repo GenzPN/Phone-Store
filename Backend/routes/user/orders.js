@@ -1,14 +1,7 @@
 import express from 'express';
 import db from '../../config/database.js';
 import { authenticateJWT } from '../../middleware/auth.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../../config/config.json'), 'utf8'));
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
@@ -164,58 +157,58 @@ router.put('/:id/items', async (req, res) => {
 });
 
 // Create a new order
-router.post('/', async (req, res) => {
-  const { items, total, paymentMethod, address } = req.body;
-  const userId = req.user.id; // Lấy user_id từ token xác thực
-
-  if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized: User not authenticated' });
-  }
-
+router.post('/', authenticateJWT, async (req, res) => {
+  const connection = await db.getConnection();
   try {
-    await db.query('START TRANSACTION');
+    await connection.beginTransaction();
 
-    // Tạo đơn hàng mới
-    const [orderResult] = await db.query(
-      'INSERT INTO Orders (user_id, total_amount, status, note) VALUES (?, ?, ?, ?)',
-      [userId, total, 'pending', address.note || null]
-    );
-    const orderId = orderResult.insertId;
+    const { shipping_address_id, items, total_amount, note, payment_method } = req.body;
 
-    // Thêm địa chỉ giao hàng
-    const [addressResult] = await db.query(
-      'INSERT INTO UserAddresses (user_id, full_name, phone, address, city) VALUES (?, ?, ?, ?, ?)',
-      [userId, address.fullName, address.phone, address.address, address.city || '']
-    );
-    const addressId = addressResult.insertId;
+    console.log('Received payment_method:', payment_method); // Thêm dòng này
 
-    // Cập nhật địa chỉ giao hàng cho đơn hàng
-    await db.query(
-      'UPDATE Orders SET shipping_address_id = ? WHERE id = ?',
-      [addressId, orderId]
+    // Kiểm tra payment_method hợp lệ
+    const validPaymentMethods = ['bank_transfer', 'momo', 'cod'];
+    if (!validPaymentMethods.includes(payment_method)) {
+      throw new Error(`Invalid payment method. Valid methods are: ${validPaymentMethods.join(', ')}`);
+    }
+
+    const [result] = await connection.query(
+      'INSERT INTO Orders (user_id, shipping_address_id, total_amount, note, payment_method, transaction_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.user.id, shipping_address_id, total_amount, note, payment_method, uuidv4()]
     );
 
-    // Thêm các mục đơn hàng
+    const orderId = result.insertId;
+
     for (const item of items) {
-      await db.query(
+      await connection.query(
         'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
         [orderId, item.product_id, item.quantity, item.price]
       );
+
+      // Cập nhật số lượng sản phẩm trong kho
+      await connection.query(
+        'UPDATE Products SET stock = stock - ? WHERE id = ?',
+        [item.quantity, item.product_id]
+      );
     }
 
-    // Tạo bản ghi thanh toán
-    await db.query(
-      'INSERT INTO Payments (order_id, amount, payment_method, status) VALUES (?, ?, ?, ?)',
-      [orderId, total, paymentMethod, 'pending']
-    );
+    // Xóa các mục trong giỏ hàng của người dùng sau khi đặt hàng
+    await connection.query('DELETE FROM Cart WHERE user_id = ?', [req.user.id]);
 
-    await db.query('COMMIT');
+    await connection.commit();
 
-    res.status(201).json({ success: true, orderId: orderId });
+    res.status(201).json({ 
+      success: true, 
+      orderId, 
+      message: 'Order created successfully',
+      payment_method // Trả về payment_method trong response
+    });
   } catch (error) {
-    await db.query('ROLLBACK');
+    await connection.rollback();
     console.error('Create order error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(400).json({ message: error.message }); // Trả về 400 Bad Request thay vì 500
+  } finally {
+    connection.release();
   }
 });
 
@@ -223,26 +216,21 @@ router.post('/', async (req, res) => {
 router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
   try {
     console.log('Fetching order:', req.params.orderId);
-    const [order] = await db.query('SELECT * FROM Orders WHERE id = ?', [req.params.orderId]);
+    const [orders] = await db.query('SELECT * FROM Orders WHERE id = ?', [req.params.orderId]);
     
-    console.log('Order found:', order);
-    if (order.length === 0) {
+    console.log('Order found:', orders);
+    if (orders.length === 0) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    console.log('Fetching payment for order:', req.params.orderId);
-    const [payment] = await db.query('SELECT * FROM Payments WHERE order_id = ?', [req.params.orderId]);
-
-    console.log('Payment found:', payment);
-    if (payment.length === 0) {
-      return res.status(404).json({ message: 'Payment not found' });
-    }
-
+    const order = orders[0];
+    
     let paymentInfo;
-    if (payment[0].payment_method === 'bank_transfer') {
+    
+    if (order.payment_method === 'bank_transfer') {
       paymentInfo = {
-        linkQR: `https://api.vietqr.io/${config.bank.shortName}/${config.bank.accountNumber}/${order[0].total_amount}/GEN${req.params.orderId}/qr_only.png?accountName=${encodeURIComponent(config.bank.accountHolder)}`,
-        amount: order[0].total_amount,
+        linkQR: `https://api.vietqr.io/${config.bank.shortName}/${config.bank.accountNumber}/${order.total_amount}/GEN${req.params.orderId}/qr_only.png?accountName=${encodeURIComponent(config.bank.accountHolder)}`,
+        amount: order.total_amount,
         accountHolder: config.bank.accountHolder,
         accountNumber: config.bank.accountNumber,
         transferContent: `GEN${req.params.orderId}`,
@@ -251,10 +239,10 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
         notify_url: `${config.website.url}/api/payment-callback`,
         orderTimeout: config.bank.orderTimeout
       };
-    } else if (payment[0].payment_method === 'momo') {
+    } else if (order.payment_method === 'momo') {
       paymentInfo = {
-        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order[0].total_amount}&note=GEN${req.params.orderId}`,
-        amount: order[0].total_amount,
+        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=GEN${req.params.orderId}`,
+        amount: order.total_amount,
         accountHolder: config.momo.accountHolder,
         accountNumber: config.momo.accountNumber,
         transferContent: `GEN${req.params.orderId}`,
@@ -263,8 +251,16 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
         notify_url: `${config.website.url}/api/payment-callback`,
         orderTimeout: config.momo.orderTimeout
       };
+    } else if (order.payment_method === 'cod') {
+      paymentInfo = {
+        amount: order.total_amount,
+        order_id: req.params.orderId,
+        payment_method: 'cod',
+        status: order.payment_status,
+        return_url: `${config.website.url}/order-confirmation/${req.params.orderId}`,
+      };
     } else {
-      console.log('Unsupported payment method:', payment[0].payment_method);
+      console.log('Unsupported payment method:', order.payment_method);
       return res.status(400).json({ message: 'Unsupported payment method' });
     }
 

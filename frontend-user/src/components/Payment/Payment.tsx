@@ -24,7 +24,12 @@ interface PaymentInfo {
 function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { orderId, total, paymentMethod } = location.state as { orderId: string; total: number; paymentMethod: string };
+  const { orderId, transactionId, total, paymentMethod } = location.state as { 
+    orderId: string; 
+    transactionId: string;
+    total: number; 
+    paymentMethod: string 
+  };
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +49,7 @@ function Payment() {
       } catch (error) {
         let errorMessage = 'Đã xảy ra lỗi không xác định';
         if (axios.isAxiosError(error)) {
-          const axiosError = error as AxiosError;
+          const axiosError = error as AxiosError<{ message: string }>;
           console.error('Error fetching payment info:', axiosError.response?.data || axiosError.message);
           errorMessage = axiosError.response?.data?.message || axiosError.message;
         } else if (error instanceof Error) {
@@ -98,6 +103,9 @@ function Payment() {
               <Title level={3}>Thông tin thanh toán</Title>
               <Paragraph>
                 Mã đơn hàng: <Text strong>{orderId}</Text>
+              </Paragraph>
+              <Paragraph>
+                Mã giao dịch: <Text strong>{transactionId}</Text>
               </Paragraph>
               <Paragraph>
                 Tổng tiền: <Text strong>{total.toLocaleString('vi-VN')} đ</Text>

@@ -76,6 +76,9 @@ CREATE TABLE Orders (
     total_amount INT,
     status ENUM('pending', 'paid', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
     note TEXT,
+    transaction_id VARCHAR(255),
+    payment_method ENUM('bank_transfer', 'momo', 'cod') NOT NULL,
+    payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     discount_type ENUM('percentage', 'fixed_amount') DEFAULT 'percentage',
@@ -83,7 +86,8 @@ CREATE TABLE Orders (
     FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
     FOREIGN KEY (shipping_address_id) REFERENCES UserAddresses(id) ON DELETE SET NULL,
     INDEX idx_user_id (user_id),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_payment_status (payment_status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE OrderItems (
@@ -94,18 +98,6 @@ CREATE TABLE OrderItems (
     price INT,
     FOREIGN KEY (order_id) REFERENCES Orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES Products(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE Payments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT,
-    amount INT,
-    payment_method ENUM('bank_transfer', 'momo', 'cod') DEFAULT 'cod',
-    status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-    transaction_id VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES Orders(id) ON DELETE CASCADE,
-    INDEX idx_status (status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE ProductReviews (

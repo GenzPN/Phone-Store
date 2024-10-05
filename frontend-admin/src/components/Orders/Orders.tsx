@@ -254,34 +254,17 @@ const Orders: React.FC = () => {
 
     try {
       const customerInfo = customerForm.getFieldsValue();
-      const totalAmount = calculateTotal();
-
-      const updatedOrderData: UpdateOrderData = {
-        id: selectedOrder.id,
-        shipping_address_id: selectedOrder.shipping_address_id,
-        customer_name: customerInfo.customer_name,
-        customer_email: customerInfo.customer_email,
-        customer_phone: customerInfo.customer_phone,
-        address: customerInfo.address,
-        items: editedItems.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        total_amount: totalAmount,
-        status: selectedOrder.status,
-        note: selectedOrder.note,
-        user_id: selectedOrder.user_id
+      const updatedOrder: UpdateOrderData = {
+        ...selectedOrder,
+        ...customerInfo,
+        items: editedItems,
+        total_amount: calculateTotal(),
+        discount_type: discountType,
+        discount_value: discountValue,
+        payment_method: selectedOrder.payment_method, // Đảm bảo giữ nguyên phương thức thanh toán
       };
 
-      if (discountType) {
-        updatedOrderData.discount_type = discountType;
-      }
-      if (discountValue !== undefined) {
-        updatedOrderData.discount_value = discountValue;
-      }
-
-      const response = await axios.put(`http://localhost:5000/api/admin/orders/${selectedOrder.id}`, updatedOrderData);
+      await axios.put(`http://localhost:5000/api/admin/orders/${selectedOrder.id}`, updatedOrder);
       message.success('Đơn hàng đã được cập nhật');
       setIsModalVisible(false);
       fetchOrders();

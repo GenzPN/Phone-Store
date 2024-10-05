@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Input, Form, Select } from 'antd';
+import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getToken } from '../../utils/tokenStorage';
@@ -9,25 +9,14 @@ import api from '../../utils/api';
 const { Title } = Typography;
 const { Option } = Select;
 
-interface AddressData {
-  fullName: string;
-  phone: string;
-  address: string;
-  addressType: string;
-  companyName?: string;
-  note?: string;
-}
-
 const Checkout: React.FC = () => {
   const { cartItems, clearCart } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState<string>('cod'); // Đặt 'cod' làm giá trị mặc định
+  const [paymentMethod, setPaymentMethod] = useState<string>('cod');
   const [addressType, setAddressType] = useState<string>('home');
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const total = useMemo(() => {
-    return cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  }, [cartItems]);
+  const total = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
   const columns = [
     {
@@ -62,8 +51,11 @@ const Checkout: React.FC = () => {
   ];
 
   const handlePaymentMethodChange = (e: any) => {
-    console.log('Selected payment method:', e.target.value);
     setPaymentMethod(e.target.value);
+  };
+
+  const handleAddressTypeChange = (value: string) => {
+    setAddressType(value);
   };
 
   const handlePayment = async () => {
@@ -74,12 +66,7 @@ const Checkout: React.FC = () => {
 
     try {
       const addressData = await form.validateFields();
-      const orderData = {
-        items: cartItems,
-        total,
-        paymentMethod,
-        address: addressData,
-      };
+      const orderData = { items: cartItems, total, paymentMethod, address: addressData };
 
       const token = getToken();
       if (!token) {
@@ -89,39 +76,25 @@ const Checkout: React.FC = () => {
       }
 
       const response = await api.post('/api/user/orders', orderData, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.status === 201) {
         message.success('Đơn hàng đã được tạo thành công.');
         clearCart();
-
-        // Đảm bảo rằng paymentMethod được gửi đúng cách
         navigate('/payment', { 
           state: { 
             orderId: response.data.orderId,
-            total: total,
-            paymentMethod: paymentMethod // Đảm bảo giá trị này là 'bank' khi chọn thanh toán ngân hàng
+            transactionId: response.data.transactionId,
+            total,
+            paymentMethod
           } 
         });
-      } else {
-        throw new Error('Failed to create order');
       }
     } catch (error) {
       console.error('Error during payment:', error);
       message.error('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
     }
-  };
-
-  const handleBackToCart = () => {
-    navigate('/cart');
-  };
-
-  const handleAddressTypeChange = (value: string) => {
-    setAddressType(value);
-    form.setFieldsValue({ addressType: value });
   };
 
   return (
@@ -133,7 +106,7 @@ const Checkout: React.FC = () => {
             <Table dataSource={cartItems} columns={columns} pagination={false} />
           </Card>
           <Card title="Địa chỉ giao hàng" style={{ marginTop: '20px' }}>
-            <Form form={form} layout="vertical" initialValues={{ addressType: 'home' }}>
+            <Form form={form} layout="vertical">
               <Form.Item name="addressType" label="Loại địa chỉ">
                 <Select style={{ width: 120 }} onChange={handleAddressTypeChange}>
                   <Option value="home">Nhà riêng</Option>
@@ -182,9 +155,6 @@ const Checkout: React.FC = () => {
                 <DollarOutlined /> Thanh toán khi nhận hàng (COD)
               </Radio>
             </Radio.Group>
-            <div style={{ marginTop: '10px' }}>
-              Phương thức thanh toán đã chọn: {paymentMethod}
-            </div>
             <Space direction="vertical" style={{ width: '100%', marginTop: '20px' }}>
               <Button 
                 type="primary" 
@@ -195,7 +165,7 @@ const Checkout: React.FC = () => {
               </Button>
               <Button 
                 icon={<ShoppingCartOutlined />} 
-                onClick={handleBackToCart}
+                onClick={() => navigate('/cart')}
                 style={{ width: '100%' }}
               >
                 Quay lại giỏ hàng

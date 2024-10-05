@@ -36,6 +36,8 @@ import { publicProductRoutes } from './routes/products.js';
 // Review routes
 import { reviewRoutes } from './routes/reviews.js';
 
+import { paymentRoutes } from './routes/payments.js';
+
 dotenv.config();
 
 const app = express();
@@ -74,6 +76,9 @@ app.use('/api/user/cart', userCartRoutes);
 
 // Review routes
 app.use('/api/reviews', reviewRoutes);
+
+// Payment routes
+app.use('/api/payments', paymentRoutes);
 
 // Use the admin order routes
 app.use('/api/orders', adminOrderRoutes);
