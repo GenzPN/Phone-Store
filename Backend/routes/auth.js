@@ -3,13 +3,14 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from '../config/database.js';
 import { authenticateJWT } from '../middleware/auth.js';
+import crypto from 'crypto'; // Thêm import này
 
 const router = express.Router();
 
 // Lấy thông tin người dùng (không cần xác thực)
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id, username, email, fullName, gender, image, isAdmin FROM Users WHERE id = ?', [req.user.id]);
+    const [rows] = await db.query('SELECT id, username, email, fullName, gender, image, isAdmin, created_at FROM Users WHERE id = ?', [req.user.id]);
     
     if (rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -88,5 +89,57 @@ router.post('/logout', (req, res) => {
   });
   res.json({ message: 'Logged out successfully' });
 });
+
+// Thêm route đăng ký mới hoặc cập nhật route đăng ký hiện có
+router.post('/register', async (req, res) => {
+  try {
+    const { username, email, password, fullName, gender } = req.body;
+
+    // Kiểm tra xem username hoặc email đã tồn tại chưa
+    const [existingUser] = await db.query('SELECT * FROM Users WHERE username = ? OR email = ?', [username, email]);
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: 'Username or email already exists' });
+    }
+
+    // Mã hóa mật khẩu
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Tạo Gravatar URL với chất lượng cao hơn
+    const gravatarUrl = getGravatarUrl(email);
+
+    // Thêm người dùng mới vào database
+    const [result] = await db.query(
+      'INSERT INTO Users (username, email, password, fullName, gender, image) VALUES (?, ?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, fullName, gender, gravatarUrl]
+    );
+
+    // Tạo token JWT
+    const token = jwt.sign({ id: result.insertId, email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Gửi phản hồi
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        id: result.insertId,
+        username,
+        email,
+        fullName,
+        gender,
+        image: gravatarUrl
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Hàm tạo Gravatar URL
+function getGravatarUrl(email, size = 200) {
+  const trimmedEmail = email.trim().toLowerCase();
+  const hash = crypto.createHash('sha256').update(trimmedEmail).digest('hex');
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+}
 
 export { router as authRoutes };

@@ -116,13 +116,20 @@ router.get('/:id', async (req, res) => {
 router.get('/brand/:brandName', async (req, res) => {
   try {
     const { brandName } = req.params;
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 12, sort = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    const [products] = await db.query(
-      'SELECT * FROM Products WHERE brand = ? LIMIT ? OFFSET ?',
-      [brandName, Number(limit), offset]
-    );
+    let query = 'SELECT * FROM Products WHERE brand = ?';
+    let queryParams = [brandName];
+
+    if (sort === 'asc' || sort === 'desc') {
+      query += ` ORDER BY price ${sort.toUpperCase()}`;
+    }
+
+    query += ' LIMIT ? OFFSET ?';
+    queryParams.push(Number(limit), offset);
+
+    const [products] = await db.query(query, queryParams);
 
     const [countResult] = await db.query(
       'SELECT COUNT(*) as total FROM Products WHERE brand = ?',
@@ -136,9 +143,11 @@ router.get('/brand/:brandName', async (req, res) => {
     }
 
     const formattedProducts = products.map(product => ({
-      ...product,
+      id: product.id,
+      title: product.title,
       price: Number(product.price),
-      thumbnail: product.thumbnail, // Sử dụng trực tiếp trường thumbnail
+      thumbnail: product.thumbnail,
+      brand: product.brand
     }));
 
     res.json({
@@ -150,6 +159,95 @@ router.get('/brand/:brandName', async (req, res) => {
   } catch (error) {
     console.error('Get products by brand error:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
+
+// Thay đổi route để lấy chi tiết sản phẩm theo brand và tên sản phẩm
+router.get('/:brand/:title', async (req, res) => {
+  const { brand, title } = req.params;
+  console.log('Searching for product:', { brand, title });
+  try {
+    const decodedBrand = decodeURIComponent(brand).replace(/\+/g, ' ').trim();
+    const decodedTitle = decodeURIComponent(title).replace(/\+/g, ' ').replace(/-/g, ' ').trim();
+    console.log('Decoded params:', { decodedBrand, decodedTitle });
+
+    const query = 'SELECT * FROM Products WHERE LOWER(brand) = LOWER(?) AND LOWER(title) = LOWER(?)';
+    console.log('Executing query:', query, [decodedBrand, decodedTitle]);
+
+    const [products] = await db.query(query, [decodedBrand, decodedTitle]);
+    console.log('Query result:', products);
+
+    if (products.length === 0) {
+      console.log('Product not found');
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    const product = products[0];
+    console.log('Found product:', product);
+
+    // Fetch reviews for the product
+    const reviewsQuery = 'SELECT * FROM ProductReviews WHERE product_id = ?';
+    const [reviews] = await db.query(reviewsQuery, [product.id]);
+    console.log('Fetched reviews:', reviews);
+
+    // Thêm thông số kỹ thuật
+    const productDetails = [
+      {
+        category: 'Màn hình',
+        items: [
+          { label: 'Công nghệ màn hình', value: product.screen },
+        ]
+      },
+      {
+        category: 'Camera sau',
+        items: [
+          { label: 'Độ phân giải', value: product.back_camera }
+        ]
+      },
+      {
+        category: 'Camera trước',
+        items: [
+          { label: 'Độ phân giải', value: product.front_camera },
+        ]
+      },
+      {
+        category: 'Bộ nhớ & Lưu trữ',
+        items: [
+          { label: 'RAM', value: product.ram },
+          { label: 'Bộ nhớ trong', value: product.storage },
+        ]
+      },
+      {
+        category: 'Pin & Sạc',
+        items: [
+          { label: 'Dung lượng pin', value: product.battery }
+        ]
+      },
+    ];
+
+    const formattedProduct = {
+      ...product,
+      price: Number(product.price),
+      images: JSON.parse(product.images || '[]'),
+      category: product.category,
+      screen: product.screen,
+      back_camera: product.back_camera,
+      front_camera: product.front_camera,
+      ram: product.ram,
+      storage: product.storage,
+      battery: product.battery,
+      discount_percentage: Number(product.discount_percentage),
+      warranty_information: product.warranty_information,
+      shipping_information: product.shipping_information,
+      availability_status: product.availability_status,
+      return_policy: product.return_policy,
+      reviews: reviews
+    };
+
+    res.json({ ...formattedProduct, details: productDetails });
+  } catch (error) {
+    console.error('Get product details error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

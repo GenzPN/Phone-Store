@@ -53,7 +53,7 @@ async function checkPaymentStatus(orderId) {
       const transactionAmount = parseFloat(transaction.amount);
       const orderAmount = parseFloat(price);
 
-      if (transactionAmount >= orderAmount && transaction.remark.includes(`GEN${orderId}`)) {
+      if (transactionAmount >= orderAmount && transaction.remark.includes(`${config.bank.transferContent}${orderId}`)) {
         await fs.writeFile(path.join(orderDir, 'status.log'), '1');
         await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [orderId]);
         return { isPaid: true, transactionId: transaction.trxId };
@@ -138,7 +138,8 @@ router.post('/', authenticateJWT, async (req, res) => {
       success: true, 
       orderId: orderId, 
       message: 'Order created successfully',
-      paymentMethod
+      paymentMethod,
+      clearCart: true // Thêm signal này để frontend biết cần xóa giỏ hàng
     });
   } catch (error) {
     await connection.rollback();
@@ -178,11 +179,12 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
     
     if (order.payment_method === 'bank_transfer') {
       paymentInfo = {
-        linkQR: `https://api.vietqr.io/${config.bank.shortName}/${config.bank.accountNumber}/${order.total_amount}/GEN${req.params.orderId}/qr_only.png?accountName=${encodeURIComponent(config.bank.accountHolder)}`,
+        linkQR: `https://api.vietqr.io/${config.bank.shortName}/${config.bank.accountNumber}/${order.total_amount}/${config.bank.transferContent}${req.params.orderId}/qr_only.png?accountName=${encodeURIComponent(config.bank.accountHolder)}`,
         amount: order.total_amount,
         accountHolder: config.bank.accountHolder,
         accountNumber: config.bank.accountNumber,
-        transferContent: `GEN${req.params.orderId}`,
+        bankName: config.bank.name,
+        transferContent: `${config.bank.transferContent}${req.params.orderId}`,
         order_id: req.params.orderId,
         return_url: `${config.website.url}/order-confirmation/${req.params.orderId}`,
         notify_url: `${config.website.url}/api/payment-callback`,
@@ -193,11 +195,11 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
       };
     } else if (order.payment_method === 'momo') {
       paymentInfo = {
-        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=GEN${req.params.orderId}`,
+        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=${config.momo.transferContent}${req.params.orderId}`,
         amount: order.total_amount,
         accountHolder: config.momo.accountHolder,
         accountNumber: config.momo.accountNumber,
-        transferContent: `GEN${req.params.orderId}`,
+        transferContent: `${config.momo.transferContent}${req.params.orderId}`,
         order_id: req.params.orderId,
         return_url: `${config.website.url}/order-confirmation/${req.params.orderId}`,
         notify_url: `${config.website.url}/api/payment-callback`,
@@ -223,6 +225,35 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
     res.json(paymentInfo);
   } catch (error) {
     console.error('Get payment info error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get all orders for the authenticated user
+router.get('/', authenticateJWT, async (req, res) => {
+  try {
+    const [orders] = await db.query(`
+      SELECT o.*, ua.full_name, ua.phone, ua.address, ua.city
+      FROM Orders o
+      LEFT JOIN UserAddresses ua ON o.shipping_address_id = ua.id
+      WHERE o.user_id = ?
+      ORDER BY o.created_at DESC
+    `, [req.user.id]);
+
+    const ordersWithItems = await Promise.all(orders.map(async (order) => {
+      const [items] = await db.query(`
+        SELECT oi.*, p.title, p.thumbnail
+        FROM OrderItems oi
+        JOIN Products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `, [order.id]);
+
+      return { ...order, items, shipping_address: order.address, city: order.city };
+    }));
+
+    res.json(ordersWithItems);
+  } catch (error) {
+    console.error('Get all orders error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -314,7 +345,7 @@ router.put('/:id/status', async (req, res) => {
 // Cancel order
 router.put('/:id/cancel', async (req, res) => {
   try {
-    const [order] = await db.promise().query(
+    const [order] = await db.query(
       'SELECT status FROM Orders WHERE id = ?',
       [req.params.id]
     );
@@ -327,7 +358,7 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(400).json({ message: 'Cannot cancel a delivered order' });
     }
 
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       'UPDATE Orders SET status = "cancelled" WHERE id = ?',
       [req.params.id]
     );

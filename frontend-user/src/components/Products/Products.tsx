@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, Empty, message } from 'antd';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, Col, Row, Typography, Button, Image, Space, Radio, Slider, Select, Empty, message, Pagination, Spin } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { useCart } from '../../contexts/CartContext';
+import api from '../../utils/api';
+import { Link } from 'react-router-dom';
 
 const { Meta } = Card;
 const { Title } = Typography;
@@ -9,14 +11,18 @@ const { Option } = Select;
 
 interface Phone {
   id: number;
-  name: string;
+  title: string;
   price: number;
   thumbnail: string;
   brand: string;
 }
 
+const formatProductNameForUrl = (name: string): string => {
+  return name.toLowerCase().replace(/\s+/g, '-');
+};
+
 const Products: React.FC = () => {
-  const { cartItems, addToCart } = useCart();
+  const { addToCart } = useCart();
   const [phones, setPhones] = useState<Phone[]>([]);
   const [filteredPhones, setFilteredPhones] = useState<Phone[]>([]);
   const [priceFilter, setPriceFilter] = useState('all');
@@ -24,17 +30,53 @@ const Products: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
   const [brandFilter, setBrandFilter] = useState<string[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const filterAndSortPhones = useCallback(() => {
-    let filtered = phones;
+  const pageSize = 12;
+
+  const fetchPhones = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/api/products', {
+        params: {
+          page: currentPage,
+          limit: pageSize,
+          brand: brandFilter.join(','),
+          priceMin: priceRange[0],
+          priceMax: priceRange[1],
+          sortOrder
+        }
+      });
+      const data = response.data;
+      if (data && data.products) {
+        setPhones(data.products);
+        setFilteredPhones(data.products);
+        setTotalProducts(data.totalProducts);
+        
+        const brandsSet = new Set(data.products.map((phone: Phone) => phone.brand));
+        setAvailableBrands(Array.from(brandsSet) as string[]);
+      }
+    } catch (error) {
+      console.error('Error fetching phone data:', error);
+      message.error('Không thể tải dữ liệu sản phẩm');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, brandFilter, priceRange, sortOrder]);
+
+  useEffect(() => {
+    fetchPhones();
+  }, [fetchPhones]);
+
+  const filteredAndSortedPhones = useMemo(() => {
+    let filtered = [...phones];
     
-    // Brand filtering
     if (brandFilter.length > 0) {
       filtered = filtered.filter(phone => brandFilter.includes(phone.brand));
     }
 
-    // Price filtering
     if (priceFilter !== 'all') {
       filtered = filtered.filter(phone => {
         const price = phone.price / 1000000;
@@ -53,86 +95,97 @@ const Products: React.FC = () => {
             return price >= priceRange[0] && price <= priceRange[1];
         }
       });
-    } else {
-      filtered = filtered.filter(phone => {
-        const price = phone.price / 1000000;
-        return price >= priceRange[0] && price <= priceRange[1];
-      });
     }
 
-    // Sorting
     if (sortOrder) {
-      filtered.sort((a, b) => {
-        return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
-      });
+      filtered.sort((a, b) => sortOrder === 'asc' ? a.price - b.price : b.price - a.price);
     }
 
-    setFilteredPhones(filtered);
+    return filtered;
   }, [phones, brandFilter, priceFilter, priceRange, sortOrder]);
 
   useEffect(() => {
-    setLoading(true);
-    fetch('http://localhost:5000/api/products')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Raw data from API:', data);
-        if (data && data.products && Array.isArray(data.products)) {
-          const allPhones: Phone[] = data.products.map((product: any) => ({
-            id: product.id,
-            name: product.title,
-            price: parseFloat(product.price.replace(/[^\d]/g, '')),
-            thumbnail: product.thumbnail || '', // Sử dụng trường thumbnail
-            brand: product.brand
-          }));
-          console.log('Processed phones:', allPhones);
-          setPhones(allPhones);
-          setFilteredPhones(allPhones);
-          
-          // Extract unique brands
-          const brandsSet = new Set(allPhones.map(phone => phone.brand));
-          const brands = Array.from(brandsSet) as string[];
-          console.log('Available brands:', brands);
-          setAvailableBrands(brands);
-        } else {
-          console.error('Invalid data structure:', data);
-          setPhones([]);
-          setFilteredPhones([]);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching phone data:', error);
-        setPhones([]);
-        setFilteredPhones([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    setFilteredPhones(filteredAndSortedPhones);
+  }, [filteredAndSortedPhones]);
 
-  useEffect(() => {
-    filterAndSortPhones();
-  }, [filterAndSortPhones]);
-
-  const handlePriceRangeChange = (value: number | number[]) => {
+  const handlePriceRangeChange = useCallback((value: number | number[]) => {
     if (Array.isArray(value) && value.length === 2) {
       setPriceRange(value as [number, number]);
       setPriceFilter('custom');
     }
-  };
+  }, []);
 
-  const handleBrandFilterChange = (checkedValues: string[]) => {
+  const handleBrandFilterChange = useCallback((checkedValues: string[]) => {
     setBrandFilter(checkedValues);
-  };
+  }, []);
 
-  const handleAddToCart = (phone: Phone) => {
+  const handleAddToCart = useCallback((phone: Phone) => {
     addToCart({
       id: phone.id,
       product_id: phone.id,
       quantity: 1,
-      title: phone.name,
+      title: phone.title,
       price: phone.price,
       thumbnail: phone.thumbnail
     });
-    message.success(`Đã thêm ${phone.name} vào giỏ hàng`);
-  };
+  }, [addToCart]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const ProductCard = useCallback(({ phone }: { phone: Phone }) => (
+    <Col key={phone.id} xs={12} sm={8} md={8} lg={6}>
+      <Link to={`/details/${phone.brand.toLowerCase()}/${formatProductNameForUrl(phone.title)}`} style={{ textDecoration: 'none' }}>
+        <Card
+          hoverable
+          cover={
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '200px',
+              overflow: 'hidden',
+              backgroundColor: 'white',
+              padding: '10px'
+            }}>
+              <Image
+                alt={phone.title}
+                src={phone.thumbnail}
+                preview={false}
+                style={{
+                  maxWidth: '90%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            </div>
+          }
+          bodyStyle={{ padding: '10px' }}
+        >
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            <Meta 
+              title={<span style={{ fontSize: '14px', fontWeight: 'bold', height: '40px', overflow: 'hidden', display: 'block' }}>{phone.title}</span>} 
+              description={<span style={{ fontSize: '16px', color: '#f5222d', fontWeight: 'bold' }}>{phone.price.toLocaleString()} đ</span>}
+            />
+            <Button 
+              type="primary" 
+              icon={<ShoppingCartOutlined />}
+              style={{ width: '100%', marginTop: '5px' }}
+              onClick={(e) => {
+                e.preventDefault(); // Ngăn chặn sự kiện click lan truyền đến Link
+                handleAddToCart(phone);
+              }}
+            >
+              Thêm vào giỏ
+            </Button>
+          </Space>
+        </Card>
+      </Link>
+    </Col>
+  ), [handleAddToCart]);
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
@@ -204,59 +257,24 @@ const Products: React.FC = () => {
         </Col>
         <Col xs={24} sm={24} md={18} lg={18}>
           {loading ? (
-            <div>Loading...</div>
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Spin size="large" />
+            </div>
           ) : filteredPhones.length > 0 ? (
-            <Row gutter={[16, 16]}>
-              {filteredPhones.map((phone, index) => (
-                <Col key={index} xs={12} sm={8} md={8} lg={6}>
-                  <Card
-                    hoverable
-                    cover={
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        height: '200px',
-                        overflow: 'hidden',
-                        backgroundColor: 'white',
-                        padding: '10px'
-                      }}>
-                        <Image
-                          alt={phone.name}
-                          src={phone.thumbnail}
-                          preview={false}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            objectFit: 'contain',
-                            width: 'auto',
-                            height: 'auto'
-                          }}
-                        />
-                      </div>
-                    }
-                    bodyStyle={{ padding: '10px' }}
-                  >
-                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                      <Meta 
-                        title={<span style={{ fontSize: '14px', fontWeight: 'bold', height: '40px', overflow: 'hidden', display: 'block' }}>{phone.name}</span>} 
-                        description={<span style={{ fontSize: '16px', color: '#f5222d', fontWeight: 'bold' }}>{phone.price.toLocaleString()} đ</span>}
-                      />
-                      <Button 
-                        type="primary" 
-                        style={{ 
-                          width: '100%', 
-                          marginTop: '5px',
-                        }} 
-                        onClick={() => handleAddToCart(phone)}
-                      >
-                        Thêm vào giỏ
-                      </Button>
-                    </Space>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+            <>
+              <Row gutter={[16, 16]}>
+                {filteredPhones.map((phone) => (
+                  <ProductCard key={phone.id} phone={phone} />
+                ))}
+              </Row>
+              <Pagination
+                current={currentPage}
+                total={totalProducts}
+                pageSize={pageSize}
+                onChange={handlePageChange}
+                style={{ marginTop: '20px', textAlign: 'center' }}
+              />
+            </>
           ) : (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -271,6 +289,7 @@ const Products: React.FC = () => {
                 setPriceRange([0, 50]);
                 setSortOrder('');
                 setBrandFilter([]);
+                fetchPhones();
               }}>
                 Đặt lại bộ lọc
               </Button>

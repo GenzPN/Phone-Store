@@ -70,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
     },
     {
       key: 'orders',
-      label: <Link to="/orders">Đơn hàng của tôi</Link>,
+      label: <Link to="/order">Đơn hàng của tôi</Link>,
       icon: <FileTextOutlined />,
     },
     // Thêm mục menu admin nếu user là admin

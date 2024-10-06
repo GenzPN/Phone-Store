@@ -15,6 +15,7 @@ import Cart from './components/Cart/Cart';
 import Products from './components/Products/Products';
 import Checkout from './components/Checkout/Checkout';
 import Order from './components/Order/Order';
+import Status from './components/Status/Status';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 import axios from 'axios';
@@ -115,11 +116,12 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/brand/:brandName" element={<BrandPage />} />
-                <Route path="/details/:productName" element={<Details />} />
+                <Route path="/details/:brand/:title" element={<Details />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/checkout" element={<Checkout />} />
-                <Route path="/order/:orderId" element={<Order />} />
+                <Route path="/order" element={<Order />} />
+                <Route path="/order-confirmation/:orderId" element={<Status />} />
                 <Route 
                   path="/profile" 
                   element={

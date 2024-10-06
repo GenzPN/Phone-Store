@@ -30,8 +30,8 @@ const Cart: React.FC = () => {
     updateQuantity(id, newQuantity);
   }, [cartItems, updateQuantity]);
 
-  const handleDelete = useCallback((id: number) => {
-    removeFromCart(id);
+  const handleDelete = useCallback((product_id: number) => {
+    removeFromCart(product_id);
   }, [removeFromCart]);
 
   const columns = useMemo(() => [
@@ -76,7 +76,7 @@ const Cart: React.FC = () => {
       render: (record: CartItem) => (
         <Popconfirm
           title="Bạn có chắc chắn muốn xóa sản phẩm này?"
-          onConfirm={() => handleDelete(record.id)}
+          onConfirm={() => handleDelete(record.product_id)} // Sử dụng product_id thay vì id
           okText="Có"
           cancelText="Không"
         >

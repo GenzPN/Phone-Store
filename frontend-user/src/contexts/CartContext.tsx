@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
 export interface CartItem {
@@ -20,7 +21,8 @@ interface CartContextType {
   clearCart: () => Promise<void>;
   login: () => void;
   logout: () => void;
-  clearCartAfterPayment: () => Promise<void>; // Add this new function
+  clearCartAfterPayment: () => Promise<void>;
+  isLoggedIn: boolean; // Thêm dòng này
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -28,11 +30,17 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
 
   const fetchCart = async () => {
     try {
       if (isLoggedIn) {
-        const response = await api.get('/api/cart');
+        const response = await api.get('/api/user/cart');
         setCartItems(response.data);
       } else {
         const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -48,51 +56,47 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isLoggedIn]); // Thêm isLoggedIn vào dependencies
 
   const addToCart = async (item: CartItem) => {
-    try {
-      if (isLoggedIn) {
-        const response = await api.post('/api/cart', {
+    if (isLoggedIn) {
+      try {
+        const response = await api.post('/api/user/cart', {
           product_id: item.product_id,
           quantity: item.quantity
         });
         if (response.status === 201) {
           await fetchCart();
-          message.success('Đã thêm sản phẩm vào giỏ hàng');
-        } else {
-          throw new Error('Unexpected response status');
+          message.success(`Đã thêm ${item.title} vào giỏ hàng`);
         }
-      } else {
-        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const existingItemIndex = localCart.findIndex((cartItem: CartItem) => cartItem.product_id === item.product_id);
-        if (existingItemIndex > -1) {
-          localCart[existingItemIndex].quantity += item.quantity;
-        } else {
-          localCart.push(item);
-        }
-        localStorage.setItem('cart', JSON.stringify(localCart));
-        setCartItems(localCart);
-        message.success('Đã thêm sản phẩm vào giỏ hàng');
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          message.error(`Lỗi: ${error.response.data.message || 'Không thể thêm sản phẩm vào giỏ hàng'}`);
-        } else if (error.request) {
-          message.error('Không thể kết nối đến server. Vui lòng thử lại sau.');
-        } else {
-          message.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
-        }
-      } else {
+      } catch (error) {
+        console.error('Error adding to cart:', error);
         message.error('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
       }
+    } else {
+      Modal.confirm({
+        title: 'Bạn cần đăng nhập',
+        content: 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.',
+        okText: 'Đăng nhập',
+        cancelText: 'Hủy',
+        onOk() {
+          navigate('/api/auth');
+        },
+      });
     }
   };
 
   const removeFromCart = async (id: number) => {
     try {
-      await api.delete(`/api/cart/${id}`);
-      await fetchCart();
-      message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+      if (isLoggedIn) {
+        await api.delete(`/api/user/cart/${id}`); // Thay đổi đường dẫn API
+        await fetchCart();
+        message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+      } else {
+        // Xử lý xóa sản phẩm khỏi giỏ hàng local
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = localCart.filter((item: CartItem) => item.product_id !== id);
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        setCartItems(updatedCart);
+        message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+      }
     } catch (error) {
       console.error('Error removing from cart:', error);
       message.error('Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.');
@@ -101,9 +105,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQuantity = async (id: number, quantity: number) => {
     try {
-      await api.put(`/api/cart/${id}`, { quantity });
-      await fetchCart();
-      message.success('Đã cập nhật số lượng sản phẩm');
+      if (isLoggedIn) {
+        await api.put(`/api/user/cart/${id}`, { quantity });
+        await fetchCart();
+        message.success('Đã cập nhật số lượng sản phẩm');
+      } else {
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = localCart.map((item: CartItem) => 
+          item.product_id === id ? { ...item, quantity } : item
+        );
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        setCartItems(updatedCart);
+        message.success('Đã cập nhật số lượng sản phẩm');
+      }
     } catch (error) {
       console.error('Error updating quantity:', error);
       message.error('Không thể cập nhật số lượng sản phẩm. Vui lòng thử lại.');
@@ -112,9 +126,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = async () => {
     try {
-      await api.delete('/api/cart');
-      setCartItems([]);
-      message.success('Đã xóa toàn bộ giỏ hàng');
+      if (isLoggedIn) {
+        await api.delete('/api/user/cart');
+        setCartItems([]);
+        message.success('Đã xóa toàn bộ giỏ hàng');
+      } else {
+        message.warning('Vui lòng đăng nhập để xóa giỏ hàng');
+      }
     } catch (error) {
       console.error('Error clearing cart:', error);
       message.error('Không thể xóa giỏ hàng. Vui lòng thử lại.');
@@ -124,7 +142,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCartAfterPayment = async () => {
     try {
       if (isLoggedIn) {
-        await api.delete('/api/cart');
+        await api.delete('/api/user/cart');
       } else {
         localStorage.removeItem('cart');
       }
@@ -139,7 +157,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async () => {
     setIsLoggedIn(true);
     try {
-      await api.post('/api/cart/merge');
+      const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      if (localCart.length > 0) {
+        await api.post('/api/user/cart/merge', { cart: localCart });
+        localStorage.removeItem('cart');
+      }
       await fetchCart();
     } catch (error) {
       console.error('Error merging cart:', error);
@@ -160,7 +182,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart,
       clearCartAfterPayment, // Add this new function to the context
       login, 
-      logout 
+      logout,
+      isLoggedIn // Thêm isLoggedIn vào context
     }}>
       {children}
     </CartContext.Provider>

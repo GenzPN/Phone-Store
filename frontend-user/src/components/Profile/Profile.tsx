@@ -1,24 +1,32 @@
 import React from 'react';
-import { Card, Avatar, Typography, Row, Col } from 'antd';
+import { Card, Avatar, Typography, Row, Col, Descriptions } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import './Profile.css';
+import { User } from '../../types/user';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface ProfileProps {
-  user: {
-    id: number;
-    username: string;
-    email: string;
-    fullName: string;
-    gender: string;
-    image: string;
-  } | null;
+  user: User | null;
 }
+
+// Hàm chuyển đổi giới tính (để đảm bảo)
+const translateGender = (gender: string): string => {
+  switch (gender.toLowerCase()) {
+    case 'male':
+      return 'Nam';
+    case 'female':
+      return 'Nữ';
+    case 'other':
+      return 'Khác';
+    default:
+      return gender;
+  }
+};
 
 const Profile: React.FC<ProfileProps> = ({ user }) => {
   if (!user) {
-    return <Text>Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.</Text>;
+    return <Typography.Text>Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.</Typography.Text>;
   }
 
   return (
@@ -29,9 +37,14 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
         </Col>
         <Col xs={24} sm={16} md={18} lg={20}>
           <Title level={2}>{user.fullName}</Title>
-          <Text strong>Username: </Text><Text>{user.username}</Text><br />
-          <Text strong>Email: </Text><Text>{user.email}</Text><br />
-          <Text strong>Gender: </Text><Text>{user.gender}</Text><br />
+          <Descriptions column={1}>
+            <Descriptions.Item label="Tên người dùng">{user.username}</Descriptions.Item>
+            <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+            <Descriptions.Item label="Giới tính">{translateGender(user.gender)}</Descriptions.Item>
+            {user.created_at && (
+              <Descriptions.Item label="Đăng ký từ">{new Date(user.created_at).toLocaleDateString()}</Descriptions.Item>
+            )}
+          </Descriptions>
         </Col>
       </Row>
     </Card>

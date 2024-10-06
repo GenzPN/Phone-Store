@@ -51,6 +51,7 @@ function getPaymentInfo(order, orderId) {
         linkQR: `https://api.vietqr.io/${config.bank.shortName}/${config.bank.accountNumber}/${order.total_amount}/GEN${orderId}/qr_only.png?accountName=${encodeURIComponent(config.bank.accountHolder)}`,
         accountHolder: config.bank.accountHolder,
         accountNumber: config.bank.accountNumber,
+        bankName: config.bank.name,
         transferContent: `GEN${orderId}`,
         orderTimeout: config.bank.orderTimeout
       };

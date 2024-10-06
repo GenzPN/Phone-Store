@@ -4,6 +4,7 @@ import api from '../utils/api';
 interface WebsiteConfig {
   name: string;
   logo: string;
+  banner: string;
 }
 
 export const useConfig = () => {

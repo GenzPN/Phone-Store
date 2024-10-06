@@ -13,6 +13,7 @@ interface PaymentInfo {
   linkQR: string;
   amount: string;
   accountHolder: string;
+  bankName: string;
   accountNumber: string;
   transferContent: string;
   order_id: string;
@@ -27,6 +28,7 @@ function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
   const { orderId, transactionId, total, paymentMethod } = location.state as { 
+    
     orderId: string; 
     transactionId: string;
     total: number; 
@@ -168,6 +170,12 @@ function Payment() {
               
               {paymentMethod === 'bank_transfer' && (
                 <Card title="Thông tin chuyển khoản" extra={<BankOutlined />}>
+                  <Paragraph>
+                    <Space>
+                      <Text strong>Tên ngân hàng:</Text>
+                      <Text copyable>{paymentInfo.bankName}</Text>
+                    </Space>
+                  </Paragraph>
                   <Paragraph>
                     <Space>
                       <Text strong>Số tài khoản:</Text>

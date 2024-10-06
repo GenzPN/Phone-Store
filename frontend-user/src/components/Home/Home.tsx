@@ -5,6 +5,7 @@ import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, Lef
 import { formatProductNameForUrl } from '../../utils/stringUtils';
 import { useCart, CartItem } from '../../contexts/CartContext';
 import axios from 'axios';
+import { useConfig } from '../../hook/useConfig';
 
 const { Title, Text } = Typography;
 
@@ -25,6 +26,7 @@ const Home: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(1);
     const carouselRefs = useRef<Record<string, any>>({});
     const navigate = useNavigate();
+    const config = useConfig();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -74,8 +76,8 @@ const Home: React.FC = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(numPrice);
     }, []);
 
-    const handleImageClick = useCallback((productName: string) => {
-        navigate(`/details/${formatProductNameForUrl(productName)}`);
+    const handleImageClick = useCallback((phone: Phone) => {
+        navigate(`/details/${phone.brand.toLowerCase()}/${formatProductNameForUrl(phone.title)}`);
     }, [navigate]);
 
     const handleAddToCart = useCallback((phone: Phone) => {
@@ -88,7 +90,6 @@ const Home: React.FC = () => {
             thumbnail: phone.thumbnail
         };
         addToCart(newCartItem);
-        message.success(`Đã thêm ${phone.title} (${formatPrice(phone.price)}) vào giỏ hàng`);
     }, [addToCart, formatPrice]);
 
     const renderPhoneCard = useCallback((phone: Phone) => (
@@ -105,7 +106,7 @@ const Home: React.FC = () => {
                         overflow: 'hidden',
                         cursor: 'pointer'
                     }}
-                    onClick={() => handleImageClick(phone.title)}
+                    onClick={() => handleImageClick(phone)}
                     >
                         <Image 
                             alt={phone.title} 
@@ -144,7 +145,7 @@ const Home: React.FC = () => {
                     {phone.price !== null && phone.price !== undefined ? formatPrice(phone.price) : 'Giá không xác định'}
                 </Text>
                 <Row justify="center" style={{ marginTop: 'auto' }}>
-                    <Link to={`/details/${formatProductNameForUrl(phone.title)}`}>
+                    <Link to={`/details/${phone.brand.toLowerCase()}/${formatProductNameForUrl(phone.title)}`}>
                         <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
                     </Link>
                     <Button 
@@ -211,7 +212,7 @@ const Home: React.FC = () => {
                 alignItems: 'center'
             }}>
                 <Image 
-                    src="https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg" 
+                    src={config?.banner || "https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg"}
                     alt="Banner" 
                     style={{
                         width: '100%',

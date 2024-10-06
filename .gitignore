@@ -4,4 +4,3 @@ Backend/package-lock.json
 /Backend/node_modules
 frontend-admin/package-lock.json
 frontend-user/package-lock.json
-/Backend/Order

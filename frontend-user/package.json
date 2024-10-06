@@ -22,6 +22,7 @@
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.2",
     "react-scripts": "5.0.1",
+    "resize-observer-polyfill": "^1.5.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
@@ -51,6 +52,7 @@
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
+    "@types/lodash": "^4.17.10",
     "@types/react-router-dom": "^5.3.3"
   },
   "proxy": "http://localhost:5000"
