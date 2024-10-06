@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input } from 'antd';
+import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input, Divider } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getToken } from '../../utils/tokenStorage';
 import { useCart, CartItem } from '../../contexts/CartContext';
 import api from '../../utils/api';
 import axios, { AxiosError } from 'axios';
+import styles from './Checkout.module.css';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface Address {
@@ -186,14 +187,14 @@ const Checkout: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className={styles.checkoutContainer}>
       <Title level={2}>Thanh toán</Title>
       <Row gutter={[24, 24]}>
-        <Col span={16}>
-          <Card title="Giỏ hàng">
+        <Col xs={24} lg={16}>
+          <Card title={<Title level={4}>Giỏ hàng</Title>} className={styles.card}>
             <Table dataSource={cartItems} columns={columns} pagination={false} />
           </Card>
-          <Card title="Địa chỉ giao hàng" style={{ marginTop: '20px' }}>
+          <Card title={<Title level={4}>Địa chỉ giao hàng</Title>} className={styles.card}>
             <Form form={form} layout="vertical">
               <Form.Item name="id" label="Địa chỉ giao hàng">
                 <Select 
@@ -226,19 +227,20 @@ const Checkout: React.FC = () => {
             </Form>
           </Card>
         </Col>
-        <Col span={8}>
-          <Card title="Tổng cộng">
-            <Title level={3}>{total.toLocaleString('vi-VN')} đ</Title>
-          </Card>
-          <Card title="Phương thức thanh toán" style={{ marginTop: '20px' }}>
-            <Radio.Group onChange={handlePaymentMethodChange} value={paymentMethod}>
-              <Radio value="momo" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+        <Col xs={24} lg={8}>
+          <Card className={styles.card}>
+            <Title level={4}>Tổng cộng</Title>
+            <Text strong className={styles.totalAmount}>{total.toLocaleString('vi-VN')} đ</Text>
+            <Divider />
+            <Title level={4}>Phương thức thanh toán</Title>
+            <Radio.Group onChange={handlePaymentMethodChange} value={paymentMethod} className={styles.paymentGroup}>
+              <Radio value="momo" className={styles.paymentOption}>
                 <MobileOutlined /> Thanh toán MoMo
               </Radio>
-              <Radio value="bank_transfer" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+              <Radio value="bank_transfer" className={styles.paymentOption}>
                 <BankOutlined /> Thanh toán ngân hàng
               </Radio>
-              <Radio value="cod" style={{display: 'block', height: '30px', lineHeight: '30px'}}>
+              <Radio value="cod" className={styles.paymentOption}>
                 <DollarOutlined /> Thanh toán khi nhận hàng (COD)
               </Radio>
             </Radio.Group>
@@ -246,14 +248,17 @@ const Checkout: React.FC = () => {
               <Button 
                 type="primary" 
                 onClick={handlePayment} 
-                style={{ width: '100%' }}
+                size="large"
+                block
+                className={styles.checkoutButton}
               >
                 {paymentMethod === 'cod' ? 'Đặt hàng' : 'Tiến hành thanh toán'}
               </Button>
               <Button 
                 icon={<ShoppingCartOutlined />} 
                 onClick={() => navigate('/cart')}
-                style={{ width: '100%' }}
+                size="large"
+                block
               >
                 Quay lại giỏ hàng
               </Button>

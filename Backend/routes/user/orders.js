@@ -45,15 +45,22 @@ async function checkPaymentStatus(orderId) {
   }
 
   const apiUrl = `${config.bank.domain}${config.bank.token}`;
-  const response = await axios.get(apiUrl);
-  const transactions = response.data.transactions;
+  try {
+    const response = await axios.get(apiUrl);
+    const transactions = response.data.transactions;
 
-  for (const transaction of transactions) {
-    if (transaction.amount === price && transaction.remark.includes(`GEN${orderId}`)) {
-      await fs.writeFile(path.join(orderDir, 'status.log'), '1');
-      await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [orderId]);
-      return { isPaid: true, transactionId: tradeno.trim() };
+    for (const transaction of transactions) {
+      const transactionAmount = parseFloat(transaction.amount);
+      const orderAmount = parseFloat(price);
+
+      if (transactionAmount >= orderAmount && transaction.remark.includes(`GEN${orderId}`)) {
+        await fs.writeFile(path.join(orderDir, 'status.log'), '1');
+        await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [orderId]);
+        return { isPaid: true, transactionId: transaction.trxId };
+      }
     }
+  } catch (error) {
+    console.error('Error checking payment status:', error);
   }
 
   return { isPaid: false, transactionId: tradeno.trim() };

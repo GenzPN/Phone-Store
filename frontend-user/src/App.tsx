@@ -14,6 +14,7 @@ import Details from './components/Details/Details';
 import Cart from './components/Cart/Cart';
 import Products from './components/Products/Products';
 import Checkout from './components/Checkout/Checkout';
+import Order from './components/Order/Order';
 
 import { getToken, setToken, removeToken, setCookie, getCookie, removeCookie } from './utils/tokenStorage';
 import axios from 'axios';
@@ -118,6 +119,7 @@ const App: React.FC = () => {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/checkout" element={<Checkout />} />
+                <Route path="/order/:orderId" element={<Order />} />
                 <Route 
                   path="/profile" 
                   element={
