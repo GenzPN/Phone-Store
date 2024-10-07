@@ -1,21 +1,21 @@
 {
   "website": {
     "name": "E-commerce Trùm",
-    "logo": "http://localhost:3000/logo192.png",
+    "logo": "http://localhost:3000/logo1801.png",
     "url": "http://localhost:3000"
   },
   "image": {
     "banner": "https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg"
   },
   "bank": {
-    "name": "VietinBank",
-    "shortName": "ICB",
-    "logo": "https://api.vietqr.io/img/ICB.png",
-    "token": "c247cc027c0a32983f37ff0724ddb7fa",
-    "accountHolder": "NGUYEN VO ANH SON",
-    "accountNumber": "107875185067",
+    "name": "MBBank",
+    "shortName": "MB",
+    "logo": "https://api.vietqr.io/img/MB.png",
+    "token": "01b88bb4aa1e3d70ca11ee79a5d47639",
+    "accountHolder": "NGUYEN VO QUOC TRUNG",
+    "accountNumber": "9704229207170049278",
     "transferContent": "ORDER",
-    "domain": "https://api.dvsteam.vn/api/historyviettin/",
+    "domain": "https://api.dvsteam.vn/api/historyviettel/",
     "orderTimeout": 30
   },
   "momo": {

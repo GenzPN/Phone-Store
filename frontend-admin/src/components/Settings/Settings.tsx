@@ -66,8 +66,8 @@ const Settings: React.FC = () => {
           'Content-Type': 'application/json'
         }
       });
-      if (response.data.message === 'Settings updated successfully') {
-        message.success('Settings updated successfully');
+      if (response.data.message === 'Đã lưu cài đặt') {
+        message.success('Đã lưu cài đặt');
       } else {
         message.error('Failed to update settings');
       }

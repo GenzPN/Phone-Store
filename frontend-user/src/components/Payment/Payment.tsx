@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Typography, Card, Image, Row, Col, Space, Button, Divider, Statistic, message, Progress } from 'antd';
 import { CopyOutlined, QrcodeOutlined, BankOutlined, MobileOutlined, ClockCircleOutlined, ArrowLeftOutlined, CheckOutlined } from '@ant-design/icons';
@@ -22,6 +22,8 @@ interface PaymentInfo {
   orderTimeout: number;
   transactionId: string;
   payment_status: string;
+  status: string; // Thêm trường này
+  newStatus?: string; // Thêm trường này nếu cần
 }
 
 function Payment() {
@@ -35,10 +37,31 @@ function Payment() {
   const [totalTimeout, setTotalTimeout] = useState<number>(30 * 60); // 30 phút
   const [total, setTotal] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   const formatCurrency = (amount: number): string => {
     return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace('₫', 'đ');
   };
+
+  const handleCheckPayment = useCallback(async () => {
+    if (checkingPayment) return;
+    setCheckingPayment(true);
+    try {
+      const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
+      if (response.data.payment_status === 'completed' || response.data.status === 'paid' || response.data.newStatus === 'completed') {
+        message.success('Thanh toán đã được xác nhận!');
+        navigate(`/order-confirmation/${orderId}`);
+      } else {
+        message.info('Thanh toán chưa được xác nhận. Hệ thống sẽ tiếp tục kiểm tra.');
+      }
+      // Cập nhật thông tin thanh toán
+      setPaymentInfo(response.data);
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi kiểm tra thanh toán.');
+    } finally {
+      setCheckingPayment(false);
+    }
+  }, [orderId, navigate, checkingPayment]);
 
   useEffect(() => {
     // Sử dụng paymentMethod từ URL nếu có
@@ -92,6 +115,29 @@ function Payment() {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    let paymentCheckInterval: NodeJS.Timeout;
+    let checkCount = 0;
+
+    const checkPayment = async () => {
+      checkCount++;
+      console.log(`Kiểm tra thanh toán lần thứ ${checkCount}`);
+      try {
+        const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
+        setPaymentInfo(response.data);
+        console.log('Kết quả kiểm tra:', response.data);
+        if (response.data.payment_status === 'completed' || response.data.status === 'paid' || response.data.newStatus === 'completed') {
+          console.log('Thanh toán đã được xác nhận!');
+          message.success('Thanh toán đã được xác nhận!');
+          navigate(`/order-confirmation/${orderId}`);
+          clearInterval(paymentCheckInterval);
+        } else {
+          console.log('Thanh toán chưa được xác nhận. Tiếp tục kiểm tra...');
+        }
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra thanh toán:', error);
+      }
+    };
+
     if (countdown !== null && countdown > 0) {
       timer = setInterval(() => {
         setCountdown(prev => {
@@ -102,15 +148,28 @@ function Payment() {
           return prev - 1;
         });
       }, 1000);
+
+      // Kiểm tra thanh toán mỗi 15 giây
+      paymentCheckInterval = setInterval(checkPayment, 15000);
+
+      // Gọi checkPayment ngay lập tức để không phải đợi 15 giây cho lần kiểm tra đầu tiên
+      checkPayment();
     } else if (countdown === 0) {
-      // Hết thời gian, chuyển hướng về trang chủ hoặc trang đơn hàng
       navigate('/');
     }
 
     return () => {
       if (timer) clearInterval(timer);
+      if (paymentCheckInterval) clearInterval(paymentCheckInterval);
     };
-  }, [countdown, navigate]);
+  }, [countdown, navigate, orderId]);
+
+  useEffect(() => {
+    if (paymentInfo && (paymentInfo.payment_status === 'completed' || paymentInfo.status === 'paid' || paymentInfo.newStatus === 'completed')) {
+      message.success('Thanh toán đã được xác nhận!');
+      navigate(`/order-confirmation/${orderId}`);
+    }
+  }, [paymentInfo, orderId, navigate]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -138,23 +197,6 @@ function Payment() {
     navigate(-1); // Quay lại trang trước đó
   };
 
-  const handleCheckPayment = async () => {
-    try {
-      const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
-      if (response.data.payment_status === 'completed') {
-        message.success('Thanh toán đã được xác nhận!');
-        navigate(`/order-confirmation/${orderId}`);
-      } else if (response.data.status === 'paid') {
-        message.success('Đơn hàng đã được thanh toán và đang được xử lý!');
-        navigate(`/order-confirmation/${orderId}`);
-      } else {
-        message.info('Thanh toán chưa được xác nhận. Vui lòng thử lại sau.');
-      }
-    } catch (error) {
-      message.error('Có lỗi xảy ra khi kiểm tra thanh toán.');
-    }
-  };
-
   if (loading) {
     return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Đang tải thông tin thanh toán...</div>;
   }
@@ -171,7 +213,7 @@ function Payment() {
             <Col xs={24} md={14}>
               <Space style={{ marginBottom: 20 }}>
                 <Button icon={<ArrowLeftOutlined />} onClick={handleGoBack}>Quay lại</Button>
-                <Button icon={<CheckOutlined />} onClick={handleCheckPayment} type="primary">Kiểm tra thanh toán</Button>
+                <Button icon={<CheckOutlined />} onClick={handleCheckPayment} type="primary" loading={checkingPayment}>Kiểm tra thanh toán</Button>
               </Space>
               <Title level={3}><ClockCircleOutlined /> Thông tin thanh toán</Title>
               <Card style={{ marginBottom: 20 }}>

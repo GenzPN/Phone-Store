@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Row, Col, Typography, Image, Button, Card, Carousel, message } from "antd";
+import { Row, Col, Typography, Image, Button, Card, Carousel, message, Spin } from "antd";
 import { Link, useNavigate } from 'react-router-dom';
 import { FireOutlined, ShoppingCartOutlined, ZoomInOutlined, TrophyOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { formatProductNameForUrl } from '../../utils/stringUtils';
@@ -27,10 +27,12 @@ const Home: React.FC = () => {
     const carouselRefs = useRef<Record<string, any>>({});
     const navigate = useNavigate();
     const config = useConfig();
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
+                setLoading(true);
                 const response = await axios.get(`http://localhost:5000/api/products`, {
                     params: {
                         page: currentPage,
@@ -42,6 +44,7 @@ const Home: React.FC = () => {
                 
                 if (!data.products || data.products.length === 0) {
                     console.warn('No products received from API');
+                    message.warning('Không có sản phẩm nào được tìm thấy.');
                     return;
                 }
 
@@ -64,7 +67,23 @@ const Home: React.FC = () => {
                 setTotalPages(data.totalPages);
             } catch (error) {
                 console.error('Error fetching products:', error);
-                message.error('Có lỗi xảy ra khi tải sản phẩm. Vui lòng thử lại sau.');
+                if (axios.isAxiosError(error)) {
+                    if (error.response) {
+                        // The request was made and the server responded with a status code
+                        // that falls out of the range of 2xx
+                        message.error(`Lỗi server: ${error.response.data.message || 'Không thể tải sản phẩm'}`);
+                    } else if (error.request) {
+                        // The request was made but no response was received
+                        message.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng của bạn.');
+                    } else {
+                        // Something happened in setting up the request that triggered an Error
+                        message.error('Có lỗi xảy ra khi tải sản phẩm. Vui lòng thử lại sau.');
+                    }
+                } else {
+                    message.error('Có lỗi không xác định xảy ra. Vui lòng thử lại sau.');
+                }
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -77,7 +96,7 @@ const Home: React.FC = () => {
     }, []);
 
     const handleImageClick = useCallback((phone: Phone) => {
-        navigate(`/details/${phone.brand.toLowerCase()}/${formatProductNameForUrl(phone.title)}`);
+        navigate(`/details/${phone.brand?.toLowerCase() || ''}/${formatProductNameForUrl(phone.title) || ''}`);
     }, [navigate]);
 
     const handleAddToCart = useCallback((phone: Phone) => {
@@ -145,7 +164,7 @@ const Home: React.FC = () => {
                     {phone.price !== null && phone.price !== undefined ? formatPrice(phone.price) : 'Giá không xác định'}
                 </Text>
                 <Row justify="center" style={{ marginTop: 'auto' }}>
-                    <Link to={`/details/${phone.brand.toLowerCase()}/${formatProductNameForUrl(phone.title)}`}>
+                    <Link to={`/details/${phone.brand?.toLowerCase() || ''}/${formatProductNameForUrl(phone.title) || ''}`}>
                         <Button icon={<ZoomInOutlined />} shape="circle" style={{ marginRight: '10px' }} />
                     </Link>
                     <Button 
@@ -200,103 +219,112 @@ const Home: React.FC = () => {
 
     return (
         <>
-            {/* Banner cố định */}
-            <div style={{ 
-                width: '100%', 
-                height: '300px', 
-                overflow: 'hidden', 
-                marginBottom: '20px',
-                borderRadius: '10px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <Image 
-                    src={config?.banner || "https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg"}
-                    alt="Banner" 
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        objectPosition: 'center'
-                    }}
-                />
-            </div>
+            {loading ? (
+                <div style={{ textAlign: 'center', margin: '20px 0' }}>
+                    <Spin size="large" />
+                    <p>Đang tải sản phẩm...</p>
+                </div>
+            ) : (
+                <>
+                    {/* Banner cố định */}
+                    <div style={{ 
+                        width: '100%', 
+                        height: '300px', 
+                        overflow: 'hidden', 
+                        marginBottom: '20px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
+                        <Image 
+                            src={config?.banner || "https://i.ytimg.com/vi/eDqfg_LexCQ/maxresdefault.jpg"}
+                            alt="Banner" 
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                objectPosition: 'center'
+                            }}
+                        />
+                    </div>
 
-            <Row gutter={[24, 24]} justify="center" style={{ marginTop: 20 }}>
-                <Col span={24}>
-                    <Card
-                        title={
-                            <Row align="middle">
-                                <TrophyOutlined style={{ color: "#ffd700" }} />
-                                <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
-                                    Bán chạy nhất
-                                </Title>
-                            </Row>
-                        }
-                        bordered={false}
-                        style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
-                        extra={
-                            <div>
-                                <Button 
-                                    className="custom-carousel-button prev" 
-                                    icon={<LeftOutlined />} 
-                                    onClick={() => carouselRefs.current['bestSellers']?.prev()}
-                                />
-                                <Button 
-                                    className="custom-carousel-button next" 
-                                    icon={<RightOutlined />} 
-                                    onClick={() => carouselRefs.current['bestSellers']?.next()}
-                                />
-                            </div>
-                        }
-                    >
-                        <Carousel {...bestSellerSettings} ref={ref => {if (ref) carouselRefs.current['bestSellers'] = ref}}>
-                            {bestSellers.map(renderPhoneCard)}
-                        </Carousel>
-                    </Card>
-                </Col>
+                    <Row gutter={[24, 24]} justify="center" style={{ marginTop: 20 }}>
+                        <Col span={24}>
+                            <Card
+                                title={
+                                    <Row align="middle">
+                                        <TrophyOutlined style={{ color: "#ffd700" }} />
+                                        <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
+                                            Bán chạy nhất
+                                        </Title>
+                                    </Row>
+                                }
+                                bordered={false}
+                                style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
+                                extra={
+                                    <div>
+                                        <Button 
+                                            className="custom-carousel-button prev" 
+                                            icon={<LeftOutlined />} 
+                                            onClick={() => carouselRefs.current['bestSellers']?.prev()}
+                                        />
+                                        <Button 
+                                            className="custom-carousel-button next" 
+                                            icon={<RightOutlined />} 
+                                            onClick={() => carouselRefs.current['bestSellers']?.next()}
+                                        />
+                                    </div>
+                                }
+                            >
+                                <Carousel {...bestSellerSettings} ref={ref => {if (ref) carouselRefs.current['bestSellers'] = ref}}>
+                                    {bestSellers.map(renderPhoneCard)}
+                                </Carousel>
+                            </Card>
+                        </Col>
 
-                {Object.entries(phonesByBrand).map(([brand, phones]) => (
-                    <Col span={24} key={brand}>
-                        <Card
-                            title={
-                                <Row align="middle">
-                                    <FireOutlined />
-                                    <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
-                                        {brand}
-                                    </Title>
-                                </Row>
-                            }
-                            bordered={false}
-                            style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
-                            extra={
-                                <div>
-                                    <Button 
-                                        className="custom-carousel-button prev" 
-                                        icon={<LeftOutlined />} 
-                                        onClick={() => carouselRefs.current[brand]?.prev()}
-                                    />
-                                    <Button 
-                                        className="custom-carousel-button next" 
-                                        icon={<RightOutlined />} 
-                                        onClick={() => carouselRefs.current[brand]?.next()}
-                                    />
-                                </div>
-                            }
-                        >
-                            <Carousel {...settings} ref={ref => {if (ref) carouselRefs.current[brand] = ref}}>
-                                {phones.map(renderPhoneCard)}
-                            </Carousel>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
-            
-            {currentPage < totalPages && (
-                <Button onClick={() => setCurrentPage(prev => prev + 1)}>
-                    Load More
-                </Button>
+                        {Object.entries(phonesByBrand).map(([brand, phones]) => (
+                            <Col span={24} key={brand}>
+                                <Card
+                                    title={
+                                        <Row align="middle">
+                                            <FireOutlined />
+                                            <Title level={4} style={{ marginLeft: 10, color: "#219ebc" }}>
+                                                {brand}
+                                            </Title>
+                                        </Row>
+                                    }
+                                    bordered={false}
+                                    style={{ width: '100%', maxWidth: 1200, borderRadius: 20, margin: '0 auto' }}
+                                    extra={
+                                        <div>
+                                            <Button 
+                                                className="custom-carousel-button prev" 
+                                                icon={<LeftOutlined />} 
+                                                onClick={() => carouselRefs.current[brand]?.prev()}
+                                            />
+                                            <Button 
+                                                className="custom-carousel-button next" 
+                                                icon={<RightOutlined />} 
+                                                onClick={() => carouselRefs.current[brand]?.next()}
+                                            />
+                                        </div>
+                                    }
+                                >
+                                    <Carousel {...settings} ref={ref => {if (ref) carouselRefs.current[brand] = ref}}>
+                                        {phones.map(renderPhoneCard)}
+                                    </Carousel>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                    
+                    {currentPage < totalPages && (
+                        <Button onClick={() => setCurrentPage(prev => prev + 1)}>
+                            Load More
+                        </Button>
+                    )}
+                </>
             )}
         </>
     );

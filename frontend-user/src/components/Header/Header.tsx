@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
     // Thêm mục menu admin nếu user là admin
     ...(user?.isAdmin ? [{
       key: 'admin',
-      label: <Link to="/admin">Quản trị</Link>,
+      label: <Link to="http://localhost:3001/admin/dashboard">Quản trị</Link>,
       icon: <SettingOutlined />,
     }] : []),
     {
@@ -93,15 +93,18 @@ const Header: React.FC<HeaderProps> = ({ brands, user, onLogout }) => {
   return (
     <header className={styles.header}>
       <Row justify="space-between" align="middle" className={styles.topRow}>
-        <Col span={4} className={styles.logoCol}>
-          <Image
-            width={80}
-            src={config?.logo || "https://github.com/fluidicon.png"}
-            alt={config?.name || "Store Logo"}
-            preview={false}
-          />
+        <Col span={6} className={styles.logoCol}>
+          <Link to="/">
+            <Image
+              width={512} // Tăng kích thước ảnh
+              src={config?.logo || "https://github.com/fluidicon.png"}
+              alt={config?.name || "Store Logo"}
+              preview={false}
+              className={styles.logo} // Thêm class này
+            />
+          </Link>
         </Col>
-        <Col span={15} className={styles.searchCol}>
+        <Col span={13} className={styles.searchCol}>
           <AutoComplete
             options={options}
             style={{ width: '100%' }}

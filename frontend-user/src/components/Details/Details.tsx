@@ -101,7 +101,6 @@ const Details: React.FC = () => {
         price: product.price,
         thumbnail: product.images[0]
       });
-      message.success('Đã thêm sản phẩm vào giỏ hàng');
     }
   };
 

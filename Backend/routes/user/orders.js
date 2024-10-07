@@ -47,16 +47,16 @@ async function checkPaymentStatus(orderId) {
   const apiUrl = `${config.bank.domain}${config.bank.token}`;
   try {
     const response = await axios.get(apiUrl);
-    const transactions = response.data.transactions;
+    const transactions = response.data.data.content;
 
     for (const transaction of transactions) {
       const transactionAmount = parseFloat(transaction.amount);
       const orderAmount = parseFloat(price);
 
-      if (transactionAmount >= orderAmount && transaction.remark.includes(`${config.bank.transferContent}${orderId}`)) {
+      if (transactionAmount >= orderAmount && transaction.msgContent.includes(`${config.bank.transferContent}${orderId}`)) {
         await fs.writeFile(path.join(orderDir, 'status.log'), '1');
         await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [orderId]);
-        return { isPaid: true, transactionId: transaction.trxId };
+        return { isPaid: true, transactionId: transaction.bankTransId, newStatus: 'completed' };
       }
     }
   } catch (error) {
@@ -75,31 +75,26 @@ function calculateTimeLeft(orderTime) {
 }
 
 // Create a new order
-router.post('/', authenticateJWT, async (req, res) => {
+router.post('/', authenticateJWT, async(req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-
     const { shipping_address_id, items, total_amount, note, paymentMethod } = req.body;
-
     console.log('Received order data:', { shipping_address_id, items, total_amount, note, paymentMethod });
 
+    // Các kiểm tra đầu vào
     if (!shipping_address_id) {
       throw new Error('Missing shipping address');
     }
-
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new Error('Đơn hàng không hợp lệ');
     }
-
     if (!total_amount || isNaN(total_amount)) {
       throw new Error('Invalid total amount');
     }
-
     if (!paymentMethod) {
       throw new Error('Missing payment method');
     }
-
     const validPaymentMethods = ['bank_transfer', 'momo', 'cod'];
     if (!validPaymentMethods.includes(paymentMethod)) {
       throw new Error(`Invalid payment method. Valid methods are: ${validPaymentMethods.join(', ')}`);
@@ -110,13 +105,29 @@ router.post('/', authenticateJWT, async (req, res) => {
       'INSERT INTO Orders (user_id, shipping_address_id, total_amount, note, payment_method, transaction_id) VALUES (?, ?, ?, ?, ?, ?)',
       [req.user.id, shipping_address_id, total_amount, note, paymentMethod, transactionId]
     );
-
     const orderId = result.insertId;
 
     // Create order files
     await createOrderFiles(orderId, total_amount, transactionId);
 
     for (const item of items) {
+      // Kiểm tra số lượng trong kho
+      const [stockResult] = await connection.query(
+        'SELECT stock FROM Products WHERE id = ? FOR UPDATE',
+        [item.product_id]
+      );
+
+      if (stockResult.length === 0) {
+        throw new Error(`Sản phẩm với ID ${item.product_id} không tồn tại`);
+      }
+
+      const currentStock = stockResult[0].stock;
+
+      if (currentStock < item.quantity) {
+        throw new Error(`Sản phẩm với ID ${item.product_id} không đủ số lượng trong kho`);
+      }
+
+      // Thêm mặt hàng vào đơn hàng
       await connection.query(
         'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
         [orderId, item.product_id, item.quantity, item.price]
@@ -133,13 +144,12 @@ router.post('/', authenticateJWT, async (req, res) => {
     await connection.query('DELETE FROM Cart WHERE user_id = ?', [req.user.id]);
 
     await connection.commit();
-
     res.status(201).json({ 
       success: true, 
       orderId: orderId, 
       message: 'Order created successfully',
       paymentMethod,
-      clearCart: true // Thêm signal này để frontend biết cần xóa giỏ hàng
+      clearCart: true
     });
   } catch (error) {
     await connection.rollback();
@@ -164,7 +174,7 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
     const order = orders[0];
     
     // Kiểm tra trạng thái thanh toán và lấy mã giao dịch
-    const { isPaid, transactionId } = await checkPaymentStatus(req.params.orderId);
+    const { isPaid, transactionId, newStatus } = await checkPaymentStatus(req.params.orderId);
     if (isPaid && order.status === 'pending') {
       await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [req.params.orderId]);
       order.status = 'paid';
@@ -225,6 +235,9 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
     const orderInfo = {
       ...paymentInfo,
       total: order.total_amount,
+      status: order.status,
+      payment_status: order.payment_status,
+      newStatus: newStatus
     };
 
     res.json(orderInfo);

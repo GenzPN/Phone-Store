@@ -7,10 +7,16 @@
   padding: 10px 20px; /* Thêm padding cho hàng trên cùng */
 }
 
-.logoCol, .searchCol, .userCol, .cartCol {
+.logoCol {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Căn chỉnh logo sang trái */
+}
+
+.logo {
+  max-height: 100px; /* Giới hạn chiều cao tối đa của logo */
+  width: auto; /* Cho phép chiều rộng tự động điều chỉnh */
+  object-fit: contain; /* Đảm bảo logo không bị méo */
 }
 
 .searchCol {

@@ -4,3 +4,6 @@ Backend/package-lock.json
 /Backend/node_modules
 frontend-admin/package-lock.json
 frontend-user/package-lock.json
+Email/node_modules
+Email/package-lock.json
+Email/.react-email

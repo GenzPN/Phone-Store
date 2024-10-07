@@ -1,0 +1,5 @@
+"id","user_id","shipping_address_id","total_amount","status","note","transaction_id","payment_method","payment_status","created_at","updated_at","discount_type","discount_value"
+"9","1","1","69980000","paid",NULL,"6bcf0c82-929d-44ba-b964-e59b95c8f0d4","bank_transfer","completed","2024-10-07 13:22:45","2024-10-07 13:23:01","percentage","0.00"
+
+
+

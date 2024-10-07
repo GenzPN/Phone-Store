@@ -24,8 +24,8 @@ router.put('/', async (req, res) => {
     console.log('Received update request with body:', req.body);
     const success = await updateConfig(req.body);
     if (success) {
-      console.log('Settings updated successfully');
-      res.json({ message: 'Settings updated successfully' });
+      console.log('Đã lưu cài đặt');
+      res.json({ message: 'Đã lưu cài đặt' });
     } else {
       console.log('Error updating settings');
       res.status(500).json({ message: 'Error updating settings' });
