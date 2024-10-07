@@ -99,7 +99,8 @@ const App: React.FC = () => {
   return (
     <CartProvider>
       <Routes>
-        <Route path="/payment" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/payment' }} />} />
+        {/* Thay đổi route cho trang Payment */}
+        <Route path="/payment/:paymentMethod/:orderId" element={user ? <Payment /> : <Navigate to="/api/auth/login" state={{ from: '/payment' }} />} />
         <Route path="/api/auth/*" element={!user ? <Auth onLogin={handleLogin} /> : <Navigate to="/" />} />
         <Route path="*" element={
           <Layout style={{ minHeight: '100vh' }}>

@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/all', async (req, res) => {
   try {
     const [users] = await db.query('SELECT id, username, email, fullName, gender, image, isAdmin, created_at FROM Users');
-    res.json(users);
+    res.json(users.map(user => ({...user, isAdmin: !!user.isAdmin})));
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -22,7 +22,8 @@ router.get('/:id', async (req, res) => {
     if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(users[0]);
+    const user = users[0];
+    res.json({...user, isAdmin: !!user.isAdmin});
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -37,7 +38,7 @@ router.post('/', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const [result] = await db.query(
       'INSERT INTO Users (username, email, password, fullName, gender, isAdmin) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, fullName, gender, isAdmin]
+      [username, email, hashedPassword, fullName, gender, isAdmin ? true : false]
     );
     res.status(201).json({ message: 'User created successfully', userId: result.insertId });
   } catch (error) {
@@ -48,7 +49,7 @@ router.post('/', async (req, res) => {
 
 // Update a user
 router.put('/:id', async (req, res) => {
-  const { username, email, fullName, gender, isAdmin } = req.body;
+  const { username, email, fullName, gender, isAdmin, image } = req.body;
   try {
     // Kiểm tra xem username hoặc email đã tồn tại chưa
     const [existingUsers] = await db.query(
@@ -60,8 +61,8 @@ router.put('/:id', async (req, res) => {
     }
 
     const [result] = await db.query(
-      'UPDATE Users SET username = ?, email = ?, fullName = ?, gender = ?, isAdmin = ? WHERE id = ?',
-      [username, email, fullName, gender, isAdmin, req.params.id]
+      'UPDATE Users SET username = ?, email = ?, fullName = ?, gender = ?, isAdmin = ?, image = ? WHERE id = ?',
+      [username, email, fullName, gender, isAdmin ? true : false, image, req.params.id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'User not found' });

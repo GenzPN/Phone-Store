@@ -3,6 +3,37 @@ import db from '../../config/database.js';
 
 const router = express.Router();
 
+// Thêm các hàm helper này vào đầu file
+
+const getPaymentMethodText = (method) => {
+  switch (method) {
+    case 'bank_transfer': return 'Chuyển khoản ngân hàng';
+    case 'momo': return 'Ví MoMo';
+    case 'cod': return 'Thanh toán khi nhận hàng';
+    default: return 'Không xác định';
+  }
+};
+
+const getPaymentStatusText = (status) => {
+  switch (status) {
+    case 'pending': return 'Chờ thanh toán';
+    case 'completed': return 'Đã thanh toán';
+    case 'failed': return 'Thanh toán thất bại';
+    default: return 'Không xác định';
+  }
+};
+
+const getOrderStatusText = (status) => {
+  switch (status) {
+    case 'pending': return 'Chờ xử lý';
+    case 'paid': return 'Đã thanh toán';
+    case 'shipped': return 'Đang giao hàng';
+    case 'delivered': return 'Đã giao hàng';
+    case 'cancelled': return 'Đã hủy';
+    default: return 'Không xác định';
+  }
+};
+
 // Get admin dashboard stats
 router.get('/stats', async (req, res) => {
   try {
@@ -49,7 +80,12 @@ router.get('/all', async (req, res) => {
         ...order, 
         items,
         customer_phone: order.phone || 'N/A',
-        customer_address: order.address ? `${order.address}, ${order.city}` : 'N/A'
+        customer_address: order.address ? `${order.address}, ${order.city}` : 'N/A',
+        payment_info: {
+          method: getPaymentMethodText(order.payment_method),
+          status: getPaymentStatusText(order.payment_status)
+        },
+        status_text: getOrderStatusText(order.status)
       };
     }));
 
@@ -100,7 +136,12 @@ router.get('/:id', async (req, res) => {
       ...order, 
       items,
       customer_phone: order.phone || 'N/A',
-      customer_address: order.address ? `${order.address}, ${order.city}` : 'N/A'
+      customer_address: order.address ? `${order.address}, ${order.city}` : 'N/A',
+      payment_info: {
+        method: getPaymentMethodText(order.payment_method),
+        status: getPaymentStatusText(order.payment_status)
+      },
+      status_text: getOrderStatusText(order.status)
     });
   } catch (error) {
     console.error('Get order details error:', error);
@@ -116,7 +157,10 @@ router.post('/', async (req, res) => {
     total_amount, 
     status, 
     note,
-    items
+    payment_method,
+    items,
+    discount_type,
+    discount_value
   } = req.body;
 
   const connection = await db.getConnection();
@@ -126,8 +170,8 @@ router.post('/', async (req, res) => {
 
     // Create new order
     const [orderResult] = await connection.query(
-      'INSERT INTO Orders (user_id, shipping_address_id, total_amount, status, note) VALUES (?, ?, ?, ?, ?)',
-      [user_id, shipping_address_id, total_amount, status, note]
+      'INSERT INTO Orders (user_id, shipping_address_id, total_amount, status, note, payment_method, discount_type, discount_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [user_id, shipping_address_id, total_amount, status, note, payment_method, discount_type, discount_value]
     );
 
     const orderId = orderResult.insertId;
@@ -160,13 +204,15 @@ router.put('/:id', async (req, res) => {
     total_amount, 
     status, 
     note,
-    customer_name,
-    customer_email,
-    customer_phone,
-    address,
+    payment_method,
+    payment_status,
     discount_type,
     discount_value,
-    user_id // Thêm user_id vào đây
+    user_id,
+    full_name,  // Thêm trường này
+    phone,      // Thêm trường này
+    address,    // Thêm trường này
+    city        // Thêm trường này
   } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0 || !total_amount || !status) {
@@ -185,28 +231,35 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
+    // Tự động cập nhật payment_status nếu payment_method là COD
+    let updatedPaymentStatus = payment_status;
+    if (payment_method === 'cod') {
+      updatedPaymentStatus = 'completed';
+    }
+
     // Prepare update fields
     const updateFields = [
       'shipping_address_id = ?',
       'total_amount = ?',
       'status = ?',
       'note = ?',
+      'payment_method = ?',
+      'payment_status = ?',
+      'discount_type = ?',
+      'discount_value = ?',
       'updated_at = CURRENT_TIMESTAMP'
     ];
-    const updateValues = [shipping_address_id, total_amount, status, note];
-
-    // Add discount fields if they are provided
-    if (discount_type !== undefined) {
-      updateFields.push('discount_type = ?');
-      updateValues.push(discount_type);
-    }
-    if (discount_value !== undefined) {
-      updateFields.push('discount_value = ?');
-      updateValues.push(discount_value);
-    }
-
-    // Add the order ID to the update values
-    updateValues.push(id);
+    const updateValues = [
+      shipping_address_id, 
+      total_amount, 
+      status, 
+      note, 
+      payment_method, 
+      updatedPaymentStatus, 
+      discount_type, 
+      discount_value,
+      id
+    ];
 
     // Update order information
     const [updateResult] = await connection.query(
@@ -228,13 +281,13 @@ router.put('/:id', async (req, res) => {
           address = ?, 
           city = ? 
         WHERE id = ?`,
-        [customer_name, customer_phone, address, '', shipping_address_id]
+        [full_name, phone, address, city, shipping_address_id]
       );
     } else {
       const [addressResult] = await connection.query(
         `INSERT INTO UserAddresses (user_id, full_name, phone, address, city) 
          VALUES (?, ?, ?, ?, ?)`,
-        [user_id || null, customer_name, customer_phone, address, '']
+        [user_id || null, full_name, phone, address, city]
       );
       await connection.query(
         'UPDATE Orders SET shipping_address_id = ? WHERE id = ?',

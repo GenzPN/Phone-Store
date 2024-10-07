@@ -129,7 +129,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isLoggedIn) {
         await api.delete('/api/user/cart');
         setCartItems([]);
-        message.success('Đã xóa toàn bộ giỏ hàng');
       } else {
         message.warning('Vui lòng đăng nhập để xóa giỏ hàng');
       }

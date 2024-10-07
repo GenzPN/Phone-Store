@@ -1,5 +1,5 @@
-export const formatProductNameForUrl = (name: string): string => {
-    return name.toLowerCase().replace(/\s+/g, '-');
+export const formatProductNameForUrl = (name: string | null | undefined): string => {
+    return name ? name.toLowerCase().replace(/\s+/g, '-') : '';
 };
 
 export const unformatProductNameFromUrl = (urlName: string): string => {

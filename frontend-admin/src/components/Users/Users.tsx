@@ -58,6 +58,7 @@ const Users: React.FC = () => {
     try {
       const values = await form.validateFields();
       const token = getToken() || getCookie('accessToken');
+      console.log('Sending update request with values:', values); // Log để kiểm tra
       await axios.put(`http://localhost:5000/api/admin/users/${editingUser?.id}`, values, {
         headers: {
           'Content-Type': 'application/json',

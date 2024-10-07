@@ -53,40 +53,86 @@ router.post('/', async (req, res) => {
 
 // Update an address
 router.put('/:id', async (req, res) => {
+    const connection = await db.getConnection();
     try {
         const userId = req.user.id;
         const addressId = req.params.id;
-        const { fullName, phone, address, city } = req.body;
-        const [result] = await db.query(
-            'UPDATE UserAddresses SET full_name = ?, phone = ?, address = ?, city = ? WHERE id = ? AND user_id = ?',
-            [fullName, phone, address, city, addressId, userId]
+        const { fullName, phone, address, city, isDefault } = req.body;
+
+        await connection.beginTransaction();
+
+        if (isDefault) {
+            await connection.query('UPDATE UserAddresses SET is_default = 0 WHERE user_id = ?', [userId]);
+        }
+
+        const [result] = await connection.query(
+            'UPDATE UserAddresses SET full_name = ?, phone = ?, address = ?, city = ?, is_default = ? WHERE id = ? AND user_id = ?',
+            [fullName, phone, address, city, isDefault ? 1 : 0, addressId, userId]
         );
+
         if (result.affectedRows === 0) {
+            await connection.rollback();
             return res.status(404).json({ message: 'Address not found or not owned by user' });
         }
+
+        await connection.commit();
         res.json({ message: 'Address updated successfully' });
     } catch (error) {
+        await connection.rollback();
         console.error('Update user address error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        connection.release();
     }
 });
 
 // Delete an address
 router.delete('/:id', async (req, res) => {
+    const connection = await db.getConnection();
     try {
         const userId = req.user.id;
         const addressId = req.params.id;
-        const [result] = await db.query(
+
+        await connection.beginTransaction();
+
+        const [result] = await connection.query(
             'DELETE FROM UserAddresses WHERE id = ? AND user_id = ?',
             [addressId, userId]
         );
+
         if (result.affectedRows === 0) {
+            await connection.rollback();
             return res.status(404).json({ message: 'Address not found or not owned by user' });
         }
+
+        // If the deleted address was the default, set another address as default
+        const [defaultAddress] = await connection.query(
+            'SELECT id FROM UserAddresses WHERE user_id = ? AND is_default = 1',
+            [userId]
+        );
+
+        if (defaultAddress.length === 0) {
+            const [firstAddress] = await connection.query(
+                'SELECT id FROM UserAddresses WHERE user_id = ? LIMIT 1',
+                [userId]
+            );
+
+            if (firstAddress.length > 0) {
+                await connection.query(
+                    'UPDATE UserAddresses SET is_default = 1 WHERE id = ?',
+                    [firstAddress[0].id]
+                );
+            }
+        }
+
+        await connection.commit();
         res.json({ message: 'Address deleted successfully' });
     } catch (error) {
+        await connection.rollback();
         console.error('Delete user address error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    } finally {
+        connection.release();
     }
 });
 

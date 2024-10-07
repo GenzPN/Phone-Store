@@ -13,7 +13,7 @@ def create_connection():
             host='localhost',
             database='phone_store',
             user='root',
-            password='1029'  # Thêm mật khẩu của bạn vào đây
+            password=''  # Thêm mật khẩu của bạn vào đây
         )
         return connection
     except Error as e:

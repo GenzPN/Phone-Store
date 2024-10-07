@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
       key: 'status',
       render: (status: string) => (
         <Tag color={getStatusColor(status)}>
-          {status.toUpperCase()}
+          {getStatusText(status)}
         </Tag>
       ),
     },
@@ -133,6 +133,17 @@ const Dashboard: React.FC = () => {
       ),
     },
   ];
+
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'pending': return 'Chờ xử lý';
+      case 'paid': return 'Đã thanh toán';
+      case 'shipped': return 'Đang giao hàng';
+      case 'delivered': return 'Đã giao hàng';
+      case 'cancelled': return 'Đã hủy';
+      default: return 'Không xác định';
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -215,7 +226,9 @@ const Dashboard: React.FC = () => {
           <Descriptions bordered column={2}>
             <Descriptions.Item label="ID đơn hàng">{selectedOrder.id}</Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={getStatusColor(selectedOrder.status)}>{selectedOrder.status.toUpperCase()}</Tag>
+              <Tag color={getStatusColor(selectedOrder.status)}>
+                {getStatusText(selectedOrder.status)}
+              </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Khách hàng">{selectedOrder.customer_name}</Descriptions.Item>
             <Descriptions.Item label="Email">{selectedOrder.customer_email}</Descriptions.Item>

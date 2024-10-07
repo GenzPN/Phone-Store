@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, message, Space, Input, Select, DatePicker, Button, Modal, Dropdown, Menu, InputNumber, Form, Radio, Card, AutoComplete } from 'antd';
+import { Table, Tag, message, Space, Input, Select, DatePicker, Button, Modal, Dropdown, Menu, InputNumber, Form, Radio, Card, AutoComplete, Descriptions } from 'antd';
 import { DownOutlined, DeleteOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import axios, { isAxiosError } from 'axios';
 import dayjs from 'dayjs';
@@ -28,38 +28,50 @@ interface OrderItem {
 interface Order {
   id: number;
   user_id: number;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  address: string;
-  status: string;
+  shipping_address_id: number;
   total_amount: number;
-  discount_value: number;
-  discount_type: 'percent' | 'amount' | null;
-  created_at: string;
-  items: OrderItem[];
-  shipping_address_id?: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
   note?: string;
+  transaction_id?: string;
+  payment_method: 'bank_transfer' | 'momo' | 'cod';
+  payment_status: 'pending' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+  discount_type: 'percentage' | 'fixed_amount';
+  discount_value: number;
+  items: OrderItem[];
+  // Thông tin từ bảng UserAddresses
+  full_name: string;
+  phone: string;
+  address: string;
+  city: string;
+  payment_info: {
+    method: string;
+    status: string;
+  };
+  status_text: string;
 }
 
 interface UpdateOrderData {
   id: number;
-  shipping_address_id?: number;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  address: string;
+  shipping_address_id: number;
+  total_amount: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  note?: string;
+  payment_method: 'bank_transfer' | 'momo' | 'cod';
+  payment_status: 'pending' | 'completed' | 'failed';
+  discount_type: 'percentage' | 'fixed_amount';
+  discount_value: number;
   items: {
     product_id: number;
     quantity: number;
     price: number;
   }[];
-  total_amount: number;
-  status: string;
-  note?: string;
   user_id: number;
-  discount_type?: 'percent' | 'amount';
-  discount_value?: number;
+  full_name: string;
+  phone: string;
+  address: string;
+  city: string;
 }
 
 const Orders: React.FC = () => {
@@ -78,7 +90,7 @@ const Orders: React.FC = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount');
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount'>('fixed_amount');
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -144,7 +156,7 @@ const Orders: React.FC = () => {
     }
 
     if (filters.username) {
-      result = result.filter(order => order.customer_name.toLowerCase().includes(filters.username.toLowerCase()));
+      result = result.filter(order => order.full_name.toLowerCase().includes(filters.username.toLowerCase()));
     }
 
     if (filters.status) {
@@ -182,13 +194,13 @@ const Orders: React.FC = () => {
     setSelectedOrder(order);
     setEditedItems(order.items || []);
     setDiscount(order.discount_value || 0);
-    setDiscountType(order.discount_type || 'amount');
+    setDiscountType(order.discount_type as 'percentage' | 'fixed_amount');
     setDiscountValue(order.discount_value || 0);
     customerForm.setFieldsValue({
-      customer_name: order.customer_name,
-      customer_email: order.customer_email,
-      customer_phone: order.customer_phone,
+      full_name: order.full_name,
+      phone: order.phone,
       address: order.address,
+      city: order.city,
     });
     setIsModalVisible(true);
   };
@@ -233,7 +245,7 @@ const Orders: React.FC = () => {
   };
 
   const calculateDiscount = () => {
-    if (discountType === 'percent') {
+    if (discountType === 'percentage') {
       const subtotal = editedItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
       return (subtotal * discountValue) / 100;
     }
@@ -242,7 +254,7 @@ const Orders: React.FC = () => {
 
   const calculateTotal = () => {
     const subtotal = editedItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    if (discountType === 'percent') {
+    if (discountType === 'percentage') {
       return subtotal * (1 - discountValue / 100);
     } else {
       return subtotal - discountValue;
@@ -255,13 +267,25 @@ const Orders: React.FC = () => {
     try {
       const customerInfo = customerForm.getFieldsValue();
       const updatedOrder: UpdateOrderData = {
-        ...selectedOrder,
-        ...customerInfo,
-        items: editedItems,
+        id: selectedOrder.id,
+        shipping_address_id: selectedOrder.shipping_address_id,
         total_amount: calculateTotal(),
+        status: selectedOrder.status,
+        note: selectedOrder.note,
+        payment_method: selectedOrder.payment_method,
+        payment_status: selectedOrder.payment_status,
         discount_type: discountType,
         discount_value: discountValue,
-        payment_method: selectedOrder.payment_method, // Đảm bảo giữ nguyên phương thức thanh toán
+        items: editedItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        user_id: selectedOrder.user_id,
+        full_name: customerInfo.full_name,
+        phone: customerInfo.phone,
+        address: customerInfo.address,
+        city: customerInfo.city
       };
 
       await axios.put(`http://localhost:5000/api/admin/orders/${selectedOrder.id}`, updatedOrder);
@@ -269,11 +293,7 @@ const Orders: React.FC = () => {
       setIsModalVisible(false);
       fetchOrders();
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Error updating order:', error.response?.data || error.message);
-      } else {
-        console.error('Error updating order:', error);
-      }
+      console.error('Error updating order:', error);
       message.error('Không thể cập nhật đơn hàng');
     }
   };
@@ -314,7 +334,7 @@ const Orders: React.FC = () => {
 
   const handleDiscountValueChange = (value: number | null) => {
     if (value === null) return;
-    if (discountType === 'percent' && value > 100) {
+    if (discountType === 'percentage' && value > 100) {
       setDiscountValue(100);
     } else {
       setDiscountValue(value);
@@ -346,16 +366,16 @@ const Orders: React.FC = () => {
     },
     {
       title: 'Khách hàng',
-      dataIndex: 'customer_name',
-      key: 'customer_name',
+      dataIndex: 'full_name',
+      key: 'full_name',
     },
     {
       title: 'Thông tin giao hàng',
       key: 'shipping',
       render: (text: string, record: Order) => (
         <Space direction="vertical">
-          <span>{record.customer_name || 'N/A'}</span>
-          <span>{record.customer_phone || 'N/A'}</span>
+          <span>{record.full_name || 'N/A'}</span>
+          <span>{record.phone || 'N/A'}</span>
           <span>{record.address || 'N/A'}</span>
         </Space>
       ),
@@ -565,26 +585,67 @@ const Orders: React.FC = () => {
             <div style={{ flex: 1 }}>
               <Card title="Thông tin khách hàng" style={{ marginBottom: '24px' }}>
                 <Form form={customerForm} layout="vertical">
-                  <Form.Item name="customer_name" label="Tên khách hàng">
+                  <Form.Item name="full_name" label="Tên khách hàng">
                     <Input />
                   </Form.Item>
-                  <Form.Item name="customer_email" label="Email">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="customer_phone" label="Số điện thoại">
+                  <Form.Item name="phone" label="Số điện thoại">
                     <Input />
                   </Form.Item>
                   <Form.Item name="address" label="Địa chỉ">
                     <Input.TextArea rows={3} />
                   </Form.Item>
+                  <Form.Item name="city" label="Thành phố">
+                    <Input />
+                  </Form.Item>
                 </Form>
               </Card>
               <Card title="Thông tin đơn hàng">
                 <p><strong>ID:</strong> {selectedOrder.id}</p>
-                <p><strong>Khách hàng:</strong> {selectedOrder.customer_name}</p>
+                <p><strong>Khách hàng:</strong> {selectedOrder.full_name}</p>
+                <p><strong>Số điện thoại:</strong> {selectedOrder.phone}</p>
+                <p><strong>Địa chỉ:</strong> {selectedOrder.address}, {selectedOrder.city}</p>
                 <p><strong>Trạng thái:</strong> <Tag color={getStatusColor(selectedOrder.status)}>{getStatusText(selectedOrder.status)}</Tag></p>
                 <p><strong>Ngày đặt hàng:</strong> {dayjs(selectedOrder.created_at).format('DD/MM/YYYY HH:mm:ss')}</p>
               </Card>
+<Card title="Thông tin thanh toán">
+  <Form.Item label="Phương thức thanh toán">
+    <Select
+      value={selectedOrder.payment_method}
+      onChange={(value) => setSelectedOrder({
+        ...selectedOrder, 
+        payment_method: value,
+        payment_status: value === 'cod' ? 'completed' : selectedOrder.payment_status
+      })}
+    >
+      <Select.Option value="bank_transfer">Chuyển khoản ngân hàng</Select.Option>
+      <Select.Option value="momo">Ví MoMo</Select.Option>
+      <Select.Option value="cod">Thanh toán khi nhận hàng</Select.Option>
+    </Select>
+  </Form.Item>
+  <Form.Item label="Trạng thái thanh toán">
+    <Select
+      value={selectedOrder.payment_status}
+      onChange={(value) => setSelectedOrder({...selectedOrder, payment_status: value})}
+      disabled={selectedOrder.payment_method === 'cod'}
+    >
+      <Select.Option value="pending">Chờ thanh toán</Select.Option>
+      <Select.Option value="completed">Đã thanh toán</Select.Option>
+      <Select.Option value="failed">Thanh toán thất bại</Select.Option>
+    </Select>
+  </Form.Item>
+  <Form.Item label="Trạng thái đơn hàng">
+    <Select
+      value={selectedOrder.status}
+      onChange={(value) => setSelectedOrder({...selectedOrder, status: value})}
+    >
+      <Select.Option value="pending">Chờ xử lý</Select.Option>
+      <Select.Option value="paid">Đã thanh toán</Select.Option>
+      <Select.Option value="shipped">Đang giao hàng</Select.Option>
+      <Select.Option value="delivered">Đã giao hàng</Select.Option>
+      <Select.Option value="cancelled">Đã hủy</Select.Option>
+    </Select>
+  </Form.Item>
+</Card>
             </div>
             <div style={{ flex: 2 }}>
               <Card title="Sản phẩm" style={{ marginBottom: '24px' }}>
@@ -654,10 +715,10 @@ const Orders: React.FC = () => {
                   <Form.Item label="Loại chiết khấu">
                     <Radio.Group
                       value={discountType}
-                      onChange={(e) => setDiscountType(e.target.value)}
+                      onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed_amount')}
                     >
-                      <Radio.Button value="percent">Phần trăm</Radio.Button>
-                      <Radio.Button value="amount">Tiền mặt</Radio.Button>
+                      <Radio.Button value="percentage">Phần trăm</Radio.Button>
+                      <Radio.Button value="fixed_amount">Số tiền cố định</Radio.Button>
                     </Radio.Group>
                   </Form.Item>
                   <Form.Item label="Giá trị chiết khấu">
@@ -665,14 +726,14 @@ const Orders: React.FC = () => {
                       value={discountValue}
                       onChange={handleDiscountValueChange}
                       formatter={(value) => 
-                        discountType === 'percent'
+                        discountType === 'percentage'
                           ? `${value}%`
                           : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
                       }
                       parser={(value) => parseFloat(value!.replace(/\%|\./g, ''))}
-                      max={discountType === 'percent' ? 100 : undefined}
+                      max={discountType === 'percentage' ? 100 : undefined}
                       min={0}
-                      step={discountType === 'percent' ? 1 : 1000}
+                      step={discountType === 'percentage' ? 1 : 1000}
                       style={{ width: 200 }}
                     />
                   </Form.Item>

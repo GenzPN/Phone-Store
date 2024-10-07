@@ -89,7 +89,7 @@ router.post('/', authenticateJWT, async (req, res) => {
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      throw new Error('Invalid or empty items array');
+      throw new Error('Đơn hàng không hợp lệ');
     }
 
     if (!total_amount || isNaN(total_amount)) {
@@ -195,7 +195,7 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
       };
     } else if (order.payment_method === 'momo') {
       paymentInfo = {
-        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=${config.momo.transferContent}${req.params.orderId}`,
+        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=${config.momo.transferContent}${req.params.orderId}&hidenote=1`,
         amount: order.total_amount,
         accountHolder: config.momo.accountHolder,
         accountNumber: config.momo.accountNumber,
@@ -222,7 +222,12 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
       return res.status(400).json({ message: 'Unsupported payment method' });
     }
 
-    res.json(paymentInfo);
+    const orderInfo = {
+      ...paymentInfo,
+      total: order.total_amount,
+    };
+
+    res.json(orderInfo);
   } catch (error) {
     console.error('Get payment info error:', error);
     res.status(500).json({ message: 'Internal server error' });

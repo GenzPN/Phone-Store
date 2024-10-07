@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Typography, Card, Image, Row, Col, Space, Button, Divider, Statistic, message, Progress } from 'antd';
 import { CopyOutlined, QrcodeOutlined, BankOutlined, MobileOutlined, ClockCircleOutlined, ArrowLeftOutlined, CheckOutlined } from '@ant-design/icons';
 import api from '../../utils/api';
@@ -25,22 +25,29 @@ interface PaymentInfo {
 }
 
 function Payment() {
-  const location = useLocation();
+  const { orderId, paymentMethod: urlPaymentMethod } = useParams<{ orderId: string, paymentMethod: string }>();
   const navigate = useNavigate();
-  const { orderId, transactionId, total, paymentMethod } = location.state as { 
-    
-    orderId: string; 
-    transactionId: string;
-    total: number; 
-    paymentMethod: string 
-  };
-
+  const location = useLocation();
+  
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [totalTimeout, setTotalTimeout] = useState<number>(30 * 60); // 30 phút
+  const [total, setTotal] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
+
+  const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace('₫', 'đ');
+  };
 
   useEffect(() => {
+    // Sử dụng paymentMethod từ URL nếu có
+    if (urlPaymentMethod) {
+      setPaymentMethod(urlPaymentMethod);
+    } else if (location.state && location.state.paymentMethod) {
+      setPaymentMethod(location.state.paymentMethod);
+    }
+
     const fetchPaymentInfo = async () => {
       try {
         const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
@@ -50,6 +57,18 @@ function Payment() {
         if (response.data.orderTimeout) {
           setCountdown(response.data.orderTimeout);
           setTotalTimeout(30 * 60); // 30 phút
+        }
+
+        // Cập nhật total từ response.data
+        if (response.data.total) {
+          setTotal(response.data.total);
+        } else if (response.data.amount) {
+          // Fallback nếu total không tồn tại nhưng amount có
+          setTotal(parseFloat(response.data.amount));
+        }
+
+        if (response.data.paymentMethod) {
+          setPaymentMethod(response.data.paymentMethod);
         }
       } catch (error) {
         let errorMessage = 'Đã xảy ra lỗi không xác định';
@@ -66,8 +85,10 @@ function Payment() {
       }
     };
 
-    fetchPaymentInfo();
-  }, [orderId]);
+    if (orderId) {
+      fetchPaymentInfo();
+    }
+  }, [orderId, location.state, urlPaymentMethod]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -161,7 +182,12 @@ function Payment() {
                   <strong>Mã giao dịch:</strong> {paymentInfo.transactionId}
                 </Paragraph>
                 <Paragraph>
-                  <strong>Tổng tiền:</strong> <Text type="danger">{total.toLocaleString('vi-VN')} đ</Text>
+                  <Space>
+                    <Text strong>Tổng tiền:</Text>
+                    <Text type="danger" copyable={{ text: total.toString() }}>
+      {formatCurrency(total)}
+    </Text>
+                  </Space>
                 </Paragraph>
                 <Paragraph>
                   <strong>Phương thức thanh toán:</strong> {paymentMethod === 'bank_transfer' ? <BankOutlined /> : <MobileOutlined />} {getPaymentMethodDisplay(paymentMethod)}
@@ -200,6 +226,12 @@ function Payment() {
                     <Space>
                       <Text strong>Số điện thoại MoMo:</Text>
                       <Text copyable>{paymentInfo.accountNumber}</Text>
+                    </Space>
+                  </Paragraph>
+                  <Paragraph>
+                    <Space>
+                      <Text strong>Nội dung chuyển khoản:</Text>
+                      <Text copyable>{paymentInfo.transferContent}</Text>
                     </Space>
                   </Paragraph>
                 </Card>

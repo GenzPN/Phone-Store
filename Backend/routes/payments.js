@@ -58,7 +58,7 @@ function getPaymentInfo(order, orderId) {
     case 'momo':
       return {
         ...baseInfo,
-        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=GEN${orderId}`,
+        linkQR: `https://momosv3.apimienphi.com/api/QRCode?phone=${config.momo.accountNumber}&amount=${order.total_amount}&note=GEN${orderId}&hidenote=1`,
         accountHolder: config.momo.accountHolder,
         accountNumber: config.momo.accountNumber,
         transferContent: `GEN${orderId}`,

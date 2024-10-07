@@ -21,7 +21,7 @@ router.put('/:id', async (req, res) => {
     const updatedProduct = req.body;
 
     // Kiểm tra xem sản phẩm có tồn tại không
-    const [existingProduct] = await db.promise().query('SELECT * FROM Products WHERE id = ?', [productId]);
+    const [existingProduct] = await db.query('SELECT * FROM Products WHERE id = ?', [productId]);
     if (existingProduct.length === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -54,7 +54,7 @@ router.put('/:id', async (req, res) => {
       is_featured, featured_sort_order, brand, description, productId
     ];
 
-    await db.promise().query(updateQuery, updateValues);
+    await db.query(updateQuery, updateValues);
 
     res.json({ message: 'Product updated successfully', productId });
   } catch (error) {

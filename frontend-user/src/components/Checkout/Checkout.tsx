@@ -121,7 +121,7 @@ const Checkout: React.FC = () => {
       if (response.status === 201) {
         message.success('Đơn hàng đã được tạo thành công.');
         clearCart();
-        navigate('/payment', { 
+        navigate(`/payment/${paymentMethod}/${response.data.orderId}`, { 
           state: { 
             orderId: response.data.orderId,
             transactionId: response.data.transactionId,
