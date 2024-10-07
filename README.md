@@ -23,22 +23,6 @@
 - Đánh giá và nhận xét sản phẩm
 - Quản lý đơn hàng
 
-## Công nghệ sử dụng
-
-[Liệt kê các công nghệ, ngôn ngữ lập trình, framework được sử dụng trong dự án]
-
-## Cài đặt và chạy dự án
-
-[Hướng dẫn chi tiết về cách cài đặt và chạy dự án trên máy local]
-
-## Cấu trúc dự án
-
-[Mô tả cấu trúc thư mục và file chính của dự án]
-
-## Đóng góp
-
-Đây là một dự án học tập. Mọi đóng góp và góp ý đều được đánh giá cao.
-
 ## Liên hệ
 
 - Nguyễn Võ Quốc Trung
