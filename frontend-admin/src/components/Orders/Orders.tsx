@@ -190,7 +190,7 @@ const Orders: React.FC = () => {
     }
   };
 
-  const showOrderDetails = (order: Order) => {
+  const showOrderDetails = (order: Order) => {discountType
     setSelectedOrder(order);
     setEditedItems(order.items || []);
     setDiscount(order.discount_value || 0);
@@ -242,14 +242,6 @@ const Orders: React.FC = () => {
         }
       ]);
     }
-  };
-
-  const calculateDiscount = () => {
-    if (discountType === 'percentage') {
-      const subtotal = editedItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
-      return (subtotal * discountValue) / 100;
-    }
-    return discountValue;
   };
 
   const calculateTotal = () => {
