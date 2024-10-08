@@ -190,7 +190,7 @@ const Orders: React.FC = () => {
     }
   };
 
-  const showOrderDetails = (order: Order) => {discountType
+  const showOrderDetails = (order: Order) => {
     setSelectedOrder(order);
     setEditedItems(order.items || []);
     setDiscount(order.discount_value || 0);
