@@ -17,6 +17,8 @@ import {
 interface OrderEmailProps {
   orderId: string;
   customerName: string;
+  customerAddress: string;
+  customerPhone: string;
   orderDate: string;
   orderStatus: string;
   totalAmount: string;
@@ -31,6 +33,8 @@ interface OrderEmailProps {
 export const OrderEmail: React.FC<OrderEmailProps> = ({
   orderId,
   customerName,
+  customerAddress,
+  customerPhone,
   orderDate,
   orderStatus,
   totalAmount,
@@ -40,26 +44,24 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
     <Head />
     <Preview>Thông báo đơn hàng {orderId}</Preview>
     <Body style={main}>
-    <Container style={container}>
-  {/* Header */}
-  <Section style={header}>
-    <Row>
-      <Column style={headerLogoColumn}>
-        <Img
-          src="https://i.imgur.com/uQaX2zy.png"
-          width="200"
-          height="auto"
-          alt="Your Company Logo"
-          style={logoStyle}
-        />
-      </Column>
-      <Column style={headerTextColumn}>
-        <Text style={headerText}>Công ty TNHH Trùm</Text>
-        <Text style={headerSubText}>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.HCM</Text>
-        <Text style={headerSubText}>Email: startrungkiller2@gmail.com</Text>
-      </Column>
-    </Row>
-  </Section>
+      <Container style={container}>
+        {/* Header */}
+        <Section style={header}>
+          <Row>
+            <Column style={headerLogoColumn}>
+              <Img
+                src="https://i.imgur.com/uQaX2zy.png"
+                width="200"
+                style={logoStyle}
+              />
+            </Column>
+            <Column style={headerTextColumn}>
+              <Text style={headerText}>Công ty TNHH Trùm</Text>
+              <Text style={headerSubText}>Địa chỉ: 77/5B Lê Lai, Phường 12, Quận Tân Bình, TP.HCM</Text>
+              <Text style={headerSubText}>Email: startrungkiller2@gmail.com</Text>
+            </Column>
+          </Row>
+        </Section>
         {/* Main Content */}
         <Section style={content}>
           <Heading style={h1}>Thông báo tình trạng đơn hàng</Heading>
@@ -68,7 +70,20 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
             Cảm ơn bạn đã đặt hàng. Dưới đây là thông tin chi tiết về đơn hàng của bạn:
           </Text>
 
+          {/* Updated Customer Information */}
+                      <Heading as="h2" style={h2}>Thông tin khách hàng</Heading>
+            <Text style={customerInfoText}>
+              Họ và tên : {customerName}
+            </Text>
+            <Text style={customerInfoText}>
+              Địa chỉ : {customerAddress}
+            </Text>
+            <Text style={customerInfoText}>
+              Số điện thoại : {customerPhone}
+            </Text>
+
           {/* Order Details Grid */}
+          <Heading as="h2" style={h2}>Thông tin đơn hàng</Heading>
           <Section style={gridContainer}>
             <Row style={gridHeader}>
               <Column style={gridHeaderCellOrderId}>Mã đơn hàng</Column>
@@ -110,12 +125,6 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
               <Column style={totalAmountLabel}>Tổng tiền:</Column>
               <Column style={totalAmountValue}>{totalAmount}</Column> 
           </Section>
-          <hr></hr>
-          <Text style={text}>
-            Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.
-          </Text>
-          <Text style={text}>Trân trọng,</Text>
-          <Text style={text}>Đội ngũ hỗ trợ khách hàng</Text>
         </Section>
 
         {/* Product Showcase Section */}
@@ -173,36 +182,16 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
           </Section>
         </Section>
 
-        {/* Advertising Section */}
-        <Section style={advertisingSection}>
-          <Heading as="h2" style={h2}>Ưu đãi đặc biệt</Heading>
-          <Text style={text}>
-            Đừng bỏ lỡ cơ hội mua sắm với giá ưu đãi! Nhập mã "WELCOME10" để được giảm 10% cho đơn hàng tiếp theo của bạn.
-          </Text>
-          <div style={adImageContainer}>
-            <Img
-              src="https://i.imgur.com/rtm89jW.png"
-              width="500"
-              height="auto"
-              alt="Ưu đãi đặc biệt"
-              style={adImage}
-            />
-          </div>
-          <Text style={text}>
-            <a href="https://your-website.com/promotions" style={ctaButton}>Xem thêm ưu đãi</a>
-          </Text>
-        </Section>
-
         {/* Footer */}
         <Section style={footer}>
-          <Text style={footerText}>© 2024 Your Company Name. All rights reserved.</Text>
+          <Text style={footerText}>© 2024 Công ty TNHH Trùm. All rights reserved.</Text>
           <Text style={footerText}>
-            123 Your Street, Your City, Your Country
+            77/5B Lê Lai, Phường 12, Quận Tân Bình, TP.HCM
           </Text>
           <Text style={footerText}>
-            <a href="https://your-website.com" style={footerLink}>Website</a> | 
-            <a href="https://your-website.com/privacy" style={footerLink}>Privacy Policy</a> | 
-            <a href="https://your-website.com/terms" style={footerLink}>Terms of Service</a>
+            <a href="https://trum.com" style={footerLink}>Website</a> | 
+            <a href="https://trum.com/privacy" style={footerLink}>Privacy Policy</a> | 
+            <a href="https://trum.com/terms" style={footerLink}>Terms of Service</a>
           </Text>
         </Section>
       </Container>
@@ -292,7 +281,7 @@ const header: React.CSSProperties = {
 
 const logoStyle: React.CSSProperties = {
   maxWidth: '200px',
-  maxHeight: '80px',
+  maxHeight: '150px',
   objectFit: 'contain',
 };
 
@@ -399,35 +388,6 @@ const footerLink: React.CSSProperties = {
   textDecoration: 'underline',
 };
 
-const advertisingSection: React.CSSProperties = {
-  backgroundColor: '#f0f8ff',
-  padding: '20px',
-  marginTop: '20px',
-  borderRadius: '4px',
-};
-
-const adImageContainer: React.CSSProperties = {
-  textAlign: 'center',
-  margin: '20px 0',
-};
-
-const adImage: React.CSSProperties = {
-  maxWidth: '100%',
-  height: 'auto',
-  borderRadius: '4px',
-};
-
-const ctaButton: React.CSSProperties = {
-  backgroundColor: '#4CAF50',
-  color: 'white',
-  padding: '10px 20px',
-  textDecoration: 'none',
-  borderRadius: '4px',
-  fontWeight: 'bold',
-  display: 'inline-block',
-  marginTop: '10px',
-};
-
 const showcaseSection: React.CSSProperties = {
   marginTop: '16px',
   marginBottom: '16px',
@@ -524,4 +484,9 @@ const headerSubText: React.CSSProperties = {
   fontSize: typography.fontSize.sm,
   color: colors.gray[600],
   marginBottom: spacing.xs,
+};
+
+const customerInfoText: React.CSSProperties = {
+  ...text,
+  marginBottom: spacing.sm,
 };

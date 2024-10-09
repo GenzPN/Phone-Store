@@ -1,9 +1,11 @@
 import React from 'react';
-import { OrderEmail } from './order';
+import { OrderEmail } from './input/order';
 
 const sampleData = {
-  orderId: "9",
+  orderId: "18",
   customerName: "Văn Đức",
+  customerAddress: "123 Đường Lê Lợi, Quận 1, TP.HCM",
+  customerPhone: "0964747524",
   orderDate: "07/10/2024",
   orderStatus: "Đã thanh toán",
   products: [
@@ -14,10 +16,10 @@ const sampleData = {
       price: 34990000
     },
     {
-      name: "AirPods Pro 2",
-      category: "Tai nghe",
+      name: "Samsung Galaxy S24 Ultra",
+      category: "Điện thoại",
       quantity: 3,
-      price: 1990000
+      price: 32990000
     }
   ]
 };
