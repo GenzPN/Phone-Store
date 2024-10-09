@@ -7,3 +7,5 @@ frontend-user/package-lock.json
 Email/node_modules
 Email/package-lock.json
 Email/.react-email
+Backend/.env
+Backend/.env

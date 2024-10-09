@@ -217,7 +217,7 @@ const Dashboard: React.FC = () => {
       />
       <Modal
         title="Chi tiết đơn hàng"
-        visible={detailModalVisible}
+        open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={800}

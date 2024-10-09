@@ -377,18 +377,16 @@ const Orders: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string, record: Order) => {
-        const menu = (
-          <Menu>
-            <Menu.Item key="pending" onClick={() => handleStatusChange(record.id, 'pending')}>Chờ Xử Lý</Menu.Item>
-            <Menu.Item key="paid" onClick={() => handleStatusChange(record.id, 'paid')}>Đã Thanh Toán</Menu.Item>
-            <Menu.Item key="shipped" onClick={() => handleStatusChange(record.id, 'shipped')}>Đang Giao</Menu.Item>
-            <Menu.Item key="delivered" onClick={() => handleStatusChange(record.id, 'delivered')}>Đã Giao</Menu.Item>
-            <Menu.Item key="cancelled" onClick={() => handleStatusChange(record.id, 'cancelled')}>Đã Hủy</Menu.Item>
-          </Menu>
-        );
+        const menuItems = [
+          { key: 'pending', label: 'Chờ Xử Lý', onClick: () => handleStatusChange(record.id, 'pending') },
+          { key: 'paid', label: 'Đã Thanh Toán', onClick: () => handleStatusChange(record.id, 'paid') },
+          { key: 'shipped', label: 'Đang Giao', onClick: () => handleStatusChange(record.id, 'shipped') },
+          { key: 'delivered', label: 'Đã Giao', onClick: () => handleStatusChange(record.id, 'delivered') },
+          { key: 'cancelled', label: 'Đã Hủy', onClick: () => handleStatusChange(record.id, 'cancelled') },
+        ];
 
         return (
-          <Dropdown overlay={menu} trigger={['click']}>
+          <Dropdown menu={{ items: menuItems }} trigger={['click']}>
             <Tag color={getStatusColor(status)} style={{ cursor: 'pointer' }}>
               {getStatusText(status)} <DownOutlined />
             </Tag>
@@ -515,7 +513,7 @@ const Orders: React.FC = () => {
       {/* Modal tạo đơn hàng mới */}
       <Modal
         title="Tạo đơn hàng mới"
-        visible={isCreateModalVisible}
+        open={isCreateModalVisible}
         onCancel={handleCreateModalCancel}
         footer={null}
       >
@@ -559,7 +557,7 @@ const Orders: React.FC = () => {
       {/* Modal chi tiết đơn hàng */}
       <Modal
         title={`Chi tiết đơn hàng #${selectedOrder?.id}`}
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleSaveChanges}
         onCancel={() => setIsModalVisible(false)}
         width={1000}

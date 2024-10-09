@@ -2,38 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Button, message, Tabs } from 'antd';
 import axios from 'axios';
 
-const { TabPane } = Tabs;
-
-interface WebsiteSettings {
-  name: string;
-  logo: string;
-}
-
-interface BankSettings {
-  name: string;
-  logo: string;
-  token: string;
-  accountHolder: string;
-  accountNumber: string;
-  transferContent: string;
-  orderTimeout: number;
-}
-
-interface MomoSettings {
-  name: string;
-  logo: string;
-  accountHolder: string;
-  accountNumber: string;
-  transferContent: string;
-  orderTimeout: number;
-}
-
-interface AdminSettings {
-  website: WebsiteSettings;
-  bank: BankSettings;
-  momo: MomoSettings;
-}
-
 const Settings: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
@@ -81,63 +49,83 @@ const Settings: React.FC = () => {
     return <div>Loading...</div>;
   }
 
+  const tabItems = [
+    {
+      key: '1',
+      label: 'Website',
+      children: (
+        <>
+          <Form.Item name={['website', 'name']} label="Website Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name={['website', 'logo']} label="Logo URL">
+            <Input />
+          </Form.Item>
+        </>
+      ),
+    },
+    {
+      key: '2',
+      label: 'Bank',
+      children: (
+        <>
+          <Form.Item name={['bank', 'name']} label="Bank Name">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'logo']} label="Bank Logo URL">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'token']} label="Bank Token">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'accountHolder']} label="Account Holder">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'accountNumber']} label="Account Number">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'transferContent']} label="Transfer Content">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['bank', 'orderTimeout']} label="Order Timeout (minutes)">
+            <InputNumber min={1} />
+          </Form.Item>
+        </>
+      ),
+    },
+    {
+      key: '3',
+      label: 'Momo',
+      children: (
+        <>
+          <Form.Item name={['momo', 'name']} label="Momo Name">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['momo', 'logo']} label="Momo Logo URL">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['momo', 'accountHolder']} label="Account Holder">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['momo', 'accountNumber']} label="Account Number">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['momo', 'transferContent']} label="Transfer Content">
+            <Input />
+          </Form.Item>
+          <Form.Item name={['momo', 'orderTimeout']} label="Order Timeout (minutes)">
+            <InputNumber min={1} />
+          </Form.Item>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div>
       <h1>Admin Settings</h1>
       <Form form={form} onFinish={onFinish} layout="vertical">
-        <Tabs defaultActiveKey="1">
-          <TabPane tab="Website" key="1">
-            <Form.Item name={['website', 'name']} label="Website Name" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name={['website', 'logo']} label="Logo URL">
-              <Input />
-            </Form.Item>
-          </TabPane>
-          <TabPane tab="Bank" key="2">
-            <Form.Item name={['bank', 'name']} label="Bank Name">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'logo']} label="Bank Logo URL">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'token']} label="Bank Token">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'accountHolder']} label="Account Holder">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'accountNumber']} label="Account Number">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'transferContent']} label="Transfer Content">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['bank', 'orderTimeout']} label="Order Timeout (minutes)">
-              <InputNumber min={1} />
-            </Form.Item>
-          </TabPane>
-          <TabPane tab="Momo" key="3">
-            <Form.Item name={['momo', 'name']} label="Momo Name">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['momo', 'logo']} label="Momo Logo URL">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['momo', 'accountHolder']} label="Account Holder">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['momo', 'accountNumber']} label="Account Number">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['momo', 'transferContent']} label="Transfer Content">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['momo', 'orderTimeout']} label="Order Timeout (minutes)">
-              <InputNumber min={1} />
-            </Form.Item>
-          </TabPane>
-        </Tabs>
+        <Tabs defaultActiveKey="1" items={tabItems} />
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Save Settings

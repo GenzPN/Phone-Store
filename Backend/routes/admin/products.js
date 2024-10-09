@@ -8,11 +8,45 @@ router.get('/', (req, res) => {
   // Xử lý GET request
 });
 
-router.post('/', (req, res) => {
-  // Xử lý POST request
-});
+// Thêm sản phẩm mới
+router.post('/', async (req, res) => {
+  try {
+    const newProduct = req.body;
 
-// Thêm các route khác nếu cần
+    // Chuẩn bị dữ liệu để thêm mới
+    const {
+      title, price, stock, thumbnail, images, category, screen, back_camera, front_camera,
+      ram, storage, battery, sku, warranty_information, shipping_information,
+      availability_status, return_policy, minimum_order_quantity, discount_percentage,
+      is_featured, featured_sort_order, brand, description
+    } = newProduct;
+
+    // Thêm sản phẩm mới vào cơ sở dữ liệu
+    const insertQuery = `
+      INSERT INTO Products (
+        title, price, stock, thumbnail, images, category, screen, back_camera, front_camera,
+        ram, storage, battery, sku, warranty_information, shipping_information,
+        availability_status, return_policy, minimum_order_quantity, discount_percentage,
+        is_featured, featured_sort_order, brand, description
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const insertValues = [
+      title, price, stock, thumbnail, JSON.stringify(images), category,
+      screen, back_camera, front_camera, ram, storage, battery, sku,
+      warranty_information, shipping_information, availability_status,
+      return_policy, minimum_order_quantity, discount_percentage,
+      is_featured, featured_sort_order, brand, description
+    ];
+
+    const [result] = await db.query(insertQuery, insertValues);
+
+    res.status(201).json({ message: 'Product added successfully', productId: result.insertId });
+  } catch (error) {
+    console.error('Add product error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
 
 // Cập nhật sản phẩm
 router.put('/:id', async (req, res) => {
