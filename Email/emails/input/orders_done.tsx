@@ -141,7 +141,7 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
           <Section style={showcaseGrid}>
             <Row>
               <Column style={showcaseColumn}>
-                <Link href="#">
+                <Link href="https://hoanghamobile.com/dien-thoai/iphone-16-pro-max-512gb">
                   <Img
                     alt="iPhone 16 Pro Max"
                     style={showcaseImage}
@@ -150,7 +150,7 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
                 </Link>
               </Column>
               <Column style={showcaseColumn}>
-                <Link href="#">
+                <Link href="https://hoanghamobile.com/tai-nghe/airpods-pro-2-voi-hop-sac-usb-c-chinh-hang-apple-viet-nam">
                   <Img
                     alt="AirPods Pro 2"
                     style={showcaseImage}
@@ -161,7 +161,7 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
             </Row>
             <Row style={showcaseSecondRow}>
               <Column style={showcaseColumn}>
-                <Link href="#">
+                <Link href="https://hoanghamobile.com/laptop/macbook-pro-16-m3-pro-12-core-cpu-18-core-gpu-18gb-512gb-chinh-hang">
                   <Img
                     alt="MacBook Pro M3"
                     style={showcaseImage}
@@ -170,7 +170,7 @@ export const OrderEmail: React.FC<OrderEmailProps> = ({
                 </Link>
               </Column>
               <Column style={showcaseColumn}>
-                <Link href="#">
+                <Link href="https://hoanghamobile.com/dong-ho-thong-minh/apple-watch-series-10-gps-46mm-vo-nhom-day-cao-su">
                   <Img
                     alt="Apple Watch Series 10"
                     style={showcaseImage}

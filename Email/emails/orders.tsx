@@ -1,12 +1,12 @@
 import React from 'react';
-import { OrderEmail } from './input/order';
+import { OrderEmail } from './input/orders_done';
 
 const sampleData = {
   orderId: "18",
-  customerName: "Văn Đức",
+  customerName: "Nguyễn Văn Đức",
   customerAddress: "123 Đường Lê Lợi, Quận 1, TP.HCM",
   customerPhone: "0964747524",
-  orderDate: "07/10/2024",
+  orderDate: "07/10/2024 10:30",
   orderStatus: "Đã thanh toán",
   products: [
     {
