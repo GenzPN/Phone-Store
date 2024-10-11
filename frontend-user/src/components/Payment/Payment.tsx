@@ -49,7 +49,6 @@ function Payment() {
     try {
       const response = await api.get(`/api/user/orders/payment-info/${orderId}`);
       if (response.data.payment_status === 'completed' || response.data.status === 'paid' || response.data.newStatus === 'completed') {
-        message.success('Thanh toán đã được xác nhận!');
         navigate(`/order-confirmation/${orderId}`);
       } else {
         message.info('Thanh toán chưa được xác nhận. Hệ thống sẽ tiếp tục kiểm tra.');
@@ -117,7 +116,7 @@ function Payment() {
     let timer: NodeJS.Timeout;
     let paymentCheckInterval: NodeJS.Timeout;
     let checkCount = 0;
-
+  
     const checkPayment = async () => {
       checkCount++;
       console.log(`Kiểm tra thanh toán lần thứ ${checkCount}`);
@@ -126,10 +125,10 @@ function Payment() {
         setPaymentInfo(response.data);
         console.log('Kết quả kiểm tra:', response.data);
         if (response.data.payment_status === 'completed' || response.data.status === 'paid' || response.data.newStatus === 'completed') {
-          console.log('Thanh toán đã được xác nhận!');
           message.success('Thanh toán đã được xác nhận!');
           navigate(`/order-confirmation/${orderId}`);
           clearInterval(paymentCheckInterval);
+          clearInterval(timer);
         } else {
           console.log('Thanh toán chưa được xác nhận. Tiếp tục kiểm tra...');
         }
@@ -137,27 +136,25 @@ function Payment() {
         console.error('Lỗi khi kiểm tra thanh toán:', error);
       }
     };
-
+  
     if (countdown !== null && countdown > 0) {
       timer = setInterval(() => {
         setCountdown(prev => {
           if (prev === null || prev <= 0) {
             clearInterval(timer);
+            clearInterval(paymentCheckInterval);
             return 0;
+          }
+          if (prev % 30 === 0) {
+            checkPayment();
           }
           return prev - 1;
         });
       }, 1000);
-
-      // Kiểm tra thanh toán mỗi 15 giây
-      paymentCheckInterval = setInterval(checkPayment, 15000);
-
-      // Gọi checkPayment ngay lập tức để không phải đợi 15 giây cho lần kiểm tra đầu tiên
-      checkPayment();
     } else if (countdown === 0) {
       navigate('/');
     }
-
+  
     return () => {
       if (timer) clearInterval(timer);
       if (paymentCheckInterval) clearInterval(paymentCheckInterval);
