@@ -19,8 +19,9 @@ router.get('/', async (req, res) => {
       const conditions = [];
 
       if (brand) {
-        conditions.push('brand = ?');
-        queryParams.push(brand);
+        const brands = brand.split(',');
+        conditions.push(`brand IN (${brands.map(() => '?').join(', ')})`);
+        queryParams.push(...brands);
       }
 
       if (isFeatured !== undefined) {

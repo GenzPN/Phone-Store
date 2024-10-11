@@ -10,7 +10,7 @@ const Settings: React.FC = () => {
     const fetchSettings = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get<AdminSettings>('http://localhost:5000/api/admin/settings', {
+        const response = await axios.get<AlignSetting>('http://localhost:5000/api/admin/settings', {
           headers: { 
             'Content-Type': 'application/json'
           }
@@ -27,7 +27,7 @@ const Settings: React.FC = () => {
     fetchSettings();
   }, [form]);
 
-  const onFinish = async (values: AdminSettings) => {
+  const onFinish = async (values: AlignSetting) => {
     try {
       const response = await axios.put('http://localhost:5000/api/admin/settings', values, {
         headers: { 

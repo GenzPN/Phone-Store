@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Modal, Form, Input, InputNumber, Select, List } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, StarOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, StarOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Option } = Select;
@@ -47,10 +47,10 @@ const formatCurrency = (value: number | null | undefined) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) => void; onRemove?: () => void }> = ({ value, onChange, onRemove }) => {
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <div style={{ marginRight: 8, marginBottom: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+      <div style={{ marginRight: 8 }}>
         <img
           src={value || 'https://via.placeholder.com/100'}
           alt="Preview"
@@ -61,8 +61,11 @@ const CustomImageUpload: React.FC<{ value?: string; onChange?: (value: string) =
         placeholder="Nhập URL ảnh"
         value={value}
         onChange={(e) => onChange && onChange(e.target.value)}
-        style={{ flex: 1 }}
+        style={{ flex: 1, marginRight: 8 }}
       />
+      {onRemove && (
+        <Button onClick={onRemove} icon={<DeleteOutlined />} />
+      )}
     </div>
   );
 };
@@ -223,6 +226,12 @@ const Products: React.FC = () => {
     }
   };
 
+  const clearFilters = () => {
+    setBrandFilter([]);
+    setIsFeaturedFilter(null);
+    fetchProducts(1, pagination.pageSize);
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -302,16 +311,19 @@ const Products: React.FC = () => {
         <Select
           mode="multiple"
           placeholder="Lọc theo thương hiệu"
+          value={brandFilter}
           onChange={setBrandFilter}
           style={{ width: 200 }}
         >
           <Option value="Apple">Apple</Option>
           <Option value="Samsung">Samsung</Option>
+          <Option value="Oppo">Oppo</Option>
           <Option value="Xiaomi">Xiaomi</Option>
           {/* Thêm các thương hiệu khác nếu cần */}
         </Select>
         <Select
           placeholder="Lọc theo nổi bật"
+          value={isFeaturedFilter}
           onChange={setIsFeaturedFilter}
           style={{ width: 200 }}
           allowClear
@@ -319,6 +331,12 @@ const Products: React.FC = () => {
           <Option value="1">Nổi bật</Option>
           <Option value="0">Không nổi bật</Option>
         </Select>
+        <Button 
+          icon={<CloseCircleOutlined />} 
+          onClick={clearFilters}
+        >
+          Xóa bộ lọc
+        </Button>
       </Space>
       <Table 
         columns={columns} 
@@ -351,27 +369,29 @@ const Products: React.FC = () => {
             <Form.List name="images">
               {(fields, { add, remove }) => (
                 <>
-                  {fields.map((field, index) => {
-                    // Tách key ra khỏi field
-                    const { key, ...restField } = field;
-                    return (
-                      <Form.Item
-                        key={key}
-                        {...restField}
-                        validateTrigger={['onChange', 'onBlur']}
-                        rules={[
-                          {
-                            required: true,
-                            whitespace: true,
-                            message: "Vui lòng nhập URL ảnh hoặc xóa trường này.",
-                          },
-                        ]}
-                        noStyle
-                      >
-                        <CustomImageUpload />
-                      </Form.Item>
-                    );
-                  })}
+                  {fields.map((field, index) => (
+                    <Form.Item
+                      key={field.key}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "Vui lòng nhập URL ảnh hoặc xóa trường này.",
+                        },
+                      ]}
+                    >
+                      <CustomImageUpload
+                        value={form.getFieldValue(['images', index])}
+                        onChange={(value) => {
+                          const images = form.getFieldValue('images');
+                          images[index] = value;
+                          form.setFieldsValue({ images });
+                        }}
+                        onRemove={() => remove(field.name)}
+                      />
+                    </Form.Item>
+                  ))}
                   <Form.Item>
                     <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
                       Thêm ảnh
