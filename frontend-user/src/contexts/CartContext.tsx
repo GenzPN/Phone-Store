@@ -86,7 +86,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const removeFromCart = async (id: number) => {
     try {
       if (isLoggedIn) {
-        await api.delete(`/api/user/cart/${id}`); // Thay đổi đường dẫn API
+        await api.delete(`/api/user/cart/${id}`);
         await fetchCart();
         message.success('Đã xóa sản phẩm khỏi giỏ hàng');
       } else {

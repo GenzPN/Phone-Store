@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input, Divider } from 'antd';
+import { Card, Col, Row, Typography, Table, Radio, Button, message, Space, Form, Select, Input, Divider, Checkbox, Modal } from 'antd';
 import { MobileOutlined, BankOutlined, DollarOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getToken } from '../../utils/tokenStorage';
@@ -16,7 +16,9 @@ interface Address {
   id: number;
   full_name: string;
   phone: string;
-  address: string;
+  street: string;
+  ward: string;
+  district: string;
   city: string;
   is_default: boolean;
 }
@@ -28,6 +30,8 @@ const Checkout: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isDefaultAddress, setIsDefaultAddress] = useState(false);
+  const [currentDefaultAddressId, setCurrentDefaultAddressId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAddresses();
@@ -90,11 +94,26 @@ const Checkout: React.FC = () => {
         const response = await api.post('/api/user/addresses', {
           fullName: values.fullName,
           phone: values.phone,
-          address: values.newAddress,
+          houseNumber: values.houseNumber,
+          street: values.street,
+          ward: values.ward,
+          district: values.district,
           city: values.city,
-          isDefault: false // hoặc true nếu bạn muốn đặt làm địa chỉ mặc định
+          isDefault: isDefaultAddress
         });
         shipping_address_id = response.data.id;
+      } else {
+        // Cập nhật địa chỉ hiện có
+        await api.put(`/api/user/addresses/${shipping_address_id}`, {
+          fullName: values.fullName,
+          phone: values.phone,
+          houseNumber: values.houseNumber,
+          street: values.street,
+          ward: values.ward,
+          district: values.district,
+          city: values.city,
+          isDefault: isDefaultAddress
+        });
       }
 
       const orderData = { 
@@ -160,6 +179,20 @@ const Checkout: React.FC = () => {
       });
 
       setAddresses(response.data);
+      const defaultAddress = response.data.find((addr: Address) => addr.is_default);
+      if (defaultAddress) {
+        setCurrentDefaultAddressId(defaultAddress.id);
+        form.setFieldsValue({
+          id: defaultAddress.id,
+          fullName: defaultAddress.full_name,
+          phone: defaultAddress.phone,
+          street: defaultAddress.street,
+          ward: defaultAddress.ward,
+          district: defaultAddress.district,
+          city: defaultAddress.city,
+        });
+        setIsDefaultAddress(true);
+      }
     } catch (error) {
       console.error('Error fetching addresses:', error);
       message.error('Không thể tải danh sách địa chỉ');
@@ -168,22 +201,35 @@ const Checkout: React.FC = () => {
 
   const handleAddressChange = (value: string) => {
     if (value === 'new') {
-      form.setFieldsValue({
-        fullName: '',
-        phone: '',
-        newAddress: '',
-        city: '',
-      });
+      form.resetFields();
+      setIsDefaultAddress(false);
     } else {
       const selectedAddress = addresses.find(addr => addr.id === parseInt(value));
       if (selectedAddress) {
         form.setFieldsValue({
           fullName: selectedAddress.full_name,
           phone: selectedAddress.phone,
-          newAddress: selectedAddress.address,
+          street: selectedAddress.street,
+          ward: selectedAddress.ward,
+          district: selectedAddress.district,
           city: selectedAddress.city,
         });
+        setIsDefaultAddress(selectedAddress.is_default);
       }
+    }
+  };
+
+  const handleDefaultAddressChange = (e: any) => {
+    const isChecked = e.target.checked;
+    if (isChecked && currentDefaultAddressId !== null && currentDefaultAddressId !== form.getFieldValue('id')) {
+      Modal.confirm({
+        title: 'Thay đổi địa chỉ mặc định',
+        content: 'Bạn có chắc chắn muốn thay đổi địa chỉ mặc định không?',
+        onOk: () => setIsDefaultAddress(true),
+        onCancel: () => setIsDefaultAddress(false),
+      });
+    } else {
+      setIsDefaultAddress(isChecked);
     }
   };
 
@@ -204,7 +250,8 @@ const Checkout: React.FC = () => {
                 >
                   {addresses.map((address: Address) => (
                     <Option key={address.id} value={address.id}>
-                      {address.full_name} - {address.address}, {address.city}
+                      {address.full_name} - {address.street}, {address.ward}, {address.district}, {address.city}
+                      {address.is_default && " (Mặc định)"}
                     </Option>
                   ))}
                   <Option value="new">Thêm địa chỉ mới</Option>
@@ -216,14 +263,25 @@ const Checkout: React.FC = () => {
               <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
                 <Input />
               </Form.Item>
-              <Form.Item name="newAddress" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
-                <Input.TextArea />
+              <Form.Item name="street" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
+                <Input />
+              </Form.Item>
+              <Form.Item name="ward" label="Phường" rules={[{ required: true, message: 'Vui lòng nhập tên phường' }]}>
+                <Input />
+              </Form.Item>
+              <Form.Item name="district" label="Quận" rules={[{ required: true, message: 'Vui lòng nhập tên quận' }]}>
+                <Input />
               </Form.Item>
               <Form.Item name="city" label="Thành phố" rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}>
                 <Input />
               </Form.Item>
               <Form.Item name="note" label="Ghi chú">
                 <Input.TextArea />
+              </Form.Item>
+              <Form.Item name="isDefault" valuePropName="checked">
+                <Checkbox checked={isDefaultAddress} onChange={handleDefaultAddressChange}>
+                  Đặt làm địa chỉ mặc định
+                </Checkbox>
               </Form.Item>
             </Form>
           </Card>

@@ -1,81 +1,104 @@
 import nodemailer from 'nodemailer';
-import fs from 'fs/promises';
-import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs/promises';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_PORT == 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-export const sendOrderConfirmationEmail = async (to, orderDetails, isPaymentConfirmation = false) => {
+// Đọc template email
+const readEmailTemplate = async () => {
+  const templatePath = join(__dirname, '../emails/orderConfirmation.html');
+  console.log('Reading email template from:', templatePath);
   try {
-    const templatePath = path.join(__dirname, '../emails/orderConfirmation.html');
-    let emailTemplate = await fs.readFile(templatePath, 'utf8');
-
-    const { 
-      orderId, 
-      customerName, 
-      totalAmount, 
-      orderDate,
-      paymentMethod,
-      items,
-      isPaid
-    } = orderDetails;
-
-    const itemsHtml = items.map(item => `
-      <tr>
-        <td>${item.title}</td>
-        <td>${item.category || 'Điện thoại'}</td>
-        <td>${item.quantity}</td>
-        <td>${item.price.toLocaleString('vi-VN')} VND</td>
-      </tr>
-    `).join('');
-
-    const replacements = {
-      '{{COMPANY_LOGO}}': 'https://example.com/logo.png', // Thay bằng URL logo thực tế
-      '{{COMPANY_NAME}}': process.env.COMPANY_NAME || 'Công ty TNHH Trùm',
-      '{{COMPANY_ADDRESS}}': process.env.COMPANY_ADDRESS || '77/5B Lê Lai, Phường 12, Quận Tân Bình, TP.HCM',
-      '{{SUPPORT_EMAIL}}': process.env.SUPPORT_EMAIL || 'startrungkiller2@gmail.com',
-      '{{CUSTOMER_NAME}}': customerName,
-      '{{ORDER_ID}}': orderId,
-      '{{ORDER_DATE}}': new Date(orderDate).toLocaleString('vi-VN'),
-      '{{PAYMENT_METHOD}}': paymentMethod,
-      '{{ORDER_ITEMS}}': itemsHtml,
-      '{{TOTAL_AMOUNT}}': totalAmount.toLocaleString('vi-VN'),
-      '{{PAYMENT_STATUS}}': isPaid ? 'Đã thanh toán' : 'Chưa thanh toán',
-      '{{EMAIL_TITLE}}': isPaymentConfirmation ? 'Xác nhận thanh toán đơn hàng' : 'Xác nhận đơn hàng',
-      '{{EMAIL_CONTENT}}': isPaymentConfirmation 
-        ? 'Chúng tôi xin thông báo rằng đơn hàng của bạn đã được thanh toán thành công.' 
-        : 'Cảm ơn bạn đã đặt hàng. Dưới đây là thông tin chi tiết về đơn hàng của bạn:'
-    };
-
-    for (const [placeholder, value] of Object.entries(replacements)) {
-      emailTemplate = emailTemplate.replace(new RegExp(placeholder, 'g'), value);
-    }
-
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to,
-      subject: isPaymentConfirmation ? `Xác nhận thanh toán đơn hàng #${orderId}` : `Xác nhận đơn hàng #${orderId}`,
-      html: emailTemplate,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`${isPaymentConfirmation ? 'Payment' : 'Order'} confirmation email sent successfully`);
+    const template = await fs.readFile(templatePath, 'utf8');
+    console.log('Email template read successfully');
+    return template;
   } catch (error) {
-    console.error(`Error sending ${isPaymentConfirmation ? 'payment' : 'order'} confirmation email:`, error);
+    console.error('Error reading email template:', error);
     throw error;
+  }
+};
+
+export const sendOrderConfirmationEmail = async (email, orderDetails) => {
+  console.log('Attempting to send email to:', email);
+  console.log('Order details:', JSON.stringify(orderDetails, null, 2));
+  try {
+    console.log('Creating transporter with config:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    });
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false, // Use TLS
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+    console.log('Transporter created');
+
+    const template = await readEmailTemplate();
+    console.log('Email template read');
+
+    // Thay thế các placeholder trong template
+    let htmlContent = template
+      .replace(/{{COMPANY_NAME}}/g, process.env.COMPANY_NAME)
+      .replace(/{{COMPANY_ADDRESS}}/g, process.env.COMPANY_ADDRESS)
+      .replace(/{{SUPPORT_EMAIL}}/g, process.env.SUPPORT_EMAIL)
+      .replace(/{{EMAIL_TITLE}}/g, orderDetails.isPaid ? `Xác nhận thanh toán đơn hàng #${orderDetails.orderId}` : `Xác nhận đơn hàng #${orderDetails.orderId}`)
+      .replace(/{{CUSTOMER_NAME}}/g, orderDetails.customerName)
+      .replace(/{{EMAIL_CONTENT}}/g, orderDetails.isPaid ? 'Cảm ơn bạn đã thanh toán đơn hàng.' : 'Cảm ơn bạn đã đặt hàng. Vui lòng thanh toán để hoàn tất đơn hàng.')
+      .replace(/{{ORDER_ID}}/g, orderDetails.orderId)
+      .replace(/{{ORDER_DATE}}/g, new Date(orderDetails.orderDate).toLocaleString())
+      .replace(/{{PAYMENT_METHOD}}/g, orderDetails.paymentMethod === 'bank_transfer' ? 'Ngân hàng' : orderDetails.paymentMethod)
+      .replace(/{{PAYMENT_STATUS}}/g, orderDetails.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán')
+      .replace(/{{TOTAL_AMOUNT}}/g, orderDetails.totalAmount ? orderDetails.totalAmount.toLocaleString() : '0');
+
+    // Tạo bảng các mặt hàng
+    let itemsHtml = '';
+    if (orderDetails.items && Array.isArray(orderDetails.items)) {
+      for (const item of orderDetails.items) {
+        itemsHtml += `
+          <tr>
+            <td class="product-name">${item.title || 'Sản phẩm không xác định'}</td>
+            <td>${item.quantity || 0}</td>
+            <td>${item.price ? item.price.toLocaleString() : '0'} đ</td>
+            <td>${(item.price * item.quantity).toLocaleString()} đ</td>
+          </tr>
+        `;
+      }
+    } else {
+      itemsHtml = '<tr><td colspan="4">Không có thông tin sản phẩm</td></tr>';
+    }
+    htmlContent = htmlContent.replace('{{ORDER_ITEMS}}', itemsHtml);
+
+    console.log('Sending email with options:', {
+      from: `"${process.env.COMPANY_NAME}" <${process.env.SUPPORT_EMAIL}>`,
+      to: email,
+      subject: orderDetails.isPaid ? `Xác nhận thanh toán đơn hàng #${orderDetails.orderId}` : `Xác nhận đơn hàng #${orderDetails.orderId}`,
+    });
+
+    const info = await transporter.sendMail({
+      from: `"${process.env.COMPANY_NAME}" <${process.env.SUPPORT_EMAIL}>`,
+      to: email,
+      subject: orderDetails.isPaid ? `Xác nhận thanh toán đơn hàng #${orderDetails.orderId}` : `Xác nhận đơn hàng #${orderDetails.orderId}`,
+      html: htmlContent,
+    });
+
+    console.log('Email sent successfully. Message ID:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+    return false;
   }
 };

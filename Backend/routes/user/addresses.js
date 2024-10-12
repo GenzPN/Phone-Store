@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     const connection = await db.getConnection();
     try {
-        const { fullName, phone, address, city, isDefault } = req.body;
+        const { fullName, phone, street, ward, district, city, isDefault } = req.body;
         const userId = req.user.id;
 
         await connection.beginTransaction();
@@ -32,8 +32,8 @@ router.post('/', async (req, res) => {
         }
 
         const [result] = await connection.query(
-            'INSERT INTO UserAddresses (user_id, full_name, phone, address, city, is_default) VALUES (?, ?, ?, ?, ?, ?)',
-            [userId, fullName, phone, address, city, isDefault ? 1 : 0]
+            'INSERT INTO UserAddresses (user_id, full_name, phone, street, ward, district, city, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, fullName, phone, street, ward, district, city, isDefault ? 1 : 0]
         );
 
         await connection.commit();
@@ -57,7 +57,7 @@ router.put('/:id', async (req, res) => {
     try {
         const userId = req.user.id;
         const addressId = req.params.id;
-        const { fullName, phone, address, city, isDefault } = req.body;
+        const { fullName, phone, street, ward, district, city, isDefault } = req.body;
 
         await connection.beginTransaction();
 
@@ -66,8 +66,8 @@ router.put('/:id', async (req, res) => {
         }
 
         const [result] = await connection.query(
-            'UPDATE UserAddresses SET full_name = ?, phone = ?, address = ?, city = ?, is_default = ? WHERE id = ? AND user_id = ?',
-            [fullName, phone, address, city, isDefault ? 1 : 0, addressId, userId]
+            'UPDATE UserAddresses SET full_name = ?, phone = ?, street = ?, ward = ?, district = ?, city = ?, is_default = ? WHERE id = ? AND user_id = ?',
+            [fullName, phone, street, ward, district, city, isDefault ? 1 : 0, addressId, userId]
         );
 
         if (result.affectedRows === 0) {

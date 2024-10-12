@@ -38,7 +38,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const brands = ["Apple", "Samsung", "Oppo", "Huawei", "Realme", "Vivo", "Xiaomi", "Nokia"];
+  const brands = ["Apple", "Samsung", "Oppo", "Xiaomi"];
 
   const handleLogout = useCallback(async () => {
     try {

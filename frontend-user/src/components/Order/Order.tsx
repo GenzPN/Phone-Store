@@ -25,8 +25,12 @@ interface Order {
   payment_method: string;
   created_at: string;
   items: OrderItem[];
-  shipping_address: string;
-  city: string; // Thêm trường city
+  full_name: string;
+  phone: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
   note?: string;
 }
 
@@ -139,7 +143,11 @@ const Order: React.FC = () => {
     return (
       <Card title="Chi tiết đơn hàng" style={{ marginBottom: 16 }}>
         <Card.Grid style={{ width: '100%' }} hoverable={false}>
-          <Text strong>Địa chỉ giao hàng:</Text> {`${selectedOrder.shipping_address}, ${selectedOrder.city}`}
+          <Text strong>Họ và tên:</Text> {selectedOrder.full_name}
+          <br />
+          <Text strong>Số điện thoại:</Text> {selectedOrder.phone}
+          <br />
+          <Text strong>Địa chỉ giao hàng:</Text> {`${selectedOrder.street}, ${selectedOrder.ward}, ${selectedOrder.district}, ${selectedOrder.city}`}
         </Card.Grid>
         <Card.Grid style={{ width: '100%' }} hoverable={false}>
           <Text strong>Sản phẩm:</Text>

@@ -125,7 +125,6 @@ function Payment() {
         setPaymentInfo(response.data);
         console.log('Kết quả kiểm tra:', response.data);
         if (response.data.payment_status === 'completed' || response.data.status === 'paid' || response.data.newStatus === 'completed') {
-          message.success('Thanh toán đã được xác nhận!');
           navigate(`/order-confirmation/${orderId}`);
           clearInterval(paymentCheckInterval);
           clearInterval(timer);

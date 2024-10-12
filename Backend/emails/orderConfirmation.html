@@ -6,36 +6,42 @@
     <title>{{EMAIL_TITLE}}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
         }
         .container {
             width: 100%;
             max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            background-color: #4a90e2;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
         }
         .logo {
             width: 100px;
             height: auto;
+            margin-bottom: 10px;
         }
         .company-info {
-            text-align: right;
+            margin-top: 10px;
         }
         .content {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 5px;
+            padding: 30px;
+        }
+        h1, h2 {
+            color: #4a90e2;
+            margin-top: 0;
         }
         table {
             width: 100%;
@@ -43,53 +49,76 @@
             margin-top: 20px;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: right;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #f8f8f8;
+            font-weight: 600;
         }
         .total {
             font-weight: bold;
             text-align: right;
             margin-top: 20px;
+            font-size: 18px;
+            color: #4a90e2;
+        }
+        .order-info {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .order-info p {
+            margin: 5px 0;
+        }
+        .product-name {
+            text-align: left;
+        }
+        .footer {
+            background-color: #4a90e2;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <img src="{{COMPANY_LOGO}}" alt="Company Logo" class="logo">
-            <div class="company-info">
-                <h2>{{COMPANY_NAME}}</h2>
-                <p>{{COMPANY_ADDRESS}}</p>
-                <p>Email: {{SUPPORT_EMAIL}}</p>
-            </div>
+            <img src="https://i.imgur.com/uQaX2zy.png" alt="Company Logo" class="logo">
+            <h2>{{COMPANY_NAME}}</h2>
         </div>
         <div class="content">
             <h1>{{EMAIL_TITLE}}</h1>
-            <p>Xin chào {{CUSTOMER_NAME}},</p>
+            <p>Xin chào <strong>{{CUSTOMER_NAME}}</strong>,</p>
             <p>{{EMAIL_CONTENT}}</p>
             
             <h2>Thông tin đơn hàng</h2>
-            <p>Mã đơn hàng: {{ORDER_ID}}</p>
-            <p>Ngày đặt hàng: {{ORDER_DATE}}</p>
-            <p>Phương thức thanh toán: {{PAYMENT_METHOD}}</p>
-            <p>Trạng thái thanh toán: {{PAYMENT_STATUS}}</p>
+            <div class="order-info">
+                <p><strong>Mã đơn hàng:</strong> {{ORDER_ID}}</p>
+                <p><strong>Ngày đặt hàng:</strong> {{ORDER_DATE}}</p>
+                <p><strong>Phương thức thanh toán:</strong> {{PAYMENT_METHOD}}</p>
+                <p><strong>Trạng thái thanh toán:</strong> {{PAYMENT_STATUS}}</p>
+            </div>
 
             <h2>Chi tiết sản phẩm</h2>
             <table>
                 <tr>
-                    <th>Sản phẩm</th>
-                    <th>Phân loại</th>
+                    <th class="product-name">Sản phẩm</th>
                     <th>Số lượng</th>
-                    <th>Giá</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
                 </tr>
                 {{ORDER_ITEMS}}
             </table>
 
             <p class="total">Tổng tiền: {{TOTAL_AMOUNT}} VND</p>
+        </div>
+        <div class="footer">
+            <p>{{COMPANY_ADDRESS}} | Email: {{SUPPORT_EMAIL}}</p>
         </div>
     </div>
 </body>

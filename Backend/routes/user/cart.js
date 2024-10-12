@@ -28,35 +28,31 @@ router.get('/', async (req, res) => {
     res.json(cartItems);
   } catch (error) {
     console.error('Get cart error:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // Thêm sản phẩm vào giỏ hàng
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { product_id, quantity } = req.body;
-    if (req.user) {
-      const [existingItem] = await db.execute(
-        'SELECT * FROM Cart WHERE user_id = ? AND product_id = ?',
-        [req.user.id, product_id]
+    const [existingItem] = await db.execute(
+      'SELECT * FROM Cart WHERE user_id = ? AND product_id = ?',
+      [req.user.id, product_id]
+    );
+    
+    if (existingItem.length > 0) {
+      await db.execute(
+        'UPDATE Cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?',
+        [quantity, req.user.id, product_id]
       );
-      
-      if (existingItem.length > 0) {
-        await db.execute(
-          'UPDATE Cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?',
-          [quantity, req.user.id, product_id]
-        );
-      } else {
-        await db.execute(
-          'INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?)',
-          [req.user.id, product_id, quantity]
-        );
-      }
-      res.status(201).json({ message: 'Product added to cart' });
     } else {
-      res.status(401).json({ message: 'Unauthorized' });
+      await db.execute(
+        'INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?)',
+        [req.user.id, product_id, quantity]
+      );
     }
+    res.status(201).json({ message: 'Product added to cart' });
   } catch (error) {
     console.error('Add to cart error:', error);
     res.status(500).json({ message: 'Internal server error' });

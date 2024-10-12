@@ -58,18 +58,53 @@ async function checkPaymentStatus(orderId) {
         await fs.writeFile(path.join(orderDir, 'status.log'), '1');
         await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [orderId]);
         
-        // Fetch user information
-        const [userResult] = await db.query('SELECT u.email, u.username, o.total_amount, o.payment_method FROM Orders o JOIN Users u ON o.user_id = u.id WHERE o.id = ?', [orderId]);
-        const user = userResult[0];
+        // Fetch user and order information
+        const [orderResult] = await db.query(`
+          SELECT o.*, u.email, u.username 
+          FROM Orders o 
+          JOIN Users u ON o.user_id = u.id 
+          WHERE o.id = ?
+        `, [orderId]);
+        const order = orderResult[0];
+        
+        // Fetch order items with product details
+        const [items] = await db.query(`
+          SELECT oi.quantity, oi.price, p.title, p.id as product_id
+          FROM OrderItems oi 
+          JOIN Products p ON oi.product_id = p.id
+          WHERE oi.order_id = ?
+        `, [orderId]);
+
+        const orderDetails = {
+          orderId: orderId,
+          customerName: order.username,
+          totalAmount: order.total_amount,
+          orderDate: order.created_at,
+          paymentMethod: order.payment_method,
+          items: items.map(item => ({
+            title: item.title,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          isPaid: true
+        };
+        
+        // Send payment confirmation email immediately
+        try {
+          await sendOrderConfirmationEmail(order.email, orderDetails);
+          console.log(`Payment confirmation email sent for order ${orderId}`);
+        } catch (emailError) {
+          console.error(`Error sending payment confirmation email for order ${orderId}:`, emailError);
+        }
         
         return { 
           isPaid: true, 
           transactionId: transaction.bankTransId, 
           newStatus: 'completed',
-          userEmail: user.email,
-          username: user.username,
-          totalAmount: user.total_amount,
-          paymentMethod: user.payment_method
+          userEmail: order.email,
+          username: order.username,
+          totalAmount: order.total_amount,
+          paymentMethod: order.payment_method
         };
       }
     }
@@ -89,76 +124,108 @@ function calculateTimeLeft(orderTime) {
 }
 
 // Create a new order
-router.post('/', authenticateJWT, async(req, res) => {
+router.post('/', authenticateJWT, async (req, res) => {
   const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-    const { shipping_address_id, items, total_amount, note, paymentMethod } = req.body;
-    console.log('Received order data:', { shipping_address_id, items, total_amount, note, paymentMethod });
+  await connection.beginTransaction();
 
-    // Các kiểm tra đầu vào
+  try {
+    const { shipping_address_id, note, paymentMethod } = req.body;
+    console.log('Received order data:', { shipping_address_id, note, paymentMethod });
+
+    // Validate input
     if (!shipping_address_id) {
       throw new Error('Missing shipping address');
-    }
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      throw new Error('Đơn hàng không hợp lệ');
-    }
-    if (!total_amount || isNaN(total_amount)) {
-      throw new Error('Invalid total amount');
     }
     if (!paymentMethod) {
       throw new Error('Missing payment method');
     }
+
     const validPaymentMethods = ['bank_transfer', 'momo', 'cod'];
     if (!validPaymentMethods.includes(paymentMethod)) {
       throw new Error(`Invalid payment method. Valid methods are: ${validPaymentMethods.join(', ')}`);
     }
+
+    // Get cart items for the user
+    const [cartItems] = await connection.query(
+      'SELECT c.product_id, c.quantity, p.price FROM Cart c JOIN Products p ON c.product_id = p.id WHERE c.user_id = ?',
+      [req.user.id]
+    );
+
+    if (cartItems.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
+    // Calculate total amount
+    const total_amount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
     const transactionId = uuidv4();
     const [result] = await connection.query(
       'INSERT INTO Orders (user_id, shipping_address_id, total_amount, note, payment_method, transaction_id) VALUES (?, ?, ?, ?, ?, ?)',
       [req.user.id, shipping_address_id, total_amount, note, paymentMethod, transactionId]
     );
+
     const orderId = result.insertId;
+
+    // Insert order items
+    for (const item of cartItems) {
+      await connection.query(
+        'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+        [orderId, item.product_id, item.quantity, item.price]
+      );
+    }
+
+    // Clear the user's cart
+    await connection.query('DELETE FROM Cart WHERE user_id = ?', [req.user.id]);
 
     // Create order files
     await createOrderFiles(orderId, total_amount, transactionId);
 
-    // ... (code xử lý các mặt hàng giữ nguyên)
-
-    // Xóa các mục trong giỏ hàng của người dùng sau khi đặt hàng
-    await connection.query('DELETE FROM Cart WHERE user_id = ?', [req.user.id]);
-
-    // Lấy thông tin người dùng để gửi email
+    // Get user information for email
     const [userResult] = await connection.query('SELECT email, username FROM Users WHERE id = ?', [req.user.id]);
     const user = userResult[0];
 
-    // Chuẩn bị dữ liệu cho email
+    // Lấy thông tin chi tiết của sản phẩm
+    const productIds = cartItems.map(item => item.product_id);
+    const [products] = await connection.query(
+      'SELECT id, title, price FROM Products WHERE id IN (?)',
+      [productIds]
+    );
+
+    const productMap = products.reduce((map, product) => {
+      map[product.id] = product;
+      return map;
+    }, {});
+
+    // Prepare data for email
     const orderDetails = {
       orderId,
-      customerName: user.username, // Thay đổi từ user.name thành user.username
+      customerName: user.username,
       totalAmount: total_amount,
       orderDate: new Date(),
-      items: items.map(item => ({
-        title: item.title,
-        quantity: item.quantity,
-        price: item.price
-      }))
+      paymentMethod: req.body.paymentMethod,
+      isPaid: false,
+      items: cartItems.map(item => {
+        const product = productMap[item.product_id];
+        return {
+          title: product ? product.title : 'Sản phẩm không xác định',
+          quantity: item.quantity || 0,
+          price: product ? product.price : 0
+        };
+      })
     };
 
     await connection.commit();
-
     res.status(201).json({ 
       success: true, 
       orderId: orderId, 
-      message: 'Order created successfully and confirmation email sent',
+      message: 'Order created successfully',
       paymentMethod,
       clearCart: true
     });
   } catch (error) {
     await connection.rollback();
     console.error('Create order error:', error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   } finally {
     connection.release();
   }
@@ -178,26 +245,13 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
     const order = orders[0];
     
     // Kiểm tra trạng thái thanh toán và lấy mã giao dịch
-    const { isPaid, transactionId, newStatus, userEmail, username, totalAmount, paymentMethod } = await checkPaymentStatus(req.params.orderId);
+    const { isPaid, transactionId, newStatus } = await checkPaymentStatus(req.params.orderId);
+    
+    // Nếu đơn hàng đã được thanh toán, cập nhật trạng thái
     if (isPaid && order.status === 'pending') {
       await db.query('UPDATE Orders SET status = "paid", payment_status = "completed" WHERE id = ?', [req.params.orderId]);
       order.status = 'paid';
       order.payment_status = 'completed';
-
-      // Fetch order items
-      const [items] = await db.query('SELECT oi.quantity, oi.price, p.title, p.category FROM OrderItems oi JOIN Products p ON oi.product_id = p.id WHERE oi.order_id = ?', [req.params.orderId]);
-
-      // Send payment confirmation email
-      const orderDetails = {
-        orderId: req.params.orderId,
-        customerName: username,
-        totalAmount: totalAmount,
-        orderDate: new Date(),
-        paymentMethod: paymentMethod,
-        items: items,
-        isPaid: true
-      };
-      await sendOrderConfirmationEmail(userEmail, orderDetails, true);
     }
 
     const orderDir = path.join(__dirname, '../../Order', `order${req.params.orderId}`);
@@ -270,7 +324,7 @@ router.get('/payment-info/:orderId', authenticateJWT, async (req, res) => {
 router.get('/', authenticateJWT, async (req, res) => {
   try {
     const [orders] = await db.query(`
-      SELECT o.*, ua.full_name, ua.phone, ua.address, ua.city
+      SELECT o.*, ua.full_name, ua.phone, ua.street, ua.ward, ua.district, ua.city
       FROM Orders o
       LEFT JOIN UserAddresses ua ON o.shipping_address_id = ua.id
       WHERE o.user_id = ?
@@ -285,7 +339,11 @@ router.get('/', authenticateJWT, async (req, res) => {
         WHERE oi.order_id = ?
       `, [order.id]);
 
-      return { ...order, items, shipping_address: order.address, city: order.city };
+      return { 
+        ...order, 
+        items,
+        shipping_address: `${order.street}, ${order.ward}, ${order.district}, ${order.city}`
+      };
     }));
 
     res.json(ordersWithItems);
